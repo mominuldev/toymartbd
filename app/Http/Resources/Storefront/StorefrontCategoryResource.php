@@ -44,9 +44,13 @@ final class StorefrontCategoryResource extends ApiResource
             /** @var string|null */
             'description_bn' => $category->description_bn,
             /** @var string|null */
+            'tagline' => $category->tagline,
+            /** @var string|null */
+            'tagline_bn' => $category->tagline_bn,
+            /** @var string|null */
             'icon' => $category->icon,
             /** @var string|null */
-            'image_url' => CategoryResource::publicUrl($category->image_path),
+            'image_url' => CategoryResource::imageUrl($category),
             /** @var string|null */
             'banner_url' => CategoryResource::publicUrl($category->banner_path),
             /** @var list<array{name: string, name_bn: string|null, slug: string}> */

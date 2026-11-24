@@ -9841,8 +9841,11 @@ export interface components {
             slug: string;
             description: string | null;
             description_bn: string | null;
+            tagline: string | null;
+            tagline_bn: string | null;
             icon: string | null;
             image_url: string | null;
+            image_media_id: number | null;
             is_featured: boolean;
             show_in_menu: boolean;
             is_active: boolean;
@@ -17511,6 +17514,9 @@ export interface components {
             parent_id?: number | null;
             description?: string | null;
             description_bn?: string | null;
+            tagline?: string | null;
+            tagline_bn?: string | null;
+            image_media_id?: number | null;
             icon?: string | null;
             is_featured?: boolean;
             show_in_menu?: boolean;
@@ -18488,6 +18494,8 @@ export interface components {
             slug: string;
             description: string | null;
             description_bn: string | null;
+            tagline: string | null;
+            tagline_bn: string | null;
             icon: string | null;
             image_url: string | null;
             banner_url: string | null;
@@ -18506,6 +18514,8 @@ export interface components {
             slug: string;
             icon: string | null;
             image_url: string | null;
+            tagline: string | null;
+            tagline_bn: string | null;
             children: components["schemas"]["StorefrontCategoryNode"][];
         };
         /** StorefrontDistrict */
@@ -19574,6 +19584,9 @@ export interface components {
             slug?: string | null;
             description?: string | null;
             description_bn?: string | null;
+            tagline?: string | null;
+            tagline_bn?: string | null;
+            image_media_id?: number | null;
             icon?: string | null;
             is_featured?: boolean;
             show_in_menu?: boolean;

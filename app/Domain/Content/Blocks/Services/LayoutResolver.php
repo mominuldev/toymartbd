@@ -208,12 +208,12 @@ final class LayoutResolver
     {
         if (($raw['source'] ?? 'top_level') === 'manual') {
             $ids = array_map(intval(...), is_array($raw['category_ids'] ?? null) ? $raw['category_ids'] : []);
-            $found = Category::query()->active()->whereIn('id', $ids)->get()->keyBy('id');
+            $found = Category::query()->active()->whereIn('id', $ids)->with('imageMedia')->get()->keyBy('id');
 
             return new Collection(array_values(array_filter(array_map(static fn (int $id): ?Category => $found->get($id), $ids))));
         }
 
-        return Category::query()->active()->where('show_in_menu', true)->whereNull('parent_id')
+        return Category::query()->active()->with('imageMedia')->where('show_in_menu', true)->whereNull('parent_id')
             ->inTreeOrder()->limit(max(1, (int) ($raw['limit'] ?? 8)))->get();
     }
 

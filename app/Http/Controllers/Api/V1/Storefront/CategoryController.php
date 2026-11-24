@@ -30,7 +30,8 @@ final class CategoryController extends ApiController
             ->active()
             ->where('show_in_menu', true)
             ->inTreeOrder()
-            ->get(['id', 'parent_id', '_lft', '_rgt', 'name', 'name_bn', 'slug', 'icon', 'image_path']);
+            ->with('imageMedia')
+            ->get(['id', 'parent_id', '_lft', '_rgt', 'name', 'name_bn', 'slug', 'icon', 'image_path', 'image_media_id', 'tagline', 'tagline_bn']);
 
         return StorefrontCategoryNodeResource::collection($tree->nest($nodes));
     }
@@ -46,7 +47,8 @@ final class CategoryController extends ApiController
         $category = Category::query()->active()->where('slug', $slug)->firstOrFail();
         $category->setRelation('ancestors', Category::query()->treeAncestorsOf($category)->inTreeOrder()->get());
 
-        $below = Category::query()->active()->treeDescendantsOf($category)->inTreeOrder()->get();
+        $category->load('imageMedia');
+        $below = Category::query()->active()->treeDescendantsOf($category)->inTreeOrder()->with('imageMedia')->get();
         $category->setRelation('children', $tree->nest($below, Category::MAX_DEPTH - 1, $category->id));
 
         return new StorefrontCategoryResource($category);

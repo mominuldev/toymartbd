@@ -43698,6 +43698,18 @@
                             "null"
                         ]
                     },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "icon": {
                         "type": [
                             "string",
@@ -43707,6 +43719,12 @@
                     "image_url": {
                         "type": [
                             "string",
+                            "null"
+                        ]
+                    },
+                    "image_media_id": {
+                        "type": [
+                            "integer",
                             "null"
                         ]
                     },
@@ -43750,8 +43768,11 @@
                     "slug",
                     "description",
                     "description_bn",
+                    "tagline",
+                    "tagline_bn",
                     "icon",
                     "image_url",
+                    "image_media_id",
                     "is_featured",
                     "show_in_menu",
                     "is_active",
@@ -73546,6 +73567,26 @@
                         ],
                         "maxLength": 5000
                     },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 60
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 60
+                    },
+                    "image_media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
                     "icon": {
                         "type": [
                             "string",
@@ -77357,6 +77398,18 @@
                             "null"
                         ]
                     },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "icon": {
                         "type": [
                             "string",
@@ -77414,6 +77467,8 @@
                     "slug",
                     "description",
                     "description_bn",
+                    "tagline",
+                    "tagline_bn",
                     "icon",
                     "image_url",
                     "banner_url",
@@ -77452,6 +77507,18 @@
                             "null"
                         ]
                     },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "children": {
                         "type": "array",
                         "items": {
@@ -77466,6 +77533,8 @@
                     "slug",
                     "icon",
                     "image_url",
+                    "tagline",
+                    "tagline_bn",
                     "children"
                 ],
                 "title": "StorefrontCategoryNode"
@@ -81688,6 +81757,26 @@
                             "null"
                         ],
                         "maxLength": 5000
+                    },
+                    "tagline": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 60
+                    },
+                    "tagline_bn": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 60
+                    },
+                    "image_media_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "icon": {
                         "type": [

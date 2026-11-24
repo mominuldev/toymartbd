@@ -141,7 +141,7 @@ it('drops unknown keys and keeps manual picks in the editor\'s order', function 
     ]])->assertCreated();
 
     expect($response->json('content'))->toBe([
-        'title' => 'Shop', 'title_bn' => null, 'source' => 'manual', 'category_ids' => [$b->id, $a->id], 'limit' => 8, 'show_see_all' => true,
+        'title' => 'Shop', 'title_bn' => null, 'eyebrow' => null, 'eyebrow_bn' => null, 'sub' => null, 'sub_bn' => null, 'source' => 'manual', 'category_ids' => [$b->id, $a->id], 'limit' => 8, 'show_see_all' => true,
     ]);
 
     $rail = $this->postJson(CmsKit::ADMIN.'/blocks', ['type' => 'product_rail', 'content' => [

@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QueryError } from '@/components/ui/QueryError';
 import { useToast } from '@/components/ui/Toast';
 import { SeoPanel } from '@/features/seo';
+import { MediaField, type PickedImage } from '@/features/content/shared/MediaField';
 import {
     MAX_DEPTH,
     flatten,
@@ -35,6 +36,9 @@ type FormValues = {
     parent_id: string;
     description: string;
     description_bn: string;
+    tagline: string;
+    tagline_bn: string;
+    image: PickedImage | null;
     icon: string;
     is_featured: boolean;
     show_in_menu: boolean;
@@ -43,7 +47,7 @@ type FormValues = {
 
 const validateInput = zodResolver(storeCategoryRequestSchema);
 
-const fields: (keyof FormValues)[] = ['name', 'name_bn', 'slug', 'parent_id', 'description', 'description_bn', 'icon', 'is_featured', 'show_in_menu', 'is_active'];
+const fields: (keyof FormValues)[] = ['name', 'name_bn', 'slug', 'parent_id', 'description', 'description_bn', 'tagline', 'tagline_bn', 'image', 'icon', 'is_featured', 'show_in_menu', 'is_active'];
 
 function toForm(category?: Category, parentId?: number | null): FormValues {
     return {
@@ -53,6 +57,9 @@ function toForm(category?: Category, parentId?: number | null): FormValues {
         parent_id: String(category?.parent_id ?? parentId ?? ''),
         description: category?.description ?? '',
         description_bn: category?.description_bn ?? '',
+        tagline: category?.tagline ?? '',
+        tagline_bn: category?.tagline_bn ?? '',
+        image: category?.image_media_id ? { media_id: category.image_media_id, url: category.image_url ?? null, alt: null } : null,
         icon: category?.icon ?? '',
         is_featured: category?.is_featured ?? false,
         show_in_menu: category?.show_in_menu ?? true,
@@ -69,6 +76,9 @@ function toInput(values: FormValues): CategoryInput {
         parent_id: values.parent_id === '' ? null : Number(values.parent_id),
         description: orNull(values.description),
         description_bn: orNull(values.description_bn),
+        tagline: orNull(values.tagline),
+        tagline_bn: orNull(values.tagline_bn),
+        image_media_id: values.image?.media_id ?? null,
         icon: orNull(values.icon),
         is_featured: values.is_featured,
         show_in_menu: values.show_in_menu,
@@ -145,7 +155,7 @@ function CategoryForm({ id, category, tree, parentId, onClose }: { id: number | 
     const fail = (error: Error) => {
         if (error instanceof ApiError && error.status === 422) {
             for (const field of fields) {
-                const message = error.fieldError(field);
+                const message = error.fieldError(field === 'image' ? 'image_media_id' : field);
                 if (message) setError(field as FieldPath<FormValues>, { message });
             }
         } else {
@@ -248,6 +258,17 @@ function CategoryForm({ id, category, tree, parentId, onClose }: { id: number | 
                         </Field>
                     </div>
 
+                    <MediaField
+                        label={t('categories.field.image')}
+                        hint={t('categories.field.imageHint')}
+                        pickerTitle="categories.field.pickImage"
+                        ratio={[1, 1]}
+                        value={form.watch('image')}
+                        onChange={(next) => form.setValue('image', next, { shouldDirty: true })}
+                        disabled={locked}
+                        error={errorOf('image')}
+                    />
+
                     <Field label={t('categories.field.icon')} hint={t('categories.field.iconHint')} error={errorOf('icon')} optional>
                         {({ id: fieldId, describedBy, invalid }) => (
                             <input
@@ -275,6 +296,16 @@ function CategoryForm({ id, category, tree, parentId, onClose }: { id: number | 
 
                 <FormSection title={t('categories.descriptionTitle')}>
                     <fieldset disabled={locked} className="grid min-w-0 gap-x-4 gap-y-3.5 md:grid-cols-2">
+                        <Field label={t('categories.field.tagline')} hint={t('categories.field.taglineHint')} error={errorOf('tagline')} optional>
+                            {({ id: fieldId, describedBy, invalid }) => (
+                                <input id={fieldId} maxLength={60} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('tagline')} />
+                            )}
+                        </Field>
+                        <Field label={t('categories.field.taglineBn')} error={errorOf('tagline_bn')} optional>
+                            {({ id: fieldId, describedBy, invalid }) => (
+                                <input id={fieldId} maxLength={60} lang="bn" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('tagline_bn')} />
+                            )}
+                        </Field>
                         <Field label={t('categories.field.description')} error={errorOf('description')} optional>
                             {({ id: fieldId, describedBy, invalid }) => (
                                 <textarea id={fieldId} rows={4} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`py-2 ${inputClass}`} {...register('description')} />

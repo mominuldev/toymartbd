@@ -24,12 +24,12 @@ use Illuminate\Validation\ValidationException;
  */
 final readonly class UpdateCategory
 {
-    private const array FIELDS = ['name', 'name_bn', 'slug', 'description', 'description_bn', 'icon', 'is_featured', 'show_in_menu'];
+    private const array FIELDS = ['name', 'name_bn', 'slug', 'description', 'description_bn', 'tagline', 'tagline_bn', 'image_media_id', 'icon', 'is_featured', 'show_in_menu'];
 
     public function __construct(private CategoryTree $tree) {}
 
     /**
-     * @param  array{name?: string, name_bn?: string|null, slug?: string, description?: string|null, description_bn?: string|null, icon?: string|null, is_featured?: bool, show_in_menu?: bool, is_active?: bool}  $changes
+     * @param  array{name?: string, name_bn?: string|null, slug?: string, description?: string|null, description_bn?: string|null, tagline?: string|null, tagline_bn?: string|null, image_media_id?: int|null, icon?: string|null, is_featured?: bool, show_in_menu?: bool, is_active?: bool}  $changes
      */
     public function handle(Category $category, array $changes): Category
     {

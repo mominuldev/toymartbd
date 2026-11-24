@@ -37,6 +37,9 @@ final class UpdateCategoryRequest extends ApiFormRequest
             ],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'description_bn' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'tagline' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'tagline_bn' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'image_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists('media', 'id')->where('kind', 'image')],
             'icon' => ['sometimes', 'nullable', 'string', 'max:64', 'regex:'.StoreCategoryRequest::ICON_PATTERN],
             'is_featured' => ['sometimes', 'boolean'],
             'show_in_menu' => ['sometimes', 'boolean'],
@@ -45,7 +48,7 @@ final class UpdateCategoryRequest extends ApiFormRequest
     }
 
     /**
-     * @return array{name?: string, name_bn?: string|null, slug?: string, description?: string|null, description_bn?: string|null, icon?: string|null, is_featured?: bool, show_in_menu?: bool, is_active?: bool}
+     * @return array{name?: string, name_bn?: string|null, slug?: string, description?: string|null, description_bn?: string|null, tagline?: string|null, tagline_bn?: string|null, image_media_id?: int|null, icon?: string|null, is_featured?: bool, show_in_menu?: bool, is_active?: bool}
      */
     public function changes(): array
     {
@@ -55,10 +58,14 @@ final class UpdateCategoryRequest extends ApiFormRequest
             $changes['name'] = $this->string('name')->toString();
         }
 
-        foreach (['name_bn', 'description', 'description_bn', 'icon'] as $field) {
+        foreach (['name_bn', 'description', 'description_bn', 'tagline', 'tagline_bn', 'icon'] as $field) {
             if ($this->has($field)) {
                 $changes[$field] = StoreCategoryRequest::nullableString($this->input($field));
             }
+        }
+
+        if ($this->has('image_media_id')) {
+            $changes['image_media_id'] = is_numeric($this->input('image_media_id')) ? (int) $this->input('image_media_id') : null;
         }
 
         $slug = StoreCategoryRequest::nullableString($this->input('slug'));

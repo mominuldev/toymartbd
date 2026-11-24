@@ -44,9 +44,15 @@ final class CategoryResource extends ApiResource
             /** @var string|null */
             'description_bn' => $category->description_bn,
             /** @var string|null */
+            'tagline' => $category->tagline,
+            /** @var string|null */
+            'tagline_bn' => $category->tagline_bn,
+            /** @var string|null */
             'icon' => $category->icon,
             /** @var string|null */
-            'image_url' => self::publicUrl($category->image_path),
+            'image_url' => self::imageUrl($category),
+            /** @var int|null */
+            'image_media_id' => $category->image_media_id,
             'is_featured' => $category->is_featured,
             'show_in_menu' => $category->show_in_menu,
             'is_active' => $category->isActive(),
@@ -73,6 +79,26 @@ final class CategoryResource extends ApiResource
             'children' => self::collection($this->whenLoaded('children')),
         ];
     }
+
+    /**
+     * The category's image: the picked Media Library image (a ~320 px rendition — the home tile
+     * shows it at 94 px) or, without one, the legacy uploaded `image_path`. Eager-load `imageMedia`
+     * on lists.
+     */
+    public static function imageUrl(Category $category): ?string
+    {
+        if ($category->image_media_id !== null) {
+            $url = $category->imageMedia?->url(self::IMAGE_WIDTH);
+            if ($url !== null) {
+                return $url;
+            }
+        }
+
+        return self::publicUrl($category->image_path);
+    }
+
+    /** Rendition width asked for the category image (2× the 128 px tile circle, rounded up). */
+    private const int IMAGE_WIDTH = 320;
 
     public static function publicUrl(?string $path): ?string
     {

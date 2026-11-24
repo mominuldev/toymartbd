@@ -104,6 +104,8 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
             return (
                 <>
                     <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="eyebrow" set={set} ctx={ctx} />
+                    <Bilingual content={content} keyName="sub" set={set} ctx={ctx} hint={t('homeBuilder.f.categoryTaglines')} />
                     <SelectField
                         label={t('homeBuilder.f.source')}
                         value={str(content.source) || 'top_level'}

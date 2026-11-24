@@ -24,7 +24,7 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | Type | Content |
 |---|---|
 | `hero` | `show_age_pills`, `slides[1..5]`: `headline`*, `accent` (words of the headline drawn in the sun colour), `overline`, `sub`, `cta_label`, `cta_href` (store path or https), `cta2_label`, `cta2_href` (the outline button), `media_id` (library image; none = built-in art), `alt`; `promos[0..2]` (the mini promo cards beside the slides, Smart Junior 34:5686): `title`*, `overline`, `cta_label`, `cta_href`, `media_id`, `alt`, `tone` pink\|green\|blue\|yellow\|purple\|orange; `proof` (null or the row under the first slide's copy): `rating` 0–5, `label`, `media_ids[0..3]` (avatars) — the storefront gets `promos[].image` and `proof.avatars[]`; figures are editor-entered, never defaulted |
-| `category_tiles` | `title`*, `source` `top_level`\|`manual`, `category_ids` (manual), `limit` 2–12, `show_see_all` |
+| `category_tiles` | `title`*, `eyebrow` (chip above the heading), `sub` (line under it), `source` `top_level`\|`manual`, `category_ids` (manual), `limit` 2–12, `show_see_all` — each category node carries its `tagline` / `tagline_bn` (the tile's short line, edited on the category) |
 | `age_tiles` | `title`*, `show_see_all` — counts are live |
 | `product_rail` | `title`*, `rule` `new`\|`best_sellers`\|`category`\|`brand`\|`manual`, `category_id`, `brand_id`, `product_ids` (≤ 24), `window_days` 7\|30\|90, `limit` 2–12, `min_items` ≤ limit, `hide_sold_out`, `show_see_all` |
 | `flash_sale` | `title`*, `limit` 2–12 — a slot: the storefront reads the running sale from `GET /storefront/flash-sales` (tags `flash-sale`, `products`) and hides the block when none runs |

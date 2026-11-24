@@ -66,6 +66,8 @@ class AppServiceProvider extends ServiceProvider
         // Media usage resolver (docs/api/media-library.md): every place a media row can be
         // referenced is a tagged provider. Blog covers, pages and banners add a line here.
         $this->app->tag([ProductImageMediaUsages::class], MediaUsageProvider::TAG);
+        // The category image (Catalog › Categories, the home tile art) cannot be deleted while chosen.
+        $this->app->tag([\App\Domain\Catalog\Services\CategoryImageMediaUsages::class], MediaUsageProvider::TAG);
         // P9: the invoice logo chosen in Settings → Invoice details cannot be deleted while chosen.
         $this->app->tag([\App\Domain\Invoicing\Services\InvoiceLogoMediaUsages::class], MediaUsageProvider::TAG);
         // P10: the dark logo, store icon and share image chosen in Settings → Site & branding.

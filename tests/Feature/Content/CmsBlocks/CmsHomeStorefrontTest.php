@@ -346,3 +346,15 @@ it('keeps an old hero (no promos, no proof) answering as before', function (): v
         ->and($en->json('blocks.0.content.proof'))->toBeNull()
         ->and($en->json('blocks.0.content.slides.0.accent'))->toBeNull();
 });
+
+it('renders the category tiles heading chip and line, and each category tagline (Smart Junior 34:5706)', function (): void {
+    $category = Category::factory()->create(['tagline' => 'Learn and play', 'tagline_bn' => 'শেখা ও খেলা', 'show_in_menu' => true]);
+    CmsKit::block('category_tiles', ['title' => 'Shop by category', 'eyebrow' => 'Categories', 'eyebrow_bn' => 'ক্যাটাগরি', 'sub' => 'Find the right toy fast.', 'source' => 'manual', 'category_ids' => [$category->id]]);
+    cmsPublish();
+
+    $bn = CmsKit::home('bn')->assertOk();
+    expect($bn->json('blocks.0.content.eyebrow'))->toBe('ক্যাটাগরি')
+        ->and($bn->json('blocks.0.content.sub'))->toBe('Find the right toy fast.')
+        ->and($bn->json('blocks.0.categories.0.tagline'))->toBe('Learn and play')
+        ->and($bn->json('blocks.0.categories.0.tagline_bn'))->toBe('শেখা ও খেলা');
+});

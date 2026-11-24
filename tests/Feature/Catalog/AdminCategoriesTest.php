@@ -41,10 +41,14 @@ it('creates a root category and returns the Category shape', function (): void {
         'name' => 'Educational Toys',
         'name_bn' => 'শিক্ষামূলক খেলনা',
         'icon' => 'graduation-cap',
+        'tagline' => 'Learn and play',
+        'tagline_bn' => 'শেখা ও খেলা',
         'is_featured' => true,
     ]);
 
     $response->assertCreated()
+        ->assertJsonPath('tagline', 'Learn and play')
+        ->assertJsonPath('tagline_bn', 'শেখা ও খেলা')
         ->assertJsonPath('slug', 'educational-toys')
         ->assertJsonPath('name_bn', 'শিক্ষামূলক খেলনা')
         ->assertJsonPath('parent_id', null)
@@ -56,7 +60,7 @@ it('creates a root category and returns the Category shape', function (): void {
         ->assertJsonPath('is_active', true);
 
     expect(array_keys($response->json()))->toBe([
-        'id', 'parent_id', 'name', 'name_bn', 'slug', 'description', 'description_bn', 'icon', 'image_url',
+        'id', 'parent_id', 'name', 'name_bn', 'slug', 'description', 'description_bn', 'tagline', 'tagline_bn', 'icon', 'image_url', 'image_media_id',
         'is_featured', 'show_in_menu', 'is_active', 'position', 'depth', 'created_at', 'updated_at',
     ]);
 });
@@ -306,4 +310,35 @@ it('archives on DELETE, idempotently, and refuses while active children remain',
     $this->patchJson("/api/v1/admin/categories/{$child->id}", ['is_active' => true])->assertStatus(409);
     $this->patchJson("/api/v1/admin/categories/{$parent->id}", ['is_active' => true])->assertOk()->assertJsonPath('is_active', true);
     $this->patchJson("/api/v1/admin/categories/{$child->id}", ['is_active' => true])->assertOk();
+});
+
+it('edits and clears a category tagline, the short line under its home tile', function (): void {
+    $category = Category::factory()->create();
+
+    $this->patchJson("/api/v1/admin/categories/{$category->id}", ['tagline' => 'Books and activities', 'tagline_bn' => 'বই ও অ্যাক্টিভিটি'])
+        ->assertOk()->assertJsonPath('tagline_bn', 'বই ও অ্যাক্টিভিটি');
+    $this->patchJson("/api/v1/admin/categories/{$category->id}", ['tagline' => ''])->assertOk()->assertJsonPath('tagline', null);
+    $this->patchJson("/api/v1/admin/categories/{$category->id}", ['tagline' => str_repeat('x', 61)])->assertUnprocessable();
+
+    expect($category->refresh()->tagline_bn)->toBe('বই ও অ্যাক্টিভিটি');
+});
+
+it('sets a category image from the media library, serves its rendition to the storefront and guards it from deletion', function (): void {
+    $category = Category::factory()->create(['show_in_menu' => true]);
+    $image = App\Domain\Catalog\Media\Models\Media::factory()->create(['alt_text' => 'Shape blocks']);
+    $document = App\Domain\Catalog\Media\Models\Media::factory()->document()->create();
+
+    $this->patchJson("/api/v1/admin/categories/{$category->id}", ['image_media_id' => $document->id])->assertUnprocessable()->assertJsonPath('errors.0.field', 'image_media_id');
+    $response = $this->patchJson("/api/v1/admin/categories/{$category->id}", ['image_media_id' => $image->id])->assertOk();
+
+    expect($response->json('image_media_id'))->toBe($image->id)
+        ->and($response->json('image_url'))->toBe($image->url(320))
+        ->and(app(App\Domain\Catalog\Media\Services\MediaUsages::class)->for($image->id)[0]->type)->toBe('category_image');
+
+    auth()->forgetGuards();
+    $this->actingAs(User::factory()->withRole(Role::SuperAdmin)->create()->refresh(), 'web');
+    $this->deleteJson('/api/v1/admin/media/'.$image->id)->assertStatus(409);
+
+    $this->patchJson("/api/v1/admin/categories/{$category->id}", ['image_media_id' => null])->assertOk()->assertJsonPath('image_url', null);
+    $this->deleteJson('/api/v1/admin/media/'.$image->id)->assertSuccessful();
 });

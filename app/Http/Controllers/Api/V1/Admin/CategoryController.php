@@ -67,7 +67,7 @@ final class CategoryController extends ApiController
                 throw new BadRequestHttpException('Filters, sorts and cursors do not apply to ?tree=1.');
             }
 
-            $all = Category::query()->withTreeDepth()->inTreeOrder()->limit(self::MAX_TREE)->get();
+            $all = Category::query()->withTreeDepth()->inTreeOrder()->with('imageMedia')->limit(self::MAX_TREE)->get();
 
             return CategoryResource::collection($tree->nest($all, PHP_INT_MAX));
         }
@@ -75,7 +75,7 @@ final class CategoryController extends ApiController
         $sort = $request->query('sort');
         $descending = is_string($sort) && str_starts_with($sort, '-');
 
-        $categories = QueryBuilder::for(Category::query()->withTreeDepth(), $request)
+        $categories = QueryBuilder::for(Category::query()->withTreeDepth()->with('imageMedia'), $request)
             ->allowedFilters(
                 AllowedFilter::callback('search', static function (Builder $query, mixed $value): void {
                     $term = is_array($value) ? implode(',', array_map(strval(...), $value)) : (string) $value;

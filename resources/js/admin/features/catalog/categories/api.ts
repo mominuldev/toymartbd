@@ -10,6 +10,9 @@ export type CategoryInput = {
     parent_id?: number | null;
     description?: string | null;
     description_bn?: string | null;
+    tagline?: string | null;
+    tagline_bn?: string | null;
+    image_media_id?: number | null;
     icon?: string | null;
     is_featured?: boolean;
     show_in_menu?: boolean;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Catalog\Models\Category;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
 /*
@@ -31,7 +32,7 @@ it('returns the menu tree in exactly the agreed shape, in tree order', function 
     $response = $this->withToken(categoryStorefrontToken())->getJson('/api/v1/storefront/categories/tree')->assertOk();
 
     expect(array_keys($response->json()))->toBe(['data'])
-        ->and(array_keys($response->json('data.0')))->toBe(['id', 'name', 'name_bn', 'slug', 'icon', 'image_url', 'children'])
+        ->and(array_keys($response->json('data.0')))->toBe(['id', 'name', 'name_bn', 'slug', 'icon', 'image_url', 'tagline', 'tagline_bn', 'children'])
         ->and($response->json('data.*.slug'))->toBe(['toys', 'books'])
         ->and($response->json('data.0.name_bn'))->toBe('খেলনা')
         ->and($response->json('data.0.icon'))->toBe('puzzle-piece')
@@ -68,7 +69,7 @@ it('shows a category page with breadcrumbs and active children', function (): vo
             ['name' => 'Puzzles', 'name_bn' => 'পাজল', 'slug' => 'puzzles'],
         ])
         ->and($response->json('children.*.slug'))->toBe(['jigsaw'])
-        ->and(array_keys($response->json('children.0')))->toBe(['id', 'name', 'name_bn', 'slug', 'icon', 'image_url', 'children']);
+        ->and(array_keys($response->json('children.0')))->toBe(['id', 'name', 'name_bn', 'slug', 'icon', 'image_url', 'tagline', 'tagline_bn', 'children']);
 });
 
 it('404s an archived or unknown category', function (): void {
@@ -84,3 +85,27 @@ it('requires a token with storefront:read', function (string $uri): void {
     $this->getJson($uri)->assertUnauthorized();
     $this->withToken(categoryStorefrontToken(['other']))->getJson($uri)->assertForbidden();
 })->with(['/api/v1/storefront/categories/tree', '/api/v1/storefront/categories/toys']);
+
+it('gives the menu tree the category image rendition, eager-loaded (no query per category)', function (): void {
+    $token = categoryStorefrontToken();
+    $count = function () use ($token): array {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $response = $this->withToken($token)->getJson('/api/v1/storefront/categories/tree')->assertOk();
+        DB::disableQueryLog();
+
+        return [$response, count(DB::getQueryLog())];
+    };
+    $image = fn () => App\Domain\Catalog\Media\Models\Media::factory()->create();
+
+    Category::factory()->count(2)->sequence(fn () => ['image_media_id' => $image()->id])->create(['show_in_menu' => true]);
+    $count(); // warm the token lookup
+    [, $few] = $count();
+    Category::factory()->count(4)->sequence(fn () => ['image_media_id' => $image()->id])->create(['show_in_menu' => true]);
+    [$response, $many] = $count();
+
+    $first = Category::query()->inTreeOrder()->with('imageMedia')->first();
+    expect($response->json('data'))->toHaveCount(6)
+        ->and($response->json('data.0.image_url'))->toBe($first?->imageMedia?->url(320))
+        ->and($many)->toBe($few);
+});

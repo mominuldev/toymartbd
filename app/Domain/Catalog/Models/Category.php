@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Models;
 
 use App\Domain\Catalog\Enums\CategoryStatus;
+use App\Domain\Catalog\Media\Models\Media;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Kalnoy\Nestedset\NodeTrait;
@@ -36,7 +38,11 @@ use Kalnoy\Nestedset\QueryBuilder;
  * @property string $slug
  * @property string|null $description
  * @property string|null $description_bn
+ * @property string|null $tagline
+ * @property string|null $tagline_bn
  * @property string|null $image_path
+ * @property int|null $image_media_id
+ * @property-read Media|null $imageMedia
  * @property string|null $icon
  * @property string|null $banner_path
  * @property int $position
@@ -68,7 +74,7 @@ final class Category extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'name', 'name_bn', 'slug', 'description', 'description_bn', 'image_path', 'icon', 'banner_path',
+        'name', 'name_bn', 'slug', 'description', 'description_bn', 'tagline', 'tagline_bn', 'image_path', 'image_media_id', 'icon', 'banner_path',
         'position', 'is_featured', 'show_in_menu', 'status',
     ];
 
@@ -86,9 +92,16 @@ final class Category extends Model
         return [
             'status' => CategoryStatus::class,
             'position' => 'integer',
+            'image_media_id' => 'integer',
             'is_featured' => 'boolean',
             'show_in_menu' => 'boolean',
         ];
+    }
+
+    /** @return BelongsTo<Media, $this> */
+    public function imageMedia(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'image_media_id');
     }
 
     public function isActive(): bool

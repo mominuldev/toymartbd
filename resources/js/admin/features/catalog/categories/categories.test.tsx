@@ -23,8 +23,11 @@ const node = (id: number, name: string, extra: Partial<Category> = {}): Category
     slug: name.toLowerCase().replace(/\s+/g, '-'),
     description: null,
     description_bn: null,
+    tagline: null,
+    tagline_bn: null,
     icon: null,
     image_url: null,
+    image_media_id: null,
     is_featured: false,
     show_in_menu: true,
     is_active: true,
@@ -161,12 +164,38 @@ describe('categories', () => {
             parent_id: 2,
             description: null,
             description_bn: null,
+            tagline: null,
+            tagline_bn: null,
+            image_media_id: null,
             icon: null,
             is_featured: false,
             show_in_menu: false,
             is_active: true,
         });
         expect(screen.getByText('Category created.')).toBeTruthy();
+    });
+
+    it('shows the category image from the media library and clears it on save', async () => {
+        let patched: Record<string, unknown> | null = null;
+        const pictured = { ...books, image_media_id: 77, image_url: 'https://cdn.test/books-320.webp' };
+        mockApi((url, init) => {
+            if (url.endsWith('/auth/me')) return { status: 200, body: editor };
+            if (url.endsWith('/categories/3') && init?.method === 'PATCH') {
+                patched = JSON.parse(String(init.body)) as Record<string, unknown>;
+                return { status: 200, body: { ...books, image_media_id: null, image_url: null } };
+            }
+            if (url.endsWith('/categories/3')) return { status: 200, body: pictured };
+            if (url.includes('/categories?tree=1')) return { status: 200, body: { data: tree } };
+            return { status: 404 };
+        });
+        renderApp('/products/categories/3');
+
+        const thumb = (await screen.findByText('Image')).closest('div')!.querySelector('img');
+        expect(thumb?.getAttribute('src')).toBe('https://cdn.test/books-320.webp');
+        fireEvent.click(screen.getByRole('button', { name: 'Remove image' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+        await waitFor(() => expect(patched).not.toBeNull());
+        expect(patched!.image_media_id).toBeNull();
     });
 
     it('never offers a category or its descendants as its own parent', async () => {
