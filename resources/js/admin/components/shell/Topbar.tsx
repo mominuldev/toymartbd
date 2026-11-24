@@ -48,7 +48,7 @@ function useDhakaTime(locale: string): string {
 }
 
 /** Storefront address from `<meta name="tm-storefront-url">` (config services.storefront.url). */
-function readStorefrontUrl(): string | null {
+export function readStorefrontUrl(): string | null {
     const raw = document.querySelector<HTMLMetaElement>('meta[name="tm-storefront-url"]')?.content?.trim();
     if (!raw) return null;
     try {

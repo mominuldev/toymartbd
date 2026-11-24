@@ -1,27 +1,31 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { ExportIcon, ImageIcon, PlusIcon, PrinterIcon } from '@phosphor-icons/react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { ArchiveIcon, ArrowSquareOutIcon, CopyIcon, ExportIcon, ImageIcon, PencilSimpleIcon, PlusIcon, PrinterIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
+import { ActionMenu, type ActionMenuItem } from '@/components/ui/ActionMenu';
 import { Button, buttonClass } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ContentHeader } from '@/components/shell/ContentHeader';
+import { readStorefrontUrl } from '@/components/shell/Topbar';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
 import { SearchField } from '@/components/ui/SearchField';
 import { Select } from '@/components/ui/Select';
 import { TabButton } from '@/components/ui/Tabs';
+import { useToast } from '@/components/ui/Toast';
+import { ApiError } from '@/lib/api';
 import { formatDhakaDate } from '@/lib/format';
 import { flatten, useCategoryTree } from '../categories/api';
-import { productSorts, productTypes, useBrandOptions, useProducts, useProductsById, type ProductFilters, type ProductListItem, type ProductSort, type ProductStatus, type ProductType } from './api';
+import { productSorts, productTypes, useArchiveProduct, useBrandOptions, useDuplicateProduct, useProducts, type ProductFilters, type ProductListItem, type ProductSort, type ProductStatus, type ProductType } from './api';
 import { formatMoney } from './document';
 import { ProductStatusChip, Taka } from './parts';
 import { ImportExportDialog } from './importExport/ImportExportDialog';
-import { PrintLabelsDialog } from './PrintLabelsDialog';
+import { MAX_LABEL_PRODUCTS } from './ProductLabelsPage';
 
-/** Products per label run from the list: each needs its full document (variants) fetched first. */
-const MAX_LABEL_PRODUCTS = 50;
+const storefrontUrl = typeof document === 'undefined' ? null : readStorefrontUrl();
 
 const statusTabs: { value: ProductStatus | ''; label: MessageKey }[] = [
     { value: '', label: 'common.all' },
@@ -127,10 +131,9 @@ export function ProductsPage() {
 
     // Bulk "Print labels": the selected products' variants, from their full documents.
     const [selected, setSelected] = useState<Set<number>>(new Set());
-    const [labelsOpen, setLabelsOpen] = useState(false);
-    const selectedIds = useMemo(() => [...selected], [selected]);
-    const details = useProductsById(selectedIds, labelsOpen);
-    const labelProducts = details.flatMap((q) => (q.data ? [q.data] : []));
+    const navigate = useNavigate();
+    // Print labels is its own page: the selection (or one row) goes there as `?ids=`.
+    const printLabels = (ids: number[]) => navigate(`/products/labels?ids=${ids.join(',')}`);
     const allOnPage = products.length > 0 && products.every((item) => selected.has(item.id));
     const tooManyForLabels = selected.size > MAX_LABEL_PRODUCTS;
     const toggle = (productId: number) =>
@@ -140,6 +143,45 @@ export function ProductsPage() {
             else next.add(productId);
             return next;
         });
+    const { notify } = useToast();
+    const duplicate = useDuplicateProduct();
+    const archive = useArchiveProduct();
+    const [archiving, setArchiving] = useState<ProductListItem | null>(null);
+    const failed = (error: unknown) => notify(error instanceof ApiError ? error.problem.title : t('error.title'), 'danger');
+
+    /** The ⋯ row menu (ActionMenu, as on Orders): the product page's own actions, each behind its permission. */
+    const rowMenu = (item: ProductListItem): ActionMenuItem[] => [
+        { key: 'edit', label: t('products.row.edit'), icon: <PencilSimpleIcon size={16} aria-hidden />, to: `/products/${item.id}` },
+        ...(storefrontUrl && item.status === 'active'
+            ? [{ key: 'store', label: t('products.row.viewStore'), icon: <ArrowSquareOutIcon size={16} aria-hidden />, onSelect: () => window.open(new URL(`${bn ? 'bn/' : ''}products/${item.slug}`, storefrontUrl).href, '_blank', 'noopener') }]
+            : []),
+        ...(can(me, 'catalog.create')
+            ? [
+                  {
+                      key: 'duplicate',
+                      label: t('products.duplicate'),
+                      icon: <CopyIcon size={16} aria-hidden />,
+                      onSelect: () =>
+                          duplicate.mutate(item.id, {
+                              onSuccess: (copy) => {
+                                  notify(t('products.duplicated'));
+                                  navigate(`/products/${copy.id}`);
+                              },
+                              onError: failed,
+                          }),
+                  },
+              ]
+            : []),
+        {
+            key: 'labels',
+            label: t('products.row.printLabels'),
+            icon: <PrinterIcon size={16} aria-hidden />,
+            onSelect: () => printLabels([item.id]),
+        },
+        ...(can(me, 'catalog.archive') && item.status !== 'archived'
+            ? [{ key: 'archive', label: t('products.archive'), icon: <ArchiveIcon size={16} aria-hidden />, onSelect: () => setArchiving(item) }]
+            : []),
+    ];
     const toggleAll = () => setSelected(allOnPage ? new Set() : new Set(products.map((item) => item.id)));
     // Figma 241:37251: the outline "Import / export" AdminButton sits before "Add product".
     const headerActions = (
@@ -161,13 +203,28 @@ export function ProductsPage() {
                 actions={headerActions}
             />
             <ImportExportDialog open={ioOpen} onClose={() => setIoOpen(false)} filters={{ ...filters, search: debounced }} canImport={can(me, 'catalog.import')} />
-            <PrintLabelsDialog
-                open={labelsOpen}
-                onClose={() => setLabelsOpen(false)}
-                products={labelProducts}
-                loading={details.some((q) => q.isPending)}
-                canGenerate={can(me, 'catalog.update')}
-            />
+
+            {archiving && (
+                <ConfirmDialog
+                    open
+                    title={t('products.archiveTitle', { name: archiving.name })}
+                    body={t('products.archiveBody')}
+                    confirmLabel={t('products.archive')}
+                    confirmText={archiving.name}
+                    typePrompt={t('products.archivePrompt', { name: archiving.name })}
+                    pending={archive.isPending}
+                    onClose={() => setArchiving(null)}
+                    onConfirm={() =>
+                        archive.mutate(archiving.id, {
+                            onSuccess: () => {
+                                setArchiving(null);
+                                notify(t('products.archived'));
+                            },
+                            onError: failed,
+                        })
+                    }
+                />
+            )}
 
             <div role="group" aria-label={t('products.statusFilter')} className="scrollbar-none flex overflow-x-auto border-b border-line-default">
                 {statusTabs.map((tab) => (
@@ -239,7 +296,7 @@ export function ProductsPage() {
                             <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
                                 {t('products.bulk.clear')}
                             </Button>
-                            <Button size="sm" onClick={() => setLabelsOpen(true)} disabled={tooManyForLabels}>
+                            <Button size="sm" onClick={() => printLabels([...selected])} disabled={tooManyForLabels}>
                                 <PrinterIcon size={16} aria-hidden />
                                 {t('products.labels.open')}
                             </Button>
@@ -259,6 +316,9 @@ export function ProductsPage() {
                                 <Th end>{t('products.col.price')}</Th>
                                 <Th>{t('products.col.status')}</Th>
                                 <Th>{t('products.col.updated')}</Th>
+                                <th scope="col" className={`w-12 ${dataTable.th}`}>
+                                    <span className="sr-only">{t('common.actions')}</span>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -279,7 +339,7 @@ export function ProductsPage() {
                                                     </span>
                                                 )}
                                                 <div className="flex min-w-0 flex-col gap-0.5">
-                                                    <Link to={`/products/${item.id}`} className="t-admin-body-strong text-fg-primary hover:underline">
+                                                    <Link to={`/products/${item.id}`} className="t-admin-body-strong text-fg-primary hover:text-fg-brand">
                                                         {item.name}
                                                     </Link>
                                                     {item.name_bn && (
@@ -300,6 +360,9 @@ export function ProductsPage() {
                                             <ProductStatusChip status={item.status} />
                                         </td>
                                         <td className={`${cell} t-admin-caption tabular whitespace-nowrap text-fg-secondary`}>{formatDhakaDate(item.updated_at, locale)}</td>
+                                        <td className={`${cell} w-12 lg:px-0 lg:text-center`}>
+                                            <ActionMenu label={t('products.row.menu', { name: item.name })} items={rowMenu(item)} />
+                                        </td>
                                     </tr>
                                 );
                             })}

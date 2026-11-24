@@ -18,6 +18,7 @@ import { AttributesPage } from '@/features/catalog/attributes/AttributesPage';
 import { AttributeFormPage } from '@/features/catalog/attributes/AttributeFormPage';
 import { ProductsPage } from '@/features/catalog/products/ProductsPage';
 import { ProductFormPage } from '@/features/catalog/products/ProductFormPage';
+import { ProductLabelsPage } from '@/features/catalog/products/ProductLabelsPage';
 import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { MovementsPage } from '@/features/inventory/MovementsPage';
 import { AdjustmentsPage } from '@/features/inventory/AdjustmentsPage';
@@ -150,6 +151,8 @@ export const routes: RouteObject[] = [
                     // The product form has its own header and tabs (Figma 241:37883), so it sits
                     // outside the catalog tab strip. Static siblings (categories, brands …) still win.
                     { path: 'products/new', element: <ProductFormPage /> },
+                    // Print labels (owner request 2026-11-24): its own page, `?ids=` from the list.
+                    { path: 'products/labels', element: <ProductLabelsPage /> },
                     { path: 'products/:productId', element: <ProductFormPage /> },
                     // Inventory overview (Figma 213:6955) and the movement ledger (213:7516).
                     { path: 'inventory', element: <InventoryPage /> },

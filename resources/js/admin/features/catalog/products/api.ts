@@ -101,12 +101,12 @@ export function useSaveProduct(id: number | null) {
     });
 }
 
-/** A draft copy with a new slug and new SKUs, made by the server. */
-export function useDuplicateProduct(id: number) {
+/** A draft copy with a new slug and new SKUs, made by the server. `mutate(otherId)` targets another product (the list's row menu). */
+export function useDuplicateProduct(id?: number) {
     const client = useQueryClient();
 
     return useMutation({
-        mutationFn: () => api<Product>(`/products/${id}/duplicate`, { method: 'POST' }),
+        mutationFn: (target?: number) => api<Product>(`/products/${target ?? id}/duplicate`, { method: 'POST' }),
         onSuccess: (copy) => {
             client.setQueryData(keys.one(copy.id), copy);
             void client.invalidateQueries({ queryKey: [...keys.all, 'list'] });
@@ -114,11 +114,12 @@ export function useDuplicateProduct(id: number) {
     });
 }
 
-export function useArchiveProduct(id: number) {
+/** `mutate(otherId)` targets another product (the list's row menu). */
+export function useArchiveProduct(id?: number) {
     const client = useQueryClient();
 
     return useMutation({
-        mutationFn: () => api<void>(`/products/${id}`, { method: 'DELETE' }),
+        mutationFn: (target?: number) => api<void>(`/products/${target ?? id}`, { method: 'DELETE' }),
         onSuccess: () => void client.invalidateQueries({ queryKey: keys.all }),
     });
 }

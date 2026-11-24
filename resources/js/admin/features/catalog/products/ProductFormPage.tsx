@@ -7,7 +7,7 @@ import { ApiError } from '@/lib/api';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { can, useMe } from '@/features/auth/api';
-import { Button } from '@/components/ui/Button';
+import { Button, buttonClass } from '@/components/ui/Button';
 import { Field, controlHeight, inputClass, monoInputClass } from '@/components/ui/Field';
 import { FormActions } from '@/components/ui/FormActions';
 import { Input } from '@/components/ui/Input';
@@ -41,7 +41,6 @@ import { ProductStatusChip, TAKA, Toggle } from './parts';
 import { OPEN_SECTION_EVENT, ProductSection } from './ProductSection';
 import { VariantMatrixEditor, type StockMode } from './VariantMatrixEditor';
 import { GenerateBarcodesButton } from './GenerateBarcodesButton';
-import { PrintLabelsDialog } from './PrintLabelsDialog';
 import { RelationsEditor } from './RelationsEditor';
 import { ImagesPanel, attachPendingImages } from './ImagesPanel';
 import type { Media } from '@/features/media';
@@ -397,7 +396,6 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
     // In-store barcodes (owner request 2026-11-16) for saved variants whose barcode is empty on
     // screen. The codes land in the form as saved values, so other unsaved edits stay as they are.
     const generateBarcodes = useGenerateBarcodes(id ?? 0);
-    const [labelsOpen, setLabelsOpen] = useState(false);
     const canGenerateBarcodes = id !== null && can(me, 'catalog.update');
     const simpleVariantId = product?.type === 'simple' ? (product.variants.find((v) => v.is_default) ?? product.variants[0])?.id : undefined;
     const matrixRows = combos.map((combo) => matrix.rows[combo.key] ?? emptyRow(combo.valueIds));
@@ -597,19 +595,16 @@ function ProductForm({ id, product }: { id: number | null; product?: Product }) 
                     )}
                 </div>
                 {product && (
-                    <Button variant="outline" onClick={() => setLabelsOpen(true)}>
+                    // Print labels is its own page with this product chosen. With unsaved edits it
+                    // opens in a new tab, so leaving never throws the edits away; it prints saved data.
+                    <Link
+                        to={`/products/labels?ids=${product.id}`}
+                        className={buttonClass('outline')}
+                        {...(dirtyCount > 0 ? { target: '_blank', rel: 'noopener', title: t('labelsPage.newTab') } : {})}
+                    >
                         <PrinterIcon size={16} aria-hidden />
                         {t('products.labels.open')}
-                    </Button>
-                )}
-                {product && (
-                    <PrintLabelsDialog
-                        open={labelsOpen}
-                        onClose={() => setLabelsOpen(false)}
-                        products={[product]}
-                        canGenerate={can(me, 'catalog.update')}
-                        onGenerateMissing={generateMissing}
-                    />
+                    </Link>
                 )}
                 {product && can(me, 'catalog.create') && (
                     <Button

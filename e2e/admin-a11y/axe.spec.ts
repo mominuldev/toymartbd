@@ -17,6 +17,7 @@ const SCREENS: Array<[string, string]> = [
     ['products', '/admin/products'],
     ['product-form', '/admin/products/1'],
     ['product-new', '/admin/products/new'],
+    ['product-labels', '/admin/products/labels?ids=1'],
     ['categories', '/admin/products/categories'],
     ['brands', '/admin/products/brands'],
     ['inventory', '/admin/inventory'],

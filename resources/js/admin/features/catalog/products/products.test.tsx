@@ -67,6 +67,43 @@ describe('products list', () => {
         expect(screen.queryByRole('link', { name: 'Add product' })).toBeNull();
     });
 
+    it('offers the row ⋯ menu and archives from it after the name is typed', async () => {
+        let deleted = false;
+        productApi(owner, (url, init) => {
+            if (url.endsWith('/products/42') && init?.method === 'DELETE') {
+                deleted = true;
+                return { status: 204 };
+            }
+            return undefined;
+        });
+        renderApp('/products');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'More actions for Brick Box 500' }));
+        const menu = await screen.findByRole('menu');
+        expect(within(menu).getByRole('menuitem', { name: 'Edit product' }).getAttribute('href')).toContain('/products/42');
+        expect(within(menu).getByRole('menuitem', { name: 'Duplicate' })).toBeTruthy();
+        expect(within(menu).getByRole('menuitem', { name: 'Print labels' })).toBeTruthy();
+        fireEvent.click(within(menu).getByRole('menuitem', { name: 'Archive product' }));
+
+        const confirm = (await screen.findAllByRole('button', { name: 'Archive product' })).at(-1)!;
+        expect(confirm.hasAttribute('disabled')).toBe(true);
+        fireEvent.change(screen.getByLabelText('Type Brick Box 500 to confirm'), { target: { value: 'Brick Box 500' } });
+        fireEvent.click(confirm);
+        await waitFor(() => expect(deleted).toBe(true));
+        expect(await screen.findByText('Product archived.')).toBeTruthy();
+    });
+
+    it('shows a read-only role only the row actions it may take', async () => {
+        productApi(viewer);
+        renderApp('/products');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'More actions for Brick Box 500' }));
+        const menu = await screen.findByRole('menu');
+        expect(within(menu).getByRole('menuitem', { name: 'Edit product' })).toBeTruthy();
+        expect(within(menu).queryByRole('menuitem', { name: 'Duplicate' })).toBeNull();
+        expect(within(menu).queryByRole('menuitem', { name: 'Archive product' })).toBeNull();
+    });
+
     it('formats money strings without turning them into numbers', () => {
         expect(formatMoney('1250.00')).toBe('1,250');
         expect(formatMoney('1234567.5')).toBe('12,34,567.50');

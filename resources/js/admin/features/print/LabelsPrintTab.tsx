@@ -145,11 +145,11 @@ function LabelsForm({ saved, editable, canPrint, canGenerate }: { saved: LabelsP
 }
 
 /** The four label stocks as radio cards (an accessible radio group, Figma Radio · on / off). */
-function PaperChoice({ value, onChange, disabled }: { value: LabelPaper; onChange: (value: LabelPaper) => void; disabled: boolean }) {
+export function PaperChoice({ value, onChange, disabled, className = 'flex flex-col gap-3' }: { value: LabelPaper; onChange: (value: LabelPaper) => void; disabled: boolean; className?: string }) {
     const { t } = useI18n();
     const name = useId();
     return (
-        <div role="radiogroup" aria-label={t('printLabels.paper.title')} className="flex flex-col gap-3">
+        <div role="radiogroup" aria-label={t('printLabels.paper.title')} className={className}>
             {LABEL_PAPERS.map((option) => {
                 const checked = value === option;
                 const size = LABEL_PAPER[option];

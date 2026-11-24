@@ -39,11 +39,16 @@ const SAMPLE_PRICE = '4,900';
 const SAMPLE_SKU = 'TRI-RED';
 const TAKA = '\u09F3';
 
-/** Preview scale: 1.5 spacing units (6 px at the default root size) per millimetre, as in Figma. */
+/** Enlarged preview: 1.5 spacing units (6 px at the default root size) per millimetre, as in Figma. */
 const SCALE = 1.5;
 const PT = 25.4 / 72;
-const mm = (value: number) => `calc(${(value * SCALE).toFixed(3)} * var(--spacing))`;
-const font = (pt: number, lineHeight = 1.15): CSSProperties => ({ fontSize: mm(pt * PT), lineHeight });
+/**
+ * `enlarged` (the default, Settings) or `actual`: CSS's absolute `mm` unit, the label's real
+ * printed size at the screen's standard 96 px per inch (a ruler held to the screen may differ
+ * with the display's own density).
+ */
+export type LabelZoom = 'enlarged' | 'actual';
+const sizer = (zoom: LabelZoom) => (value: number) => (zoom === 'actual' ? `${value.toFixed(3)}mm` : `calc(${(value * SCALE).toFixed(3)} * var(--spacing))`);
 
 /** Bar runs as [start, width] in modules, for the SVG. */
 const BARS: [number, number][] = (() => {
@@ -64,19 +69,37 @@ const GUARD_BARS = BARS.filter(([start]) => isGuard(start));
 const DATA_BARS = BARS.filter(([start]) => !isGuard(start));
 
 /**
+ * Real text for the sample (the Print labels page previews the item picked in its list): the
+ * name, options line, SKU and the server's formatted price, already in the label language.
+ * The bars and digits stay the sample's — the server encodes the real barcode in the PDF.
+ */
+export type LabelContent = { name: string; options: string | null; sku: string; price: string; lang: 'en' | 'bn' };
+
+/**
  * One sample label for the chosen stock, laid out like the PDF (resources/views/labels/
  * products.blade.php): a header with the store name in tracked capitals and the SKU, a hairline,
  * the bold name and options beside a large price, then the barcode, which takes every
  * millimetre that is left — no blank band at the bottom. Black ink only. Every toggle shows or
  * hides its line.
  */
-export function LabelPreview({ value }: { value: LabelsPrint }) {
+export function LabelPreview({
+    value,
+    content,
+    zoom = 'enlarged',
+}: {
+    value: Pick<LabelsPrint, 'template' | 'show_name' | 'show_options' | 'show_price' | 'show_store' | 'show_digits'>;
+    content?: LabelContent;
+    zoom?: LabelZoom;
+}) {
     const { t, locale } = useI18n();
+    const mm = sizer(zoom);
+    const font = (pt: number, lineHeight = 1.15): CSSProperties => ({ fontSize: mm(pt * PT), lineHeight });
     const paper = LABEL_PAPER[value.template];
     const s = STYLE[value.template];
-    const bn = locale === 'bn';
+    const bn = content ? content.lang === 'bn' : locale === 'bn';
     const store = t('printLabels.sample.store');
-    const hasMid = value.show_name || value.show_options || value.show_price;
+    const options = content ? content.options : t('printLabels.sample.options');
+    const hasMid = value.show_name || (value.show_options && options) || value.show_price;
     const digitsBand = s.digits * PT * 1.05;
 
     return (
@@ -84,6 +107,7 @@ export function LabelPreview({ value }: { value: LabelsPrint }) {
             role="img"
             aria-label={t('printLabels.preview.label')}
             data-paper={value.template}
+            data-zoom={zoom}
             className="flex shrink-0 flex-col overflow-hidden rounded-xs border border-line-default bg-surface text-fg-primary shadow-e1"
             style={{ width: mm(paper.width), height: mm(paper.height), padding: mm(s.padding), gap: mm(s.gap) }}
         >
@@ -94,7 +118,7 @@ export function LabelPreview({ value }: { value: LabelsPrint }) {
                     </span>
                 )}
                 <span className="shrink-0 font-mono tracking-wide" style={font(s.sku)}>
-                    {SAMPLE_SKU}
+                    {content?.sku ?? SAMPLE_SKU}
                 </span>
             </div>
             {value.show_store && <div aria-hidden data-part="rule" className="shrink-0 bg-current" style={{ height: mm(0.18), marginTop: mm(-s.gap * 0.4) }} />}
@@ -103,19 +127,19 @@ export function LabelPreview({ value }: { value: LabelsPrint }) {
                     <div className="flex min-w-0 flex-1 flex-col" style={{ gap: mm(0.2) }}>
                         {value.show_name && (
                             <span data-part="name" className={`font-bold ${s.twoLines ? 'line-clamp-2' : 'truncate'}`} style={font(s.name, 1.1)}>
-                                {t('printLabels.sample.name')}
+                                {content?.name ?? t('printLabels.sample.name')}
                             </span>
                         )}
-                        {value.show_options && (
+                        {value.show_options && options && (
                             <span data-part="options" className="truncate" style={font(s.options)}>
-                                {t('printLabels.sample.options')}
+                                {options}
                             </span>
                         )}
                     </div>
                     {value.show_price && (
                         <span data-part="price" className="shrink-0 font-bold whitespace-nowrap tabular" style={{ ...font(s.price, 1), letterSpacing: '-0.02em' }}>
                             <span style={{ fontSize: '0.62em' }}>{TAKA}</span>
-                            {SAMPLE_PRICE}
+                            {content?.price ?? SAMPLE_PRICE}
                         </span>
                     )}
                 </div>

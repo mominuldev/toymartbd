@@ -96,3 +96,21 @@ test('the Inventory tab brings "Stock by branch" into view below the sticky topb
         await expect(tab).toHaveAttribute('aria-current', 'location');
     }
 });
+
+test('Print labels opens as its own page from a row’s ⋯ menu', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await signIn(page);
+
+    await page.getByRole('button', { name: /^More actions for / }).first().click();
+    await page.getByRole('menuitem', { name: 'Print labels' }).click();
+    await expect(page).toHaveURL(/\/admin\/products\/labels\?ids=\d+$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Print barcode labels' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Sample label' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Print \d+ labels?$/ })).toBeEnabled();
+
+    const shots = process.env.SHOTS_DIR;
+    if (shots) await page.screenshot({ path: `${shots}/labels-1920.png`, fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    if (shots) await page.screenshot({ path: `${shots}/labels-390.png`, fullPage: true });
+});
