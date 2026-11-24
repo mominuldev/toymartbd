@@ -674,3 +674,65 @@ Remaining deviations (storefront):
   - Product names follow the page language.
 - **Bestsellers on mobile.** The header link shows the editor's `see_all_label`.
 - **Help CTA on the phone.** The buttons show the hotline number and the editor's label, not Figma's short "কল করুন" / "WhatsApp".
+
+### 16.3 Category, product, cart, checkout and order confirmed (2026-11-24)
+
+Restyled to the Vivid frames on page `34:5658` (category `34:6106` / `34:6313` / sheet `34:6359`, product `34:6394` / `34:6677`, cart `34:6773` / `34:6922`, checkout `34:7021` / `34:7187`, order confirmed `34:7265` / `34:7307`). Behaviour is unchanged: no-JS forms, idempotency, the address cascade, tracking, JSON-LD, the sticky bars.
+
+**Shared pieces.**
+- `components/layout/MobileTopBar` and the `PageShell` `mobileTopBar` slot. Below lg the top bar replaces the site header and carries the page's h1; from lg the site header is back. It is used on the cart ("Your cart (n)"; back to home), the product (product name; back to its category) and checkout (back to the cart, a trailing "Secure" lock).
+- The icon set has `lock`, which is used on the cart and checkout CTAs.
+- e2e specs find the page title with `getByRole('heading', { level: 1 })`. The DOM holds two h1s and only one is displayed at a time.
+- The ListingView restyle also applies to brand, search, all-toys and flash-sale listings.
+
+**Deviations common to all five pages.**
+- Hairlines and card borders use `line-default` #E2E8F0, because Figma's `border/subtle` #F1F5F9 has no storefront token.
+- Radius 36 (`radius/2xl`) renders as 32 (`xl-plus`).
+- Headings run one step larger than Figma: `t-h3` is 21 against 20, `t-h1` is 34 against 32/36, and `t-price-lg` is 30 against 28.
+- The butter and mint pastels use the `tile-*` 100 tints, not Figma's 50 tints.
+
+**Category.**
+- The hero lead is the category `tagline`, and the About card is built from the category `description`. Its heading is an i18n template ("Choosing {category} in Bangladesh").
+- The collage is the first three product photos and is decorative.
+- Pagination stays cursor "Show more", where Figma shows numbered pages.
+- The price filter uses the API's price bands, not a slider.
+- The sheet's Apply button says "Show results", without a count.
+- Left out, no data: the average rating and "dispatched in 24 h" facts, the Skill and Rating facets, the "on sale" and "new" availability options, the grid/list toggle and the inline promo strip.
+
+**Product.**
+- The tabs include "Age & safety". Reviews is a link beside the tablist.
+- "Buy now" has no "— pay on delivery" suffix, because online payment exists.
+- The delivery card lists the API's three zones and makes no "Free" claims.
+- The sticky bar has no stepper and no heart.
+- The free-delivery line comes from the API threshold. There is no progress bar, which would need maths in the client.
+- Left out:
+  - The bestseller badge, gift chip, sold count, video tile and share button.
+  - The skills tiles and the "What's in the box" list.
+  - **Frequently bought together**: the API sends only `related`.
+- The section eyebrow is uppercase in English (`t-overline`); Figma uses sentence case.
+
+**Cart.**
+- The coupon field is always open.
+- The free-delivery meter uses the API's `delivery.free_shipping`.
+- The phone help card is hidden while the hotline is the sample.
+- The "Delivery to" district picker is kept, although it is not in Figma.
+- The mobile top bar has no "Edit", because the cart has no edit mode. The footer and the tab bar stay on the mobile cart.
+- Left out:
+  - **The cross-sell rail `34:6914`**: there is no recommendation read API for the cart yet.
+  - Select-all and save for later, gift wrap, the line age badge, "reserved for 30 minutes" and a separate product-discount row.
+- In Bangla the payment chips read বিকাশ / নগদ / রকেট (`payment.channels`), against §7.3, which keeps brands in English.
+
+**Checkout.**
+- There is no division select (the API has none) and no Express option (one quote per address).
+- The delivery note (`customer_note`) is now on the page.
+- On mobile the summary and reassurance cards sit after the form.
+- The coupon button keeps the shared pill shape.
+- Left out: "Most popular", the gift-wrap row, "incl. VAT" and "cancel free until shipped".
+- The Figma copy about WhatsApp updates is not used. The existing call/SMS copy stays until WhatsApp order updates are live.
+
+**Order confirmed.**
+- The heading has no customer name.
+- The middle fact tile shows "Placed on {date}", because the order has no delivery estimate.
+- The account nudge drops "৳100 off your next order", an unconfirmed value.
+- The items, delivery details and help cards are kept below the confirmation card.
+- The thank-you line keeps "we will call to confirm, then SMS", for the same reason as checkout.
