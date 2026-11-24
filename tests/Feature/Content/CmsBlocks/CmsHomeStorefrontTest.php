@@ -315,40 +315,24 @@ it('seeds the default homepage once, published as version 1, without queueing a 
         ->and($hero['content']['promos'])->toBe([]);
 });
 
-it('replaces an edited homepage only when asked, as the next version, keeping the old one restorable', function (): void {
+it('replaces a homepage it did not seed once, as the next version, then never again', function (): void {
     CmsKit::block('rich_text', ['html' => '<p>Owner copy</p>']);
     cmsPublish();
+
     $this->seed(CmsHomeBlocksSeeder::class);
-    expect(CmsLayoutVersion::query()->count())->toBe(1); // never overwritten by default
-
-    putenv(CmsHomeBlocksSeeder::REPLACE_ENV.'=1');
-    try {
-        $this->seed(CmsHomeBlocksSeeder::class);
-    } finally {
-        putenv(CmsHomeBlocksSeeder::REPLACE_ENV);
-    }
-
     $latest = CmsLayoutVersion::latestFor(LayoutKey::home());
     expect($latest?->version)->toBe(2)
+        ->and($latest?->note)->toBe(CmsHomeBlocksSeeder::SEED_NOTE)
         ->and(array_column($latest?->blocks ?? [], 'type'))->not->toContain('rich_text')
         ->and(array_column($latest?->blocks ?? [], 'type'))->toContain('why_band')
-        ->and(CmsLayoutVersion::query()->where('version', 1)->value('blocks'))->not->toBeNull();
-});
+        ->and(CmsLayoutVersion::query()->where('version', 1)->value('blocks'))->not->toBeNull(); // restorable
 
-it('seeds the sample figures off a developer machine only when asked', function (): void {
-    expect(CmsHomeBlocksSeeder::sampleEnabled())->toBeFalse();
-
-    putenv(CmsHomeBlocksSeeder::SAMPLE_ENV.'=1');
-    try {
-        expect(CmsHomeBlocksSeeder::sampleEnabled())->toBeTrue();
-        $this->seed(CmsHomeBlocksSeeder::class);
-    } finally {
-        putenv(CmsHomeBlocksSeeder::SAMPLE_ENV);
-    }
-
-    $why = collect(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks)->firstWhere('type', 'why_band');
-    expect(array_column($why['content']['stats'], 'value'))->toBe(['50,000+', '4.9 / 5', '64', '1,200+'])
-        ->and($why['content']['media_id'])->toBeInt();
+    // The owner edits after it: the default seed never overwrites that.
+    CmsKit::block('rich_text', ['html' => '<p>Later edit</p>']);
+    cmsPublish();
+    $this->seed(CmsHomeBlocksSeeder::class);
+    expect(CmsLayoutVersion::latestFor(LayoutKey::home())?->version)->toBe(3)
+        ->and(array_column(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks ?? [], 'type'))->toContain('rich_text');
 });
 
 it('renders the hero promos and proof row with their images, in the locale (Smart Junior hero)', function (): void {

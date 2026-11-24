@@ -25,8 +25,12 @@ use Illuminate\Support\Facades\Event;
 /**
  * The default homepage: the Smart Junior home (docs/_design/07-smart-junior-storefront.md §3.1,
  * §16.2; Vivid frames on Figma page 34:5658), one block per section in the design's order, with
- * the design's copy in both languages. Published as version 1. Runs once: an existing draft or
- * version is never touched, so re-seeding cannot overwrite the owner's homepage.
+ * the design's copy in both languages. Runs with the default seed (`php artisan db:seed`).
+ *
+ * Applied ONCE per site: when no published version carries SEED_NOTE yet, the homepage there now
+ * (if any) is replaced and this one is published as the next version — the replaced one stays
+ * restorable in Pages › Home › Versions. Once applied, re-seeding never touches the homepage
+ * again, so the owner's later edits are safe. A new design revision bumps SEED_NOTE.
  *
  * Owner rule (§16.2): every word, link, image and figure on a section is block content. What the
  * design shows as a business fact — the parents' count and rating, the "why" figures, prices in
@@ -40,35 +44,27 @@ final class CmsHomeBlocksSeeder extends Seeder
     /** A CC0 clip from MDN, 5 seconds long; the sample reels play it. */
     public const string SAMPLE_VIDEO = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
-    /**
-     * Replace mode (`HOME_SEED_REPLACE=1`, the "replace_home" input of the CI and deploy workflow):
-     * the current draft blocks are deleted and this homepage is published as the NEXT version. Earlier
-     * versions are kept, so Pages › Home › Versions restores the replaced homepage.
-     */
-    public const string REPLACE_ENV = 'HOME_SEED_REPLACE';
-
-    /** Sample figures and photos off a developer machine too (see sampleEnabled()). */
-    public const string SAMPLE_ENV = 'HOME_SEED_SAMPLE';
+    /** The version note this seed publishes under; its presence means "already applied here". */
+    public const string SEED_NOTE = 'Smart Junior homepage (seeded)';
 
     public function run(CreateBlock $create, PublishLayout $publish, DeleteBlock $delete): void
     {
         $placement = LayoutKey::home();
-        // The process environment, not env(): the host caches its config, and env() then reads null.
-        $replace = filter_var(getenv(self::REPLACE_ENV), FILTER_VALIDATE_BOOL);
 
-        if (! $replace && (CmsBlock::query()->where('placement', $placement->value)->exists() || CmsLayoutVersion::latestFor($placement) !== null)) {
-            return;
+        if (CmsLayoutVersion::query()->where('placement', $placement->value)->where('note', self::SEED_NOTE)->exists()) {
+            return; // applied before: never overwrite what the owner has done since
         }
 
-        if ($replace) {
-            $previous = CmsLayoutVersion::latestFor($placement)?->version;
+        $previous = CmsLayoutVersion::latestFor($placement)?->version;
+        $replacing = $previous !== null || CmsBlock::query()->where('placement', $placement->value)->exists();
+        if ($replacing) {
             foreach (CmsBlock::query()->inPlacement($placement)->get() as $block) {
                 $delete->handle($block);
             }
-            $this->command?->warn('Replacing the homepage'.($previous !== null ? " (published version {$previous} stays restorable in Pages › Home › Versions)" : '').'.');
+            $this->command?->warn('Replacing the homepage with the Smart Junior home'.($previous !== null ? " (version {$previous} stays restorable in Pages › Home › Versions)" : '').'.');
         }
 
-        if ($replace && self::sampleEnabled()) {
+        if (self::sampleEnabled()) {
             CategoryDemoSeeder::dressExisting(); // the category tiles' art and short lines
         }
 
@@ -80,16 +76,16 @@ final class CmsHomeBlocksSeeder extends Seeder
             $create->handle($placement, $type, new BlockSettings(content: $schema->normalize($content), label: $label, present: ['label']), null, null);
         }
 
-        // A replacement is a real publish on a live storefront: its cached home is revalidated.
-        if ($replace) {
-            $publish->handle($placement, null, 'Smart Junior homepage (seeded)');
+        // Replacing a live homepage is a real publish: the storefront's cached home is revalidated.
+        if ($replacing) {
+            $publish->handle($placement, null, self::SEED_NOTE);
 
             return;
         }
 
         // A first seed is not an editorial publish: no storefront revalidation is queued (a fresh
         // storefront has nothing cached, and seeding must not need STOREFRONT_URL or a queue).
-        Event::fakeFor(static fn () => $publish->handle($placement, null, 'Default homepage'), [CmsLayoutPublished::class]);
+        Event::fakeFor(static fn () => $publish->handle($placement, null, self::SEED_NOTE), [CmsLayoutPublished::class]);
     }
 
     /**
@@ -289,14 +285,12 @@ final class CmsHomeBlocksSeeder extends Seeder
     }
 
     /**
-     * Sample content (the design's figures, AI placeholder photos, demo picks) on a developer
-     * machine, or on a host only when the owner asks for it (`HOME_SEED_SAMPLE=1`, the
-     * "sample_home" input of the CI and deploy workflow; owner decision 2026-11-24). The photos are
-     * not licensed photography and the figures are not the business's: the owner replaces both.
+     * Sample content (the design's figures, AI placeholder photos, demo picks) only on a developer
+     * machine: the photos are not licensed photography and the figures are not the business's.
      */
     public static function sampleEnabled(): bool
     {
-        return app()->environment('local') || filter_var(getenv(self::SAMPLE_ENV), FILTER_VALIDATE_BOOL);
+        return app()->environment('local');
     }
 
     /**
