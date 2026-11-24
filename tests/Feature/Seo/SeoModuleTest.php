@@ -77,8 +77,8 @@ it('serves a category SEO document with server defaults and both-locale SERP pre
     expect($doc['title'])->toBeNull()
         ->and($doc['path'])->toBe('/categories/building-blocks')
         ->and($doc['urls'])->toBe(['en' => 'https://toymartbd.com/categories/building-blocks', 'bn' => 'https://toymartbd.com/bn/categories/building-blocks'])
-        ->and($doc['defaults']['title'])->toBe('Building Blocks | Toy Mart BD')
-        ->and($doc['defaults']['title_bn'])->toBe('বিল্ডিং ব্লক | Toy Mart BD')
+        ->and($doc['defaults']['title'])->toBe('Building Blocks | Smart Junior')
+        ->and($doc['defaults']['title_bn'])->toBe('বিল্ডিং ব্লক | Smart Junior')
         ->and($doc['defaults']['description'])->toContain('Building Blocks')
         ->and($doc['defaults']['description_bn'])->toContain('বিল্ডিং ব্লক')
         ->and($doc['serp']['en']['title_truncated'])->toBeFalse()
@@ -96,15 +96,15 @@ it('saves a brand SEO document with separate Bangla OG and purges the page', fun
     $long = str_repeat('Wonderful wooden educational toys for kids ', 4);
     $doc = $this->putJson("/api/v1/admin/seo/meta/brand/{$brand->id}", [
         'title' => $long,
-        'title_bn' => 'লেগো খেলনা | Toy Mart BD',
+        'title_bn' => 'লেগো খেলনা | Smart Junior',
         'description' => 'Genuine LEGO sets.',
-        'og_title' => 'LEGO at Toy Mart BD',
-        'og_title_bn' => 'টয় মার্টে লেগো',
+        'og_title' => 'LEGO at Smart Junior',
+        'og_title_bn' => 'Smart Juniorে লেগো',
         'og_description_bn' => 'আসল লেগো সেট।',
         'robots' => 'noindex,follow',
     ])->assertOk()->json();
 
-    expect($doc['og_title_bn'])->toBe('টয় মার্টে লেগো')
+    expect($doc['og_title_bn'])->toBe('Smart Juniorে লেগো')
         ->and($doc['robots'])->toBe('noindex,follow')
         ->and($doc['in_sitemap'])->toBeFalse()
         ->and($doc['serp']['en']['title_truncated'])->toBeTrue()
@@ -116,8 +116,8 @@ it('saves a brand SEO document with separate Bangla OG and purges the page', fun
     // The storefront reads effective values per locale.
     $sf = seoStorefront('GET', '/api/v1/storefront/seo/brand/lego')->assertOk()->json();
     expect($sf['en']['title'])->toBe(trim($long))
-        ->and($sf['bn']['title'])->toBe('লেগো খেলনা | Toy Mart BD')
-        ->and($sf['bn']['og_title'])->toBe('টয় মার্টে লেগো')
+        ->and($sf['bn']['title'])->toBe('লেগো খেলনা | Smart Junior')
+        ->and($sf['bn']['og_title'])->toBe('Smart Juniorে লেগো')
         ->and($sf['bn']['og_description'])->toBe('আসল লেগো সেট।')
         ->and($sf['en']['og_description'])->toBe('Genuine LEGO sets.')
         ->and($sf['robots'])->toBe(['index' => false, 'follow' => true]);
@@ -471,8 +471,8 @@ it('covers CMS pages, articles and guides in the SEO document, sitemaps and conf
 
     $sf = seoStorefront('GET', '/api/v1/storefront/seo/page/returns')->assertOk()->json();
     expect($sf['path'])->toBe('/returns')
-        ->and($sf['en']['title'])->toBe('Returns | Toy Mart BD')
-        ->and($sf['bn']['title'])->toBe('রিটার্ন | Toy Mart BD')
+        ->and($sf['en']['title'])->toBe('Returns | Smart Junior')
+        ->and($sf['bn']['title'])->toBe('রিটার্ন | Smart Junior')
         ->and($sf['en']['description'])->toBe('Return any toy within 7 days.');
     expect(seoStorefront('GET', '/api/v1/storefront/seo/blog_post/best-toys-for-3')->assertOk()->json('path'))->toBe('/guides/best-toys-for-3');
     seoStorefront('GET', '/api/v1/storefront/seo/page/draft-page')->assertNotFound();

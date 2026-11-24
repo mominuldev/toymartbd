@@ -298,7 +298,7 @@ it('sends one test SMS through the saved provider and reports the result', funct
             'error' => null,
         ]);
     Http::assertSent(fn (Request $r): bool => $r['toUser'] === '8801812345678'
-        && $r['messageContent'] === 'টয় মার্ট বিডি: এটি একটি পরীক্ষামূলক এসএমএস।'
+        && $r['messageContent'] === 'Smart Junior: এটি একটি পরীক্ষামূলক এসএমএস।'
         && $r['apikey'] === DB_KEY);
     expect(NotificationLog::query()->latest('id')->first()?->provider_message_id)->toBe('4242');
 });

@@ -23,7 +23,7 @@ const icon = { id: 8, filename: 'toymart-icon.png', width: 1024, height: 1024, u
 /** Mirrors the StoreBranding contract (brief-p10-branding.md), Bangla and English values. */
 const branding: StoreBranding = {
     values: {
-        site_name_en: 'Toy Mart BD',
+        site_name_en: 'Smart Junior',
         site_name_bn: null,
         tagline_en: 'Toys & learning for every age',
         tagline_bn: 'সব বয়সের খেলনা ও শেখা',
@@ -35,7 +35,7 @@ const branding: StoreBranding = {
         share_image_media_id: null,
     },
     media: { logo, logo_dark: null, icon, share_image: null },
-    fallbacks: { site_name_en: 'Toy Mart BD', site_name_bn: 'টয় মার্ট বিডি' },
+    fallbacks: { site_name_en: 'Smart Junior', site_name_bn: 'Smart Junior' },
     storefront_host: 'toymartbd.com',
     limits: { site_name: 60, tagline: 80, description: 160 },
 };
@@ -52,7 +52,7 @@ function brandingApi(me: Me, put?: (body: Record<string, unknown>) => Reply) {
             return { status: 200, body: { ...branding, values, media: { ...branding.media, logo: values.logo_media_id === null ? null : branding.media.logo, logo_dark: values.logo_dark_media_id === 42 ? { id: 42, filename: brickBox.filename, width: 1600, height: 1600, url: brickBox.urls.medium } : null } } };
         }
         if (path === '/settings/branding') return { status: 200, body: branding };
-        if (path === '/settings/business') return { status: 200, body: { name_en: 'Toy Mart BD', name_bn: null, trade_licence: null, bin: null, hotline: null, whatsapp: null, messenger: null, default_names: { name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি' }, hotline_default: null, placeholders: [] } };
+        if (path === '/settings/business') return { status: 200, body: { name_en: 'Smart Junior', name_bn: null, trade_licence: null, bin: null, hotline: null, whatsapp: null, messenger: null, default_names: { name_en: 'Smart Junior', name_bn: 'Smart Junior' }, hotline_default: null, placeholders: [] } };
         return undefined;
     });
 }
@@ -78,11 +78,11 @@ describe('site & branding', () => {
         expect(await screen.findByRole('heading', { level: 2, name: 'Site & branding' })).toBeTruthy();
         expect(screen.getByText('Live on the storefront')).toBeTruthy();
         const name = screen.getByLabelText('Store name') as HTMLInputElement;
-        expect(name.value).toBe('Toy Mart BD');
+        expect(name.value).toBe('Smart Junior');
         expect(name.maxLength).toBe(60);
-        expect(screen.getByText('11 / 60')).toBeTruthy();
+        expect(screen.getByText('12 / 60')).toBeTruthy();
         // A blank Bangla name shows the business name the storefront falls back to.
-        expect((screen.getByLabelText('Store name · বাংলা') as HTMLInputElement).placeholder).toBe('টয় মার্ট বিডি');
+        expect((screen.getByLabelText('Store name · বাংলা') as HTMLInputElement).placeholder).toBe('Smart Junior');
         expect(screen.getByText('22 / 80')).toBeTruthy();
         // Saved images: file name and size, Replace and Library; Remove is named.
         const logoTile = screen.getByRole('group', { name: 'Logo' });
@@ -105,14 +105,14 @@ describe('site & branding', () => {
         renderApp('/settings/branding');
 
         const title = await screen.findByTestId('preview-tab-title');
-        expect(title.textContent).toBe('Toy Mart BD — Toys & learning for every age');
+        expect(title.textContent).toBe('Smart Junior — Toys & learning for every age');
         expect(screen.getAllByText('toymartbd.com').length).toBeGreaterThan(0);
 
         fireEvent.change(screen.getByLabelText('Tagline'), { target: { value: 'STEM toys' } });
-        expect(title.textContent).toBe('Toy Mart BD — STEM toys');
+        expect(title.textContent).toBe('Smart Junior — STEM toys');
 
         fireEvent.click(screen.getByRole('button', { name: 'বাংলা' }));
-        expect(screen.getByTestId('preview-tab-title').textContent).toBe('টয় মার্ট বিডি — সব বয়সের খেলনা ও শেখা');
+        expect(screen.getByTestId('preview-tab-title').textContent).toBe('Smart Junior — সব বয়সের খেলনা ও শেখা');
         expect(screen.getByTestId('preview-tab-title').getAttribute('lang')).toBe('bn');
     });
 
@@ -226,12 +226,12 @@ describe('site & branding', () => {
 
 describe('branding helpers', () => {
     it('counts code points, as the server does', () => {
-        expect(charCount('টয় মার্ট বিডি')).toBe([...'টয় মার্ট বিডি'].length);
-        expect(charCount('Toy Mart BD')).toBe(11);
+        expect(charCount('Smart Junior')).toBe([...'Smart Junior'].length);
+        expect(charCount('Smart Junior')).toBe(12);
     });
 
     it('builds the tab title with or without a tagline', () => {
-        expect(tabTitle('Toy Mart BD', 'Toys')).toBe('Toy Mart BD — Toys');
-        expect(tabTitle('Toy Mart BD', '')).toBe('Toy Mart BD');
+        expect(tabTitle('Smart Junior', 'Toys')).toBe('Smart Junior — Toys');
+        expect(tabTitle('Smart Junior', '')).toBe('Smart Junior');
     });
 });

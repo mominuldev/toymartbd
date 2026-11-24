@@ -24,7 +24,7 @@ beforeEach(function (): void {
 
 it('seeds everything with the typed password and keeps the live settings', function (): void {
     $this->seed(Database\Seeders\RolesAndPermissionsSeeder::class);
-    Setting::put('store.name', 'Toy Mart Live', SettingGroup::Store);
+    Setting::put('store.name', 'Smart Junior Live', SettingGroup::Store);
     Setting::put('payments.secret', 'k-123', SettingGroup::Payment, encrypted: true);
 
     $this->artisan('toymart:demo:seed', ['--no-images' => true])
@@ -44,7 +44,7 @@ it('seeds everything with the typed password and keeps the live settings', funct
     expect(Hash::check('a-long-live-pass', $owner->password))->toBeTrue()
         ->and(Hash::check('password', $owner->password))->toBeFalse()
         ->and(Hash::check('a-long-live-pass', $staff->password))->toBeTrue()
-        ->and(Setting::get('store.name'))->toBe('Toy Mart Live')
+        ->and(Setting::get('store.name'))->toBe('Smart Junior Live')
         ->and(Setting::get('payments.secret'))->toBe('k-123')
         ->and(Storage::disk('backups')->files())->toHaveCount(1);
 })->group('slow');

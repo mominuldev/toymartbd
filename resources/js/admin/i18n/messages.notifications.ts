@@ -81,7 +81,7 @@ export const notificationsEn = {
 
     'notif.preview.title': 'Template preview · {channel}',
     'notif.preview.subtitle': 'Rendered with sample values',
-    'notif.preview.from': 'Toy Mart BD',
+    'notif.preview.from': 'Smart Junior',
 
     'notif.runs.title': 'Recent runs',
     'notif.runs.empty': 'Nothing sent with this template yet.',
@@ -321,7 +321,7 @@ export const notificationsBn: Record<keyof typeof notificationsEn, string> = {
 
     'notif.preview.title': 'টেমপ্লেট প্রিভিউ · {channel}',
     'notif.preview.subtitle': 'নমুনা মান দিয়ে দেখানো',
-    'notif.preview.from': 'টয় মার্ট বিডি',
+    'notif.preview.from': 'Smart Junior',
 
     'notif.runs.title': 'সাম্প্রতিক রান',
     'notif.runs.empty': 'এই টেমপ্লেটে এখনো কিছু পাঠানো হয়নি।',

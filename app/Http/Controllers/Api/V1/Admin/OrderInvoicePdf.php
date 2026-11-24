@@ -103,7 +103,7 @@ final class OrderInvoicePdf
     {
         $store = config('notifications.store_url');
 
-        return 'https://'.(is_string($store) ? $store : 'toymartbd.com').($bn ? '/bn' : '').'/track?order='.rawurlencode($orderNumber);
+        return 'https://'.(is_string($store) ? $store : 'smartjunior.com.bd').($bn ? '/bn' : '').'/track?order='.rawurlencode($orderNumber);
     }
 
     /**
@@ -125,7 +125,7 @@ final class OrderInvoicePdf
     private function renderLocked(array $invoices, array $print, bool $sample): string
     {
         $mpdf = $this->mpdf(self::format($invoices, $print));
-        $mpdf->SetTitle(count($invoices) === 1 ? $invoices[0]['invoice']->number : 'Toy Mart BD — invoices');
+        $mpdf->SetTitle(count($invoices) === 1 ? $invoices[0]['invoice']->number : 'Smart Junior — invoices');
         $mpdf->WriteHTML($this->html($invoices, $print, $sample));
 
         return $mpdf->Output('', 'S');
@@ -146,7 +146,7 @@ final class OrderInvoicePdf
     private function renderCreditNotesLocked(array $notes): string
     {
         $mpdf = $this->mpdf();
-        $mpdf->SetTitle(count($notes) === 1 ? $notes[0]['credit_note']->number : 'Toy Mart BD — credit notes');
+        $mpdf->SetTitle(count($notes) === 1 ? $notes[0]['credit_note']->number : 'Smart Junior — credit notes');
         $mpdf->WriteHTML(view('invoices.credit-note', ['notes' => $notes])->render());
 
         return $mpdf->Output('', 'S');

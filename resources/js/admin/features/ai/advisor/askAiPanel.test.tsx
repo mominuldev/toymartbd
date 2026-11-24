@@ -43,7 +43,7 @@ function api({ me = manager, ai = overview.ai, ask }: { me?: Me; ai?: GrowthAdvi
 
 async function openPanel() {
     fireEvent.click(await screen.findByRole('button', { name: 'Ask' }));
-    return screen.findByRole('region', { name: 'Ask Toy Mart AI' });
+    return screen.findByRole('region', { name: 'Ask Smart Junior AI' });
 }
 
 describe('Ask AI panel', () => {

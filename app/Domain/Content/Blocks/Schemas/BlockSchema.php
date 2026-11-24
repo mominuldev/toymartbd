@@ -110,6 +110,53 @@ abstract class BlockSchema
         self::copyText($content, $out, 'title', 'sub');
     }
 
+    /** Slide transition lengths, ms, and autoplay delays, seconds — fixed choices, so no editor can set an unusable value. */
+    public const array SLIDER_SPEEDS = [300, 500, 800, 1200];
+
+    public const array SLIDER_DELAYS = [3, 4, 5, 6, 8, 10];
+
+    /**
+     * Carousel behaviour for a block the storefront shows as a slider (hero, product rail in
+     * `slider` layout, flash sale, video reel): `slider.loop`, `slider.autoplay`, `slider.delay`
+     * (seconds between slides while autoplaying) and `slider.speed` (transition, ms). Autoplay
+     * is off by default; the storefront pauses it on hover/focus, gives a pause control and never
+     * autoplays under prefers-reduced-motion (WCAG 2.2.2).
+     *
+     * @return array<string, mixed>
+     */
+    protected static function sliderRules(): array
+    {
+        return [
+            'slider' => ['sometimes', 'nullable', 'array'],
+            'slider.loop' => ['sometimes', 'boolean'],
+            'slider.autoplay' => ['sometimes', 'boolean'],
+            'slider.delay' => ['sometimes', 'integer', 'in:'.implode(',', self::SLIDER_DELAYS)],
+            'slider.speed' => ['sometimes', 'integer', 'in:'.implode(',', self::SLIDER_SPEEDS)],
+        ];
+    }
+
+    /** @return array{loop: bool, autoplay: bool, delay: int, speed: int} */
+    public static function sliderDefaults(): array
+    {
+        return ['loop' => false, 'autoplay' => false, 'delay' => 5, 'speed' => 500];
+    }
+
+    /** @return array{loop: bool, autoplay: bool, delay: int, speed: int} */
+    protected static function slider(mixed $value): array
+    {
+        $in = is_array($value) ? $value : [];
+        $d = self::sliderDefaults();
+        $delay = self::int($in['delay'] ?? null, $d['delay']);
+        $speed = self::int($in['speed'] ?? null, $d['speed']);
+
+        return [
+            'loop' => self::bool($in['loop'] ?? null, $d['loop']),
+            'autoplay' => self::bool($in['autoplay'] ?? null, $d['autoplay']),
+            'delay' => in_array($delay, self::SLIDER_DELAYS, true) ? $delay : $d['delay'],
+            'speed' => in_array($speed, self::SLIDER_SPEEDS, true) ? $speed : $d['speed'],
+        ];
+    }
+
     /**
      * Prefix every key of a rule set (`items.*.` for a list item's fields).
      *

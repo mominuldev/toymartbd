@@ -15,7 +15,7 @@ declare(strict_types=1);
 */
 
 return [
-    'site_name' => 'Toy Mart BD',
+    'site_name' => 'Smart Junior',
 
     'title_separator' => ' | ',
 ];

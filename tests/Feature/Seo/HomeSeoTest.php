@@ -36,8 +36,8 @@ function homeBrand(string $field, string $value): void
 
 it('defaults the home title and description to Site & branding, with the catalog copy as fallback', function (): void {
     $this->getJson('/api/v1/admin/seo/meta/home/1')->assertOk()
-        ->assertJsonPath('defaults.title', 'Toy Mart BD | Toys for every age, delivered across Bangladesh.')
-        ->assertJsonPath('defaults.title_bn', 'টয় মার্ট বিডি | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।')
+        ->assertJsonPath('defaults.title', 'Smart Junior | Toys for every age, delivered across Bangladesh.')
+        ->assertJsonPath('defaults.title_bn', 'Smart Junior | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।')
         ->assertJsonPath('defaults.description', 'Toys for 0–12 years with the age, price and stock stated on every one. Cash on delivery across Bangladesh.');
 
     homeBrand('site_name_en', 'ToyMart');
@@ -53,8 +53,8 @@ it('saves the home SEO document and purges the homepage head', function (): void
     $doc = $this->getJson('/api/v1/admin/seo/meta/home/1')->assertOk()->json();
 
     $this->putJson('/api/v1/admin/seo/meta/home/1', [
-        'title' => 'Toy Mart BD — toys in Dhaka',
-        'title_bn' => 'টয় মার্ট বিডি — ঢাকায় খেলনা',
+        'title' => 'Smart Junior — toys in Dhaka',
+        'title_bn' => 'Smart Junior — ঢাকায় খেলনা',
         'description' => 'Buy toys online.',
         'description_bn' => null,
         'canonical_url' => null,
@@ -67,11 +67,11 @@ it('saves the home SEO document and purges the homepage head', function (): void
         'og_image' => null,
         'twitter_card' => 'summary_large_image',
         'focus_keyword' => 'toys',
-    ])->assertOk()->assertJsonPath('title', 'Toy Mart BD — toys in Dhaka');
+    ])->assertOk()->assertJsonPath('title', 'Smart Junior — toys in Dhaka');
 
     expect(SeoMeta::for('home', 1)->first()?->description)->toBe('Buy toys online.');
     Event::assertDispatched(SeoPagesStale::class, fn (SeoPagesStale $e): bool => in_array('home:home', $e->tags, true));
-    expect($doc['defaults']['title'])->toContain('Toy Mart BD');
+    expect($doc['defaults']['title'])->toContain('Smart Junior');
 });
 
 it('serves the effective home document to the storefront', function (): void {
@@ -80,7 +80,7 @@ it('serves the effective home document to the storefront', function (): void {
     $token = User::factory()->create(['is_active' => false])->createToken('storefront', ['storefront:read'])->plainTextToken;
 
     $this->withToken($token)->getJson('/api/v1/storefront/seo/home/home')->assertOk()
-        ->assertJsonPath('en.title', 'Toy Mart BD | Toys for every age, delivered across Bangladesh.')
+        ->assertJsonPath('en.title', 'Smart Junior | Toys for every age, delivered across Bangladesh.')
         ->assertJsonPath('en.description', 'Own description');
 });
 

@@ -142,7 +142,7 @@ it('falls back to SMS when the customer turned WhatsApp off, counting Bangla seg
         ->and($log->encoding)->toBe('ucs2')
         ->and($log->segments)->toBe(2)
         ->and($log->cost->toDecimal())->toBe('1.28')
-        ->and($sms->sent[0]['body'])->toContain('টয় মার্ট বিডি')->toContain($order->number)->toContain('BDT 2450');
+        ->and($sms->sent[0]['body'])->toContain('Smart Junior')->toContain($order->number)->toContain('BDT 2450');
 });
 
 it('records a skipped row and sends nothing when the customer opted out of every messaging channel', function (): void {
@@ -225,7 +225,7 @@ it('emails the customer in Bangla with the Bangla name, alongside the message', 
         $html = $mail->render();
 
         return $mail->hasTo('nusrat@example.com')
-            && $mail->subjectLine === "অর্ডার {$order->number} পেয়েছি - টয় মার্ট বিডি"
+            && $mail->subjectLine === "অর্ডার {$order->number} পেয়েছি - Smart Junior"
             && str_contains($html, 'নুসরাত জাহান')
             && str_contains($html, 'কাঠের পাজল সেট')
             && str_contains($html, 'lang="bn"')
@@ -275,7 +275,7 @@ it('does not send a template an admin switched off', function (): void {
 it('records a direct SMS send (the OTP job) with its segments and cost', function (): void {
     config(['notifications.sms.driver' => 'log', 'notifications.sms.cost_per_segment' => '0.64']);
 
-    $result = app(SmsGateway::class)->send('+8801712345678', 'টয় মার্ট বিডি কোড: 482917। 5 মিনিট কাজ করবে। কাউকে দেবেন না।', 'otp.login');
+    $result = app(SmsGateway::class)->send('+8801712345678', 'Smart Junior কোড: 482917। 5 মিনিট কাজ করবে। কাউকে দেবেন না।', 'otp.login');
 
     $log = NotificationLog::query()->sole();
     expect($result->accepted)->toBeTrue()

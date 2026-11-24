@@ -9,6 +9,7 @@ use App\Domain\Catalog\Models\Brand;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Content\Blocks\DTOs\ResolvedBlock;
 use App\Domain\Content\Blocks\Enums\BlockType;
+use App\Domain\Content\Blocks\Schemas\BlockSchema;
 use App\Domain\Content\Blocks\Services\VideoLengths;
 use App\Domain\Content\Blocks\ValueObjects\VideoEmbed;
 use App\Domain\Content\Models\Testimonial;
@@ -70,6 +71,12 @@ final class StorefrontHomeResource extends ApiResource
 
         /** @var Collection<int, Media> $media */
         $media = $data['media'] ?? collect();
+
+        // Carousel behaviour, always complete: a block saved before these settings existed answers
+        // with the defaults, so the storefront never guesses (BlockSchema::sliderRules()).
+        if (in_array($block->type, [BlockType::Hero, BlockType::ProductRail, BlockType::FlashSale, BlockType::VideoReel], true)) {
+            $content['slider'] = [...BlockSchema::sliderDefaults(), ...(is_array($content['slider'] ?? null) ? $content['slider'] : [])];
+        }
 
         switch ($block->type) {
             case BlockType::Hero:
@@ -187,7 +194,7 @@ final class StorefrontHomeResource extends ApiResource
                         'products' => StorefrontProductCardResource::collection($chip['products'])->resolve($request),
                     ];
                 }, $data['chips'] ?? []);
-                $content = array_intersect_key($content, array_flip(['eyebrow', 'eyebrow_tone', 'title', 'sub', 'layout', 'band', 'see_all_label', 'all_label', 'limit']));
+                $content = array_intersect_key($content, array_flip(['eyebrow', 'eyebrow_tone', 'title', 'sub', 'layout', 'band', 'see_all_label', 'all_label', 'limit', 'slider']));
                 break;
 
             case BlockType::BrandStrip:

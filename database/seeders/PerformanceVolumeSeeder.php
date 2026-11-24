@@ -256,7 +256,7 @@ class PerformanceVolumeSeeder extends Seeder
                 $invoices[] = [
                     'type' => 'sales', 'series' => 'VINV', 'year' => $year, 'sequence' => $seq, 'number' => sprintf('VINV-%07d', $seq),
                     'order_id' => $orderId, 'reference' => sprintf('VOL-%07d', $seq), 'issued_to' => '{"name":"Volume Buyer"}',
-                    'issued_by' => '{"name":"Toy Mart BD"}', 'lines' => '[]', 'subtotal' => $subtotal, 'shipping' => $shipping, 'total' => $grand,
+                    'issued_by' => '{"name":"Smart Junior"}', 'lines' => '[]', 'subtotal' => $subtotal, 'shipping' => $shipping, 'total' => $grand,
                     'paid' => $grand, 'payment_method' => 'cod', 'issued_at' => $deliveredAt->toDateTimeString(), 'kind' => 'original',
                     'created_at' => $deliveredAt->toDateTimeString(), 'updated_at' => $deliveredAt->toDateTimeString(),
                 ];

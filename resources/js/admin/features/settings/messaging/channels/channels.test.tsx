@@ -65,7 +65,7 @@ const connectedPage = channel({
     send_ready: true,
     connection: { state: 'connected', reason: null, since: null },
     activity: { open: 12, waiting: 3, unread: 5, oldest_waiting_at: new Date(Date.now() - 18 * 60_000).toISOString(), last_inbound_at: new Date(Date.now() - 4 * 60_000).toISOString(), last_inbound_from: 'Rakibul Hasan', last_event_at: new Date().toISOString() },
-    page_name: 'Toy Mart BD',
+    page_name: 'Smart Junior',
     connected_at: '2026-11-20T08:00:00+06:00',
     connected_by: 'Mominul Islam',
     app_id: '987654321012345',
@@ -121,7 +121,7 @@ describe('inbox › channels › facebook page', () => {
     it('finishes the login from the redirect and connects the only Page shared, never seeing its token', async () => {
         let connected = false;
         const calls = api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger', login_ready: true }) }, (url, init) => {
-            if (url.endsWith('/messenger/login/finish')) return { status: 200, body: { session: 'S'.repeat(48), pages: [{ id: '151784545352643', name: 'Toy Mart BD', can_message: true }] } };
+            if (url.endsWith('/messenger/login/finish')) return { status: 200, body: { session: 'S'.repeat(48), pages: [{ id: '151784545352643', name: 'Smart Junior', can_message: true }] } };
             if (url.endsWith('/messenger/connect')) {
                 connected = true;
                 return { status: 200, body: { whatsapp: channel({ channel: 'whatsapp' }), messenger: connectedPage } };
@@ -133,7 +133,7 @@ describe('inbox › channels › facebook page', () => {
 
         await waitFor(() => expect(bodies(calls, '/messenger/connect', 'POST')).toEqual([{ session: 'S'.repeat(48), page_id: '151784545352643' }]));
         expect(bodies(calls, '/messenger/login/finish', 'POST')).toEqual([{ code: 'AQD-code', state: 'a'.repeat(48) }]);
-        expect(await screen.findByRole('heading', { name: 'Toy Mart BD' })).toBeTruthy();
+        expect(await screen.findByRole('heading', { name: 'Smart Junior' })).toBeTruthy();
     });
 
     it('asks which Page when several were shared, and says when a Page cannot be messaged', async () => {
@@ -144,7 +144,7 @@ describe('inbox › channels › facebook page', () => {
                       body: {
                           session: 'S'.repeat(48),
                           pages: [
-                              { id: '1', name: 'Toy Mart BD', can_message: true },
+                              { id: '1', name: 'Smart Junior', can_message: true },
                               { id: '2', name: 'Babur Gallery', can_message: false },
                           ],
                       },
@@ -169,7 +169,7 @@ describe('inbox › channels › facebook page', () => {
         api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: connectedPage });
         renderApp('/inbox/channels/messenger');
 
-        const card = within((await screen.findByRole('heading', { name: 'Toy Mart BD' })).closest('section')!);
+        const card = within((await screen.findByRole('heading', { name: 'Smart Junior' })).closest('section')!);
         expect(card.getByText('Connected')).toBeTruthy();
         expect(card.getByText(/Page ID 151784545352643/)).toBeTruthy();
         expect(card.getByText(/connected by Mominul Islam/)).toBeTruthy();
@@ -236,7 +236,7 @@ describe('inbox › channels › whatsapp', () => {
         const calls = api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger' }) }, (url) => {
             if (url.endsWith('/whatsapp/test')) {
                 tested = true;
-                return { status: 200, body: { channel: 'whatsapp', ok: true, checked_at: new Date().toISOString(), display_name: 'Toy Mart BD', display_number: '+880 1711-000222', quality_rating: 'GREEN', error_code: null, error_message: null } };
+                return { status: 200, body: { channel: 'whatsapp', ok: true, checked_at: new Date().toISOString(), display_name: 'Smart Junior', display_number: '+880 1711-000222', quality_rating: 'GREEN', error_code: null, error_message: null } };
             }
             return undefined;
         });
@@ -312,7 +312,7 @@ describe('inbox › channels › whatsapp', () => {
                 send_token: secret('••••2222'),
                 send_ready: true,
                 connection: { state: 'connected', reason: null, since: null },
-                last_check: { ok: true, checked_at: new Date().toISOString(), display_name: 'Toy Mart BD', display_number: '+880 1711-000222', quality_rating: 'GREEN', error_code: null, error_message: null },
+                last_check: { ok: true, checked_at: new Date().toISOString(), display_name: 'Smart Junior', display_number: '+880 1711-000222', quality_rating: 'GREEN', error_code: null, error_message: null },
             }),
             messenger: channel({ channel: 'messenger' }),
         });

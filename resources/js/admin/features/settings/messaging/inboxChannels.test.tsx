@@ -213,7 +213,7 @@ describe('integrations → messaging → inbox channels', () => {
                 last_check: {
                     ok: true,
                     checked_at: new Date().toISOString(),
-                    display_name: 'Toy Mart BD',
+                    display_name: 'Smart Junior',
                     display_number: '+880 1700-000000',
                     quality_rating: 'GREEN',
                     error_code: null,
@@ -229,7 +229,7 @@ describe('integrations → messaging → inbox channels', () => {
         expect(wa.getByText(/A passing test does not mark the channel verified/)).toBeTruthy();
         fireEvent.click(wa.getByRole('button', { name: 'Test connection' }));
 
-        expect(await wa.findByText(/Connected as Toy Mart BD \(\+880 1700-000000\) · quality GREEN/)).toBeTruthy();
+        expect(await wa.findByText(/Connected as Smart Junior \(\+880 1700-000000\) · quality GREEN/)).toBeTruthy();
         expect(wa.getByText('Not verified — no real account yet')).toBeTruthy();
         expect(calls.mock.calls.some(([url, init]) => String(url).endsWith('/settings/inbox-channels/whatsapp/test') && (init as RequestInit | undefined)?.method === 'POST')).toBe(true);
     });

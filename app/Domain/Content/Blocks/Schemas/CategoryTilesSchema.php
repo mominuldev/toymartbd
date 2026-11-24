@@ -30,7 +30,11 @@ final class CategoryTilesSchema extends BlockSchema
 
     public function defaults(): array
     {
-        return ['title' => 'Shop by category', 'title_bn' => 'ক্যাটাগরি', 'eyebrow' => null, 'eyebrow_bn' => null, 'sub' => null, 'sub_bn' => null, 'source' => 'top_level', 'category_ids' => [], 'limit' => 8, 'show_see_all' => true];
+        return [
+            'title' => 'Shop by category', 'title_bn' => 'ক্যাটাগরি অনুযায়ী কিনুন', 'eyebrow' => 'Categories', 'eyebrow_bn' => 'ক্যাটাগরি',
+            'sub' => 'Find the right toy fast — every category sorted by what it teaches.', 'sub_bn' => 'সঠিক খেলনা দ্রুত খুঁজুন — প্রতিটি ক্যাটাগরি শেখার মূল্য দেখে সাজানো।',
+            'source' => 'top_level', 'category_ids' => [], 'limit' => 8, 'show_see_all' => false,
+        ];
     }
 
     public function normalize(array $content): array

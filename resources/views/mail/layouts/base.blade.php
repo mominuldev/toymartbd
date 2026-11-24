@@ -22,7 +22,7 @@
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:{{ MailTheme::color('color/bg/surface') }};border:1px solid {{ MailTheme::color('color/border/default') }};border-radius:16px;">
                     <tr>
                         <td style="padding:24px 24px 8px;font-size:20px;font-weight:600;color:{{ MailTheme::color('color/text/brand') }};">
-                            {{ $locale === 'bn' ? 'টয় মার্ট বিডি' : 'Toy Mart BD' }}
+                            {{ $locale === 'bn' ? 'Smart Junior' : 'Smart Junior' }}
                         </td>
                     </tr>
                     <tr>

@@ -21,7 +21,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
-    <title>@yield('code') · @yield('title') · Toy Mart BD</title>
+    <title>@yield('code') · @yield('title') · Smart Junior</title>
     <style>
         {!! $tokens !!}
         *, *::before, *::after { box-sizing: border-box; }
@@ -59,7 +59,7 @@
 </head>
 <body>
     <main class="card" role="main">
-        <span class="brand">Toy Mart BD · <span lang="bn" class="lang-bn">টয় মার্ট বিডি</span></span>
+        <span class="brand">Smart Junior · <span lang="bn" class="lang-bn">Smart Junior</span></span>
         <span class="code">Error @yield('code')</span>
         <h1>@yield('title')</h1>
         <p>@yield('message')</p>

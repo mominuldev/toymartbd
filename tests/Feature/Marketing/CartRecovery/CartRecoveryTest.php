@@ -88,7 +88,7 @@ it('waits N minutes, then sends one Bangla SMS with a restore link, recording se
     expect(app(DetectAbandonedCarts::class)->handle())->toBe(['messaged' => 1, 'skipped' => 0])
         ->and($sms->sent)->toHaveCount(1)
         ->and($sms->sent[0]['to'])->toBe('+8801712345678')
-        ->and($sms->sent[0]['body'])->toContain('টয় মার্ট বিডি')->toContain('/bn/cart/restore/');
+        ->and($sms->sent[0]['body'])->toContain('Smart Junior')->toContain('/bn/cart/restore/');
 
     $log = NotificationLog::query()->sole();
     expect($log->status)->toBe(NotificationStatus::Sent)
@@ -141,7 +141,7 @@ it('uses a signed-in customer’s explicit marketing opt-in', function (): void 
 
     app(DetectAbandonedCarts::class)->handle();
 
-    expect($sms->sent)->toHaveCount(1)->and($sms->sent[0]['body'])->toStartWith('Toy Mart BD:')->not->toContain('/bn/');
+    expect($sms->sent)->toHaveCount(1)->and($sms->sent[0]['body'])->toStartWith('Smart Junior:')->not->toContain('/bn/');
 });
 
 it('stops when the order is placed before the reminder goes out', function (): void {

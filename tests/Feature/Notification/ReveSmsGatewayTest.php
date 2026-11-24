@@ -42,7 +42,7 @@ function reveGateway(): ReveSmsGateway
 it('posts JSON with credentials in the body, never the URL, and the number without a plus', function (): void {
     Http::fake(['smpp.example.test:7790/sendtext' => Http::response(['Status' => '0', 'Text' => 'ACCEPTD', 'Message_ID' => '9123'])]);
 
-    $result = reveGateway()->send('+8801712345678', 'Toy Mart BD: hello', 'test');
+    $result = reveGateway()->send('+8801712345678', 'Smart Junior: hello', 'test');
 
     expect($result->accepted)->toBeTrue()
         ->and($result->providerMessageId)->toBe('9123')
@@ -56,7 +56,7 @@ it('posts JSON with credentials in the body, never the URL, and the number witho
             && $request['secretkey'] === 'test-secret'
             && $request['callerID'] === 'ToyMartBD'
             && $request['toUser'] === '8801712345678'
-            && $request['messageContent'] === 'Toy Mart BD: hello';
+            && $request['messageContent'] === 'Smart Junior: hello';
     });
 });
 

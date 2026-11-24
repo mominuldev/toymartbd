@@ -20,7 +20,7 @@ const PERMISSION = 'settings.manage_integrations';
  * Inbox › Channels › Facebook Page (Figma B · 44: Not connected 627:51843, Connected 627:51411,
  * Reconnect needed 629:52143, Meta app not added 629:52249), modelled on SSFlows' Agent Pages.
  *
- * "Continue with Facebook" is Meta's manual login flow on Toy Mart's OWN Meta app: the server
+ * "Continue with Facebook" is Meta's manual login flow on Smart Junior's OWN Meta app: the server
  * builds the dialog URL, Facebook sends the owner back HERE with `?code&state`, and this page
  * hands both to the server, which exchanges them and lists the Pages that were shared. Page
  * tokens never reach the browser. One Page shared → connected at once; several → a chooser.

@@ -6,7 +6,7 @@ declare(strict_types=1);
 // Sender identity values are PLACEHOLDERS until the owner supplies them (UI-UX-DESIGN-SPEC §10).
 return [
     'from' => 'From',
-    'shop' => 'Toy Mart BD',
+    'shop' => 'Smart Junior',
     'hotline' => 'Hotline: [placeholder]',
     'to' => 'To',
     'phone' => 'Phone',

@@ -47,6 +47,6 @@ return [
         'due' => 'Due on delivery',
         'track' => 'Track your order',
         'help' => 'Questions? Call :hotline.',
-        'footer' => 'You are receiving this because you placed an order with Toy Mart BD.',
+        'footer' => 'You are receiving this because you placed an order with Smart Junior.',
     ],
 ];

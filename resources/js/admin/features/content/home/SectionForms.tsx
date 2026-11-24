@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { MediaField, type PickedImage } from '@/features/content/shared/MediaField';
 import { useI18n } from '@/i18n/I18nProvider';
 import { ids, rows, str, type Content } from './content';
-import { Bilingual, Repeater, SelectField, TextField, type FieldCtx } from './fields';
+import { Bilingual, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { ProductPicker } from './pickers';
 
 /*
@@ -64,6 +64,47 @@ export function SectionHeaderFields({ kit, tone, sub = true }: { kit: FormKit; t
 export function BandField({ kit }: { kit: FormKit }) {
     const { t } = useI18n();
     return <ToneField label={t('homeBuilder.f.band')} value={kit.content.band} fallback="" onChange={(v) => kit.set('band', v)} path="band" ctx={kit.ctx} none />;
+}
+
+/** BlockSchema::SLIDER_SPEEDS (ms) and SLIDER_DELAYS (s): fixed choices, as the server validates. */
+export const SLIDER_SPEEDS = [300, 500, 800, 1200] as const;
+export const SLIDER_DELAYS = [3, 4, 5, 6, 8, 10] as const;
+const SLIDER_DEFAULTS = { loop: false, autoplay: false, delay: 5, speed: 500 };
+
+/** Carousel behaviour for a block the storefront shows as a slider (`content.slider`). */
+export function SliderFields({ kit }: { kit: FormKit }) {
+    const { t } = useI18n();
+    const raw = kit.content.slider;
+    const current = { ...SLIDER_DEFAULTS, ...(raw !== null && typeof raw === 'object' ? (raw as Partial<typeof SLIDER_DEFAULTS>) : {}) };
+    const put = (patch: Partial<typeof SLIDER_DEFAULTS>) => kit.set('slider', { ...current, ...patch });
+    return (
+        <fieldset className="flex flex-col gap-3">
+            <legend className="mb-1 t-admin-label text-fg-primary">{t('homeBuilder.f.slider')}</legend>
+            <SwitchRow label={t('homeBuilder.f.slider.loop')} checked={current.loop === true} onChange={(v) => put({ loop: v })} disabled={kit.ctx.disabled} />
+            <SwitchRow label={t('homeBuilder.f.slider.autoplay')} checked={current.autoplay === true} onChange={(v) => put({ autoplay: v })} disabled={kit.ctx.disabled} />
+            {current.autoplay === true && (
+                <>
+                    <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.slider.autoplayHint')}</p>
+                    <SelectField
+                        label={t('homeBuilder.f.slider.delay')}
+                        value={current.delay}
+                        options={SLIDER_DELAYS.map((v) => ({ value: v, label: t('homeBuilder.f.slider.delayValue', { count: v }) }))}
+                        onChange={(v) => put({ delay: v })}
+                        path="slider.delay"
+                        ctx={kit.ctx}
+                    />
+                </>
+            )}
+            <SelectField
+                label={t('homeBuilder.f.slider.speed')}
+                value={current.speed}
+                options={SLIDER_SPEEDS.map((v) => ({ value: v, label: t(`homeBuilder.f.slider.speed.${v}`) }))}
+                onChange={(v) => put({ speed: v })}
+                path="slider.speed"
+                ctx={kit.ctx}
+            />
+        </fieldset>
+    );
 }
 
 function AddButton({ label, disabled, onClick }: { label: string; disabled: boolean; onClick: () => void }) {

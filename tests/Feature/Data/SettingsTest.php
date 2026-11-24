@@ -12,7 +12,7 @@ it('round-trips typed values', function (mixed $value): void {
 
     expect(Setting::get('test.value'))->toBe($value);
 })->with([
-    'string' => 'Toy Mart BD',
+    'string' => 'Smart Junior',
     'int' => 60,
     'float' => 1.5,
     'whole float' => 2.0,
@@ -24,12 +24,12 @@ it('round-trips typed values', function (mixed $value): void {
 ]);
 
 it('round-trips Bangla unchanged, stored unescaped', function (): void {
-    $name = 'টয় মার্ট বিডি — যুক্তাক্ষর ক্ষ ত্র জ্ঞ';
+    $name = 'Smart Junior — যুক্তাক্ষর ক্ষ ত্র জ্ঞ';
 
     Setting::put('store.name_bn', $name, SettingGroup::Store);
 
     expect(Setting::get('store.name_bn'))->toBe($name)
-        ->and((string) DB::table('settings')->where('key', 'store.name_bn')->value('value'))->toContain('টয় মার্ট');
+        ->and((string) DB::table('settings')->where('key', 'store.name_bn')->value('value'))->toContain('Smart Junior');
 });
 
 it('round-trips a Bangla map', function (): void {

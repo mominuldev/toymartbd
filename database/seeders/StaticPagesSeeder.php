@@ -19,7 +19,7 @@ final class StaticPagesSeeder extends Seeder
 {
     /** slug => [title, title_bn, template] */
     private const array PAGES = [
-        'about' => ['About Toy Mart BD', 'টয় মার্ট বিডি সম্পর্কে', PageTemplate::Default],
+        'about' => ['About Smart Junior', 'Smart Junior সম্পর্কে', PageTemplate::Default],
         'contact' => ['Contact us', 'যোগাযোগ', PageTemplate::Sidebar],
         'delivery-policy' => ['Delivery policy', 'ডেলিভারি নীতি', PageTemplate::Sidebar],
         'returns-policy' => ['Returns & refunds', 'রিটার্ন ও রিফান্ড', PageTemplate::Sidebar],

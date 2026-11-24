@@ -19,7 +19,8 @@ final class BlogTeaserSchema extends BlockSchema
     {
         return [
             'eyebrow' => 'For parents', 'eyebrow_bn' => 'অভিভাবকদের জন্য', 'eyebrow_tone' => 'green',
-            'title' => 'From the toy box', 'title_bn' => 'খেলনার বাক্স থেকে', 'sub' => null, 'sub_bn' => null,
+            'title' => 'Play & learn journal', 'title_bn' => 'খেলো ও শেখো জার্নাল',
+            'sub' => 'Age-by-age guides from our early-years team.', 'sub_bn' => 'আমাদের শিশু-শিক্ষা টিমের বয়সভিত্তিক গাইড।',
             'show_see_all' => false, 'limit' => 3,
         ];
     }

@@ -60,14 +60,14 @@ class DemoSeoSeeder extends Seeder
      * @var list<array{SeoableType, string, string, string, string, string, string|null, RobotsDirective}>
      */
     public const array META = [
-        [SeoableType::Product, 'lego-classic-creative-bricks-484', 'LEGO Classic 484 pcs price in Bangladesh | Toy Mart BD', 'লেগো ক্লাসিক 484 পিস — বাংলাদেশে দাম | টয় মার্ট বিডি', 'Buy the original LEGO Classic Creative Bricks (484 pcs) with cash on delivery anywhere in Bangladesh.', 'আসল লেগো ক্লাসিক ক্রিয়েটিভ ব্রিকস (484 পিস) কিনুন, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।', 'lego price in bangladesh', RobotsDirective::IndexFollow],
-        [SeoableType::Product, 'rubiks-cube-3x3-original', "Original Rubik's Cube 3x3 in Bangladesh | Toy Mart BD", 'আসল রুবিক্স কিউব 3x3 | টয় মার্ট বিডি', "The original Rubik's 3x3 speed cube — smooth turning, genuine stickers. Delivered across Bangladesh.", 'আসল রুবিক্স 3x3 কিউব — মসৃণ ঘোরানো, আসল স্টিকার। সারা দেশে ডেলিভারি।', 'rubiks cube bd', RobotsDirective::IndexFollow],
-        [SeoableType::Product, 'fisher-price-smart-stages-puppy', 'Fisher-Price Smart Stages Puppy | Toy Mart BD', 'ফিশার-প্রাইস স্মার্ট স্টেজেস পাপি | টয় মার্ট বিডি', 'A singing puppy that teaches first words and counting, for 6–36 months.', '6–36 মাসের শিশুর জন্য প্রথম শব্দ আর গোনা শেখানো গান গাওয়া পাপি।', 'fisher price toys bangladesh', RobotsDirective::IndexFollow],
-        [SeoableType::Category, 'building-blocks', 'Building blocks & LEGO sets in Bangladesh | Toy Mart BD', 'বিল্ডিং ব্লক ও লেগো সেট | টয় মার্ট বিডি', 'LEGO, DUPLO, wooden and magnetic blocks for every age, with cash on delivery.', 'সব বয়সের জন্য লেগো, ডুপ্লো, কাঠের ও ম্যাগনেটিক ব্লক, ক্যাশ অন ডেলিভারি।', 'building blocks bangladesh', RobotsDirective::IndexFollow],
-        [SeoableType::Category, 'baby-toddler', 'Baby & toddler toys online in Bangladesh | Toy Mart BD', 'শিশু ও বেবি খেলনা অনলাইনে | টয় মার্ট বিডি', 'Safe, age-labelled toys for babies and toddlers: activity gyms, musical toys and more.', 'শিশু ও ছোটদের জন্য নিরাপদ খেলনা: অ্যাক্টিভিটি জিম, মিউজিক্যাল খেলনা ও আরও অনেক কিছু।', 'baby toys bd', RobotsDirective::IndexFollow],
-        [SeoableType::Brand, 'lego', 'LEGO in Bangladesh — original sets | Toy Mart BD', 'বাংলাদেশে আসল লেগো সেট | টয় মার্ট বিডি', 'Original LEGO sets with cash on delivery across Bangladesh.', 'সারা বাংলাদেশে ক্যাশ অন ডেলিভারিতে আসল লেগো সেট।', 'lego bangladesh', RobotsDirective::IndexFollow],
-        [SeoableType::Page, 'about', 'About Toy Mart BD', 'টয় মার্ট বিডি সম্পর্কে', 'Toy Mart BD sells original toys and educational products across Bangladesh.', 'টয় মার্ট বিডি সারা বাংলাদেশে আসল খেলনা ও শিক্ষামূলক পণ্য বিক্রি করে।', null, RobotsDirective::IndexFollow],
-        [SeoableType::Page, 'terms', 'Terms & conditions | Toy Mart BD', 'শর্তাবলি | টয় মার্ট বিডি', 'The terms of using Toy Mart BD.', 'টয় মার্ট বিডি ব্যবহারের শর্তাবলি।', null, RobotsDirective::NoindexFollow],
+        [SeoableType::Product, 'lego-classic-creative-bricks-484', 'LEGO Classic 484 pcs price in Bangladesh | Smart Junior', 'লেগো ক্লাসিক 484 পিস — বাংলাদেশে দাম | Smart Junior', 'Buy the original LEGO Classic Creative Bricks (484 pcs) with cash on delivery anywhere in Bangladesh.', 'আসল লেগো ক্লাসিক ক্রিয়েটিভ ব্রিকস (484 পিস) কিনুন, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।', 'lego price in bangladesh', RobotsDirective::IndexFollow],
+        [SeoableType::Product, 'rubiks-cube-3x3-original', "Original Rubik's Cube 3x3 in Bangladesh | Smart Junior", 'আসল রুবিক্স কিউব 3x3 | Smart Junior', "The original Rubik's 3x3 speed cube — smooth turning, genuine stickers. Delivered across Bangladesh.", 'আসল রুবিক্স 3x3 কিউব — মসৃণ ঘোরানো, আসল স্টিকার। সারা দেশে ডেলিভারি।', 'rubiks cube bd', RobotsDirective::IndexFollow],
+        [SeoableType::Product, 'fisher-price-smart-stages-puppy', 'Fisher-Price Smart Stages Puppy | Smart Junior', 'ফিশার-প্রাইস স্মার্ট স্টেজেস পাপি | Smart Junior', 'A singing puppy that teaches first words and counting, for 6–36 months.', '6–36 মাসের শিশুর জন্য প্রথম শব্দ আর গোনা শেখানো গান গাওয়া পাপি।', 'fisher price toys bangladesh', RobotsDirective::IndexFollow],
+        [SeoableType::Category, 'building-blocks', 'Building blocks & LEGO sets in Bangladesh | Smart Junior', 'বিল্ডিং ব্লক ও লেগো সেট | Smart Junior', 'LEGO, DUPLO, wooden and magnetic blocks for every age, with cash on delivery.', 'সব বয়সের জন্য লেগো, ডুপ্লো, কাঠের ও ম্যাগনেটিক ব্লক, ক্যাশ অন ডেলিভারি।', 'building blocks bangladesh', RobotsDirective::IndexFollow],
+        [SeoableType::Category, 'baby-toddler', 'Baby & toddler toys online in Bangladesh | Smart Junior', 'শিশু ও বেবি খেলনা অনলাইনে | Smart Junior', 'Safe, age-labelled toys for babies and toddlers: activity gyms, musical toys and more.', 'শিশু ও ছোটদের জন্য নিরাপদ খেলনা: অ্যাক্টিভিটি জিম, মিউজিক্যাল খেলনা ও আরও অনেক কিছু।', 'baby toys bd', RobotsDirective::IndexFollow],
+        [SeoableType::Brand, 'lego', 'LEGO in Bangladesh — original sets | Smart Junior', 'বাংলাদেশে আসল লেগো সেট | Smart Junior', 'Original LEGO sets with cash on delivery across Bangladesh.', 'সারা বাংলাদেশে ক্যাশ অন ডেলিভারিতে আসল লেগো সেট।', 'lego bangladesh', RobotsDirective::IndexFollow],
+        [SeoableType::Page, 'about', 'About Smart Junior', 'Smart Junior সম্পর্কে', 'Smart Junior sells original toys and educational products across Bangladesh.', 'Smart Junior সারা বাংলাদেশে আসল খেলনা ও শিক্ষামূলক পণ্য বিক্রি করে।', null, RobotsDirective::IndexFollow],
+        [SeoableType::Page, 'terms', 'Terms & conditions | Smart Junior', 'শর্তাবলি | Smart Junior', 'The terms of using Smart Junior.', 'Smart Junior ব্যবহারের শর্তাবলি।', null, RobotsDirective::NoindexFollow],
     ];
 
     /** @var list<array{SeoableType, string, string, int}> [type, current slug, old slug, days ago] */
@@ -153,7 +153,7 @@ class DemoSeoSeeder extends Seeder
             return;
         }
         $content = str_replace('Disallow: /api/', "Disallow: /api/\nDisallow: /track\nDisallow: /bn/track", RobotsTxt::defaultContent());
-        app(SaveRobotsTxt::class)->handle("# Toy Mart BD — edited in Admin › SEO › robots.txt\n".$content, self::actorId());
+        app(SaveRobotsTxt::class)->handle("# Smart Junior — edited in Admin › SEO › robots.txt\n".$content, self::actorId());
     }
 
     private static function id(SeoableType $type, string $slug): int

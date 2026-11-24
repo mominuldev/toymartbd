@@ -16,14 +16,14 @@ const owner: Me = { ...viewer, roles: ['super_admin'], permissions: ['dashboard.
 const readOnly: Me = { ...viewer, roles: ['viewer'], permissions: ['dashboard.view', 'settings.view'] };
 
 const business: BusinessDetails = {
-    name_en: 'Toy Mart BD',
-    name_bn: 'টয় মার্ট বিডি',
+    name_en: 'Smart Junior',
+    name_bn: 'Smart Junior',
     trade_licence: null,
     bin: null,
     hotline: null,
     whatsapp: null,
     messenger: null,
-    default_names: { name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি' },
+    default_names: { name_en: 'Smart Junior', name_bn: 'Smart Junior' },
     hotline_default: null,
     placeholders: [],
 };

@@ -55,7 +55,7 @@ return [
         'drift_body' => 'Nothing was corrected automatically: drift means a code path skipped the ledger. Investigate, correct with a stock adjustment if needed, then acknowledge the alert.',
         'open_inventory' => 'Open inventory',
         'open_alerts' => 'Open stock alerts',
-        'footer' => 'Toy Mart BD admin · sent to managers',
+        'footer' => 'Smart Junior admin · sent to managers',
     ],
 
 ];

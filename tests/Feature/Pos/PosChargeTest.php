@@ -305,7 +305,7 @@ it('prints a receipt with store details, masked phone, tenders and change', func
     ], '1850.00', ['customer_phone' => PosKit::PHONE, 'customer_name' => 'Rubina Akter'])->assertCreated();
 
     $this->getJson("/api/v1/admin/pos/sales/{$sale->json('id')}/receipt")->assertOk()
-        ->assertJsonPath('store.name_en', 'Toy Mart BD')
+        ->assertJsonPath('store.name_en', 'Smart Junior')
         ->assertJsonPath('branch.name', 'Chattogram · Agrabad')
         ->assertJsonPath('register', 'Register 1')
         ->assertJsonPath('cashier', $this->cashier->name)

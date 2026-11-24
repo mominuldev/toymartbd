@@ -66,14 +66,14 @@ it('returns a number to the series when the issuing transaction rolls back (no g
 it('keeps the snapshot when store settings and the order change afterwards', function (): void {
     Support::actingAs(Role::Manager);
     $this->putJson('/api/v1/admin/settings/invoice', [
-        'name_en' => 'Toy Mart BD Ltd', 'address_en' => 'House 12, Road 5, Dhanmondi, Dhaka', 'hotline' => '09600 111222',
+        'name_en' => 'Smart Junior Ltd', 'address_en' => 'House 12, Road 5, Dhanmondi, Dhaka', 'hotline' => '09600 111222',
         'trade_licence' => 'TRAD/DSCC/111111', 'bin' => '000111222-0101',
     ])->assertOk()->assertJsonPath('placeholders', ['name_bn', 'address_bn']);
     $order = invoicedOrder(['shipping_name' => 'Rahela Khatun']);
     $this->get("/api/v1/admin/orders/{$order->id}/invoice?locale=en")->assertOk();
 
     $this->putJson('/api/v1/admin/settings/invoice', [
-        'name_en' => 'Toy Mart BD Ltd', 'address_en' => 'Plot 9, Gulshan 2, Dhaka', 'hotline' => '09600 999888',
+        'name_en' => 'Smart Junior Ltd', 'address_en' => 'Plot 9, Gulshan 2, Dhaka', 'hotline' => '09600 999888',
         'trade_licence' => 'TRAD/DNCC/999999', 'bin' => '999888777-0101',
     ])->assertOk();
     DB::table('orders')->where('id', $order->id)->update(['shipping_name' => 'Someone Else', 'grand_total' => '9999.00']);
@@ -97,7 +97,7 @@ it('prints [placeholder] for company details the owner has not set', function ()
     $text = PdfText::extract((string) $this->get("/api/v1/admin/orders/{$order->id}/invoice?locale=en")->assertOk()->getContent());
     $invoice = Invoice::query()->sole();
 
-    expect($text)->toContain('[placeholder]')->toContain('Toy Mart BD')
+    expect($text)->toContain('[placeholder]')->toContain('Smart Junior')
         ->and($invoice->issued_by['placeholders'])->toContain('bin', 'trade_licence', 'hotline');
 });
 

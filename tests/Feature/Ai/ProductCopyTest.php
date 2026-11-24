@@ -53,7 +53,7 @@ function aiCopyAnswer(array $override = []): array
     return $override + [
         'title' => 'Rainbow Stacker — Beech Wood Stacking Rings',
         'description_html' => '<p>A <strong>calm</strong> first toy.</p><h2>Why</h2><ul><li onclick="x()">Beech wood</li></ul><script>alert(1)</script><a href="https://x.test">link</a>',
-        'seo_title' => 'Rainbow Stacker in Beech Wood | Toy Mart BD',
+        'seo_title' => 'Rainbow Stacker in Beech Wood | Smart Junior',
         'meta_description' => 'A beech wood rainbow stacker for 12 months to 3 years, ৳1,250.',
     ];
 }

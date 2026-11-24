@@ -6,7 +6,7 @@ declare(strict_types=1);
 // Business identity values are PLACEHOLDERS until the owner supplies them (UI-UX-DESIGN-SPEC §10).
 return [
     'title' => 'Invoice',
-    'shop' => 'Toy Mart BD',
+    'shop' => 'Smart Junior',
     'shop_line' => 'Kids toys & educational products',
     'hotline' => 'Hotline: [placeholder]',
     'licence' => 'Trade licence: [placeholder] · BIN: [placeholder]',
@@ -30,7 +30,7 @@ return [
     'payment' => 'Payment',
     'cod' => 'Cash on delivery',
     'note' => 'Note',
-    'thanks' => 'Thank you for shopping with Toy Mart BD.',
+    'thanks' => 'Thank you for shopping with Smart Junior.',
     'page' => 'Page',
     // P8 invoicing (PRD N-13): numbered, snapshotted invoices + supplier invoices.
     'placeholder' => '[placeholder]',

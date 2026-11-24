@@ -158,7 +158,7 @@ final readonly class SendReviewRequests
      */
     public static function reviewUrl(Order $order, string $locale): string
     {
-        $base = rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://toymartbd.com')), '/')
+        $base = rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://smartjunior.com.bd')), '/')
             .($locale === 'bn' ? '/bn' : '');
         $productId = $order->items->first(static fn ($item): bool => $item->product_id !== null)?->product_id;
         $slug = $productId === null ? null : Product::query()->whereKey($productId)->value('slug');

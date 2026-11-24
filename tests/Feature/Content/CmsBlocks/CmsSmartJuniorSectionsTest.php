@@ -74,8 +74,8 @@ it('sends the rail header, layout, band and button wording, and runs the rule in
     CmsKit::product('atlas', 3, ['primary_category_id' => $books->id]);
 
     CmsKit::block('product_rail', [
-        'eyebrow' => 'Most loved', 'eyebrow_bn' => 'সবচেয়ে প্রিয়', 'eyebrow_tone' => 'yellow', 'title' => 'Bought again and again', 'title_bn' => null, 'sub' => 'Played with for months.',
-        'layout' => 'grid', 'band' => 'pink', 'see_all_label' => 'See all best sellers', 'all_label' => 'All', 'all_label_bn' => 'সব',
+        'eyebrow' => 'Most loved', 'eyebrow_bn' => 'সবচেয়ে প্রিয়', 'eyebrow_tone' => 'yellow', 'title' => 'Bought again and again', 'title_bn' => null, 'sub' => 'Played with for months.', 'sub_bn' => null,
+        'layout' => 'grid', 'band' => 'pink', 'see_all_label' => 'See all best sellers', 'see_all_label_bn' => null, 'all_label' => 'All', 'all_label_bn' => 'সব',
         'rule' => 'new', 'chip_category_ids' => [$plush->id, $empty->id, $books->id],
     ]);
     sjPublish();
@@ -84,6 +84,7 @@ it('sends the rail header, layout, band and button wording, and runs the rule in
     expect($bn->json('blocks.0.content'))->toBe([
         'eyebrow' => 'সবচেয়ে প্রিয়', 'eyebrow_tone' => 'yellow', 'title' => 'Bought again and again', 'sub' => 'Played with for months.',
         'layout' => 'grid', 'band' => 'pink', 'see_all_label' => 'See all best sellers', 'all_label' => 'সব', 'limit' => 8,
+        'slider' => ['loop' => false, 'autoplay' => false, 'delay' => 5, 'speed' => 500],
     ])
         ->and($bn->json('blocks.0.products.*.slug'))->toEqualCanonicalizing(['bunny', 'atlas'])
         // The empty category's chip is left out; each chip carries its own products, in the locale.
@@ -219,4 +220,24 @@ it('records the images of age cards, promo banners and reel posters as block med
     $this->postJson(CmsKit::ADMIN.'/blocks', ['type' => 'video_reel', 'content' => ['title' => 'Reel', 'items' => [['title' => 'x', 'video_url' => 'https://youtu.be/Abc_def-123', 'media_id' => $poster->id]]]])->assertCreated();
 
     expect(DB::table('cms_block_media')->where('layer', 'draft')->pluck('media_id')->sort()->values()->all())->toBe([$card->id, $banner->id, $poster->id]);
+});
+
+it('takes slider settings on the four slider blocks: loop, autoplay, delay and speed from fixed choices', function (): void {
+    CmsKit::actAsEditor();
+    $bad = ['loop' => 'sometimes', 'delay' => 7, 'speed' => 999];
+    foreach (['hero' => ['slides' => [['headline' => 'Hi']]], 'product_rail' => ['title' => 'New', 'rule' => 'new'], 'flash_sale' => ['title' => 'Flash'], 'video_reel' => ['title' => 'Reels']] as $type => $content) {
+        expect(sjErrors($this->postJson(CmsKit::ADMIN.'/blocks', ['type' => $type, 'content' => [...$content, 'slider' => $bad]])))
+            ->toContain('content.slider.loop', 'content.slider.delay', 'content.slider.speed');
+    }
+});
+
+it('sends the saved slider settings, and the defaults for a block saved before they existed', function (): void {
+    CmsKit::product('stacker', 2);
+    CmsKit::block('product_rail', ['title' => 'New', 'rule' => 'new', 'slider' => ['loop' => true, 'autoplay' => true, 'delay' => 8, 'speed' => 800]]);
+    $old = CmsKit::block('flash_sale', ['title' => 'Flash']);
+    $old->forceFill(['content' => array_diff_key($old->content, ['slider' => true])])->save();
+    sjPublish();
+
+    expect(CmsKit::home()->json('blocks.0.content.slider'))->toBe(['loop' => true, 'autoplay' => true, 'delay' => 8, 'speed' => 800])
+        ->and(CmsKit::home()->json('blocks.1.content.slider'))->toBe(App\Domain\Content\Blocks\Schemas\BlockSchema::sliderDefaults());
 });

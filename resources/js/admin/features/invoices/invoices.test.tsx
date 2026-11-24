@@ -105,7 +105,7 @@ const supplementary: InvoiceListItem = {
 const rto: CreditNoteListItem = { ...creditNote, id: 5, number: 'CN-26-000005', reason: 'courier_return', source_reference: 'TMB-26-00490' };
 
 const settings: InvoiceSettings = {
-    name_en: 'Toy Mart BD',
+    name_en: 'Smart Junior',
     name_bn: null,
     address_en: null,
     address_bn: null,

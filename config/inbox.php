@@ -76,7 +76,7 @@ return [
 
     // Quick actions compose links from these. The tracking link follows the order
     // notifications' short-link convention (config notifications.short_link_base).
-    'storefront_url' => env('STOREFRONT_URL', 'https://toymartbd.com'),
+    'storefront_url' => env('STOREFRONT_URL', 'https://smartjunior.com.bd'),
 
     // Raw verified webhook payloads are kept this long for disputes, then pruned.
     'receipt_retention_days' => 90,

@@ -74,5 +74,5 @@ return [
     'hotline' => env('STORE_HOTLINE', '09600123456'),
     // `tmbd.co` must actually be registered (05-content-and-assets-spec open item 7).
     'short_link_base' => env('NOTIFICATION_SHORT_LINK_BASE', 'tmbd.co'),
-    'store_url' => env('STORE_PUBLIC_DOMAIN', 'toymartbd.com'),
+    'store_url' => env('STORE_PUBLIC_DOMAIN', 'smartjunior.com.bd'),
 ];

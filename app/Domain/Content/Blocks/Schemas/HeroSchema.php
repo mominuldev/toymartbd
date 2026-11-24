@@ -28,6 +28,7 @@ final class HeroSchema extends BlockSchema
     {
         $rules = [
             'show_age_pills' => ['sometimes', 'boolean'],
+            ...self::sliderRules(),
             'slides' => ['required', 'array', 'min:1', 'max:'.self::MAX_SLIDES],
             'slides.*' => ['required', 'array'],
             ...$this->slide('slides.*.'),
@@ -79,16 +80,18 @@ final class HeroSchema extends BlockSchema
         return [
             'show_age_pills' => true,
             'slides' => [[
-                'overline' => 'Shop by age', 'overline_bn' => 'বয়স অনুযায়ী খেলনা',
-                'headline' => 'Tell us the age. See the right toys.', 'headline_bn' => 'বয়স বলুন, সঠিক খেলনা দেখুন',
-                'accent' => null, 'accent_bn' => null,
-                'sub' => 'Toys for 0–12 years. Age, price and stock stated on every one.', 'sub_bn' => '0–12 বছরের খেলনা। প্রতিটিতে বয়স, দাম আর স্টক পরিষ্কার লেখা।',
-                'cta_label' => 'Browse all toys', 'cta_label_bn' => 'সব খেলনা দেখুন', 'cta_href' => '/toys',
-                'cta2_label' => null, 'cta2_label_bn' => null, 'cta2_href' => null,
+                'overline' => 'New season', 'overline_bn' => 'নতুন সিজন',
+                'headline' => 'Toys that grow with every age', 'headline_bn' => 'প্রতিটি বয়সের সাথে বেড়ে ওঠা খেলনা',
+                'accent' => 'every age', 'accent_bn' => 'খেলনা',
+                'sub' => 'Educational toys, soft toys and everyday essentials — picked with early-years educators, delivered across Bangladesh.',
+                'sub_bn' => 'শিক্ষামূলক খেলনা, সফট টয় আর প্রতিদিনের প্রয়োজনীয় জিনিস — শিশু-শিক্ষা বিশেষজ্ঞদের সাথে বাছাই করা, পৌঁছে দিই সারা বাংলাদেশে।',
+                'cta_label' => 'New arrivals', 'cta_label_bn' => 'নতুন এসেছে', 'cta_href' => '/toys?sort=newest',
+                'cta2_label' => 'Shop by age', 'cta2_label_bn' => 'বয়স অনুযায়ী কিনুন', 'cta2_href' => '/toys',
                 'media_id' => null, 'alt' => null, 'alt_bn' => null,
             ]],
             'promos' => [],
             'proof' => null,
+            'slider' => self::sliderDefaults(),
         ];
     }
 
@@ -129,6 +132,7 @@ final class HeroSchema extends BlockSchema
             'slides' => $slides,
             'promos' => array_slice($promos, 0, self::MAX_PROMOS),
             'proof' => self::proof($content['proof'] ?? null),
+            'slider' => self::slider($content['slider'] ?? null),
         ];
     }
 

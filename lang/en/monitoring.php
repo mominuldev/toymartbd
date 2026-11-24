@@ -57,10 +57,10 @@ return [
         'test_note' => 'This is a TEST notice sent by `php artisan toymart:alerts:test`. Nothing is wrong.',
         'checked_at' => 'Checked at (UTC)',
         'runbook' => 'What to do: docs/ops/observability.md, "Business alerts".',
-        'footer' => 'Toy Mart BD monitoring. Change recipients with MONITORING_ALERT_EMAILS / MONITORING_ALERT_PHONES.',
+        'footer' => 'Smart Junior monitoring. Change recipients with MONITORING_ALERT_EMAILS / MONITORING_ALERT_PHONES.',
     ],
 
     // Latin, not Bangla: an SMS in Bangla costs 2–3× more per segment (rule 39).
-    'sms' => ':tagToy Mart BD :kind :name: :summary',
+    'sms' => ':tagSmart Junior :kind :name: :summary',
 
 ];

@@ -15,12 +15,12 @@ final class FlashSaleSchema extends BlockSchema
 {
     public function rules(): array
     {
-        return [...self::text('title', 120), ...self::text('sub', 160, false), 'limit' => ['sometimes', 'integer', 'min:2', 'max:12']];
+        return [...self::text('title', 120), ...self::text('sub', 160, false), 'limit' => ['sometimes', 'integer', 'min:2', 'max:12'], ...self::sliderRules()];
     }
 
     public function defaults(): array
     {
-        return ['title' => 'Flash sale', 'title_bn' => 'ফ্ল্যাশ সেল', 'sub' => null, 'sub_bn' => null, 'limit' => 8];
+        return ['title' => "Today's flash deals", 'title_bn' => 'আজকের ফ্ল্যাশ ডিল', 'sub' => null, 'sub_bn' => null, 'limit' => 8, 'slider' => self::sliderDefaults()];
     }
 
     public function normalize(array $content): array
@@ -28,6 +28,7 @@ final class FlashSaleSchema extends BlockSchema
         $out = [];
         self::copyText($content, $out, 'title', 'sub');
         $out['limit'] = self::int($content['limit'] ?? null, 8);
+        $out['slider'] = self::slider($content['slider'] ?? null);
 
         return $out;
     }

@@ -7,19 +7,19 @@ declare(strict_types=1);
 | copy, and the redirect / robots.txt validation messages.
 */
 return [
-    'site_name' => 'Toy Mart BD',
+    'site_name' => 'Smart Junior',
     // The homepage title's second half when Site & branding has no tagline (storefront lib/i18n site.tagline).
     'home_tagline' => 'Toys for every age, delivered across Bangladesh.',
     'default_description' => [
-        'category' => 'Shop :name toys online at Toy Mart BD. Genuine products, cash on delivery across Bangladesh.',
-        'brand' => 'Shop genuine :name toys at Toy Mart BD. Cash on delivery across Bangladesh.',
-        'page' => ':name — Toy Mart BD.',
+        'category' => 'Shop :name toys online at Smart Junior. Genuine products, cash on delivery across Bangladesh.',
+        'brand' => 'Shop genuine :name toys at Smart Junior. Cash on delivery across Bangladesh.',
+        'page' => ':name — Smart Junior.',
         'home' => 'Toys for 0–12 years with the age, price and stock stated on every one. Cash on delivery across Bangladesh.',
-        'blog_post' => ':name — the Toy Mart BD toy guide.',
-        'blog_category' => ':name — articles and buying guides from Toy Mart BD.',
-        'blog_tag' => 'Articles about :name from the Toy Mart BD toy guide.',
-        'blog_author' => 'Articles by :name in the Toy Mart BD toy guide.',
-        'product' => 'Buy :name online at Toy Mart BD. Cash on delivery across Bangladesh.',
+        'blog_post' => ':name — the Smart Junior toy guide.',
+        'blog_category' => ':name — articles and buying guides from Smart Junior.',
+        'blog_tag' => 'Articles about :name from the Smart Junior toy guide.',
+        'blog_author' => 'Articles by :name in the Smart Junior toy guide.',
+        'product' => 'Buy :name online at Smart Junior. Cash on delivery across Bangladesh.',
     ],
     'redirect' => [
         'from_invalid' => 'The source must be a path starting with / (no query string or fragment).',

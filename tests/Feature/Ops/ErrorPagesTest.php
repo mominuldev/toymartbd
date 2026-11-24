@@ -26,7 +26,7 @@ it('renders a branded, bilingual 404 for an unknown web path', function (): void
 
     $response->assertNotFound()
         ->assertHeader('Content-Type', 'text/html; charset=UTF-8')
-        ->assertSee('Toy Mart BD')
+        ->assertSee('Smart Junior')
         ->assertSee('This page isn&#039;t here', false)
         ->assertSee('এই পাতাটি নেই')
         ->assertSee('class="lang-bn"', false)

@@ -22,7 +22,7 @@ describe('products list', () => {
         expect(within(table).getByText('ব্রিক বক্স 500')).toBeTruthy();
         // The taka sign is its own span (Admin/currency/num), so match the cell's whole text.
         expect(within(table).getByText((_, el) => el?.tagName === 'TD' && el.textContent === '৳1,250 – ৳2,400.50')).toBeTruthy();
-        expect(within(table).getByText('Toy Mart Originals')).toBeTruthy();
+        expect(within(table).getByText('Smart Junior Originals')).toBeTruthy();
         expect(await within(table).findByText('Building & Construction')).toBeTruthy();
         expect(within(table).getByText('Published')).toBeTruthy();
     });

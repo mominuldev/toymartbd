@@ -32,6 +32,7 @@ final class ProductRailSchema extends BlockSchema
         return [
             ...self::headerRules(),
             'layout' => ['sometimes', Rule::in(self::LAYOUTS)],
+            ...self::sliderRules(),
             'band' => self::toneRule(),
             ...self::text('see_all_label', 60, false),
             ...self::text('all_label', 30, false),
@@ -53,13 +54,15 @@ final class ProductRailSchema extends BlockSchema
     public function defaults(): array
     {
         return [
-            'eyebrow' => null, 'eyebrow_bn' => null, 'eyebrow_tone' => 'yellow',
-            'title' => 'Best sellers', 'title_bn' => 'সবচেয়ে বেশি বিক্রি', 'sub' => null, 'sub_bn' => null,
-            'layout' => 'slider', 'band' => null, 'see_all_label' => null, 'see_all_label_bn' => null,
+            'eyebrow' => 'Most loved', 'eyebrow_bn' => 'সবচেয়ে প্রিয়', 'eyebrow_tone' => 'yellow',
+            'title' => 'What parents buy again and again', 'title_bn' => 'অভিভাবকরা বারবার কেনেন যেগুলো',
+            'sub' => 'The toys that get played with month after month.', 'sub_bn' => 'যে খেলনাগুলো মাসের পর মাস খেলা হয়।',
+            'layout' => 'slider', 'band' => null, 'see_all_label' => 'See all best sellers', 'see_all_label_bn' => 'সব বেস্টসেলার দেখুন',
             'all_label' => 'All', 'all_label_bn' => 'সব', 'chip_category_ids' => [],
             'rule' => ProductRailRule::BestSellers->value,
             'category_id' => null, 'brand_id' => null, 'product_ids' => [], 'window_days' => 30,
             'limit' => 8, 'min_items' => 1, 'hide_sold_out' => true, 'show_see_all' => true,
+            'slider' => self::sliderDefaults(),
         ];
     }
 
@@ -81,6 +84,7 @@ final class ProductRailSchema extends BlockSchema
         $out['min_items'] = min(self::int($content['min_items'] ?? null, 1), $out['limit']);
         $out['hide_sold_out'] = self::bool($content['hide_sold_out'] ?? null, true);
         $out['show_see_all'] = self::bool($content['show_see_all'] ?? null, true);
+        $out['slider'] = self::slider($content['slider'] ?? null);
 
         return $out;
     }

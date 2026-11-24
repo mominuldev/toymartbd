@@ -56,9 +56,9 @@ return [
         'test_note' => 'এটি `php artisan toymart:alerts:test` থেকে পাঠানো একটি পরীক্ষামূলক বার্তা। কোনো সমস্যা নেই।',
         'checked_at' => 'যাচাইয়ের সময় (UTC)',
         'runbook' => 'করণীয়: docs/ops/observability.md, "Business alerts"।',
-        'footer' => 'টয় মার্ট বিডি মনিটরিং। প্রাপক বদলাতে MONITORING_ALERT_EMAILS / MONITORING_ALERT_PHONES ব্যবহার করুন।',
+        'footer' => 'Smart Junior মনিটরিং। প্রাপক বদলাতে MONITORING_ALERT_EMAILS / MONITORING_ALERT_PHONES ব্যবহার করুন।',
     ],
 
-    'sms' => ':tagToy Mart BD :kind :name: :summary',
+    'sms' => ':tagSmart Junior :kind :name: :summary',
 
 ];

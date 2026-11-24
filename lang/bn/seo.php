@@ -7,18 +7,18 @@ declare(strict_types=1);
 | (PRD: human-written Bangla copy belongs to the owner).
 */
 return [
-    'site_name' => 'Toy Mart BD',
+    'site_name' => 'Smart Junior',
     'home_tagline' => 'সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।',
     'default_description' => [
         'home' => '0–12 বছরের খেলনা, প্রতিটিতে বয়স, দাম আর স্টক পরিষ্কার লেখা। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
-        'category' => 'Toy Mart BD-তে অনলাইনে :name খেলনা কিনুন। আসল পণ্য, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
-        'brand' => 'Toy Mart BD-তে আসল :name খেলনা কিনুন। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
-        'page' => ':name — Toy Mart BD।',
-        'blog_post' => ':name — Toy Mart BD খেলনা গাইড।',
-        'blog_category' => ':name — Toy Mart BD-এর লেখা ও কেনার গাইড।',
-        'blog_tag' => 'Toy Mart BD খেলনা গাইডে :name নিয়ে লেখা।',
-        'blog_author' => 'Toy Mart BD খেলনা গাইডে :name-এর লেখা।',
-        'product' => 'Toy Mart BD-তে অনলাইনে :name কিনুন। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
+        'category' => 'Smart Junior-তে অনলাইনে :name খেলনা কিনুন। আসল পণ্য, সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
+        'brand' => 'Smart Junior-তে আসল :name খেলনা কিনুন। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
+        'page' => ':name — Smart Junior।',
+        'blog_post' => ':name — Smart Junior খেলনা গাইড।',
+        'blog_category' => ':name — Smart Junior-এর লেখা ও কেনার গাইড।',
+        'blog_tag' => 'Smart Junior খেলনা গাইডে :name নিয়ে লেখা।',
+        'blog_author' => 'Smart Junior খেলনা গাইডে :name-এর লেখা।',
+        'product' => 'Smart Junior-তে অনলাইনে :name কিনুন। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।',
     ],
     'redirect' => [
         'from_invalid' => 'উৎস অবশ্যই / দিয়ে শুরু হওয়া একটি পাথ হতে হবে (কোয়েরি স্ট্রিং বা ফ্র্যাগমেন্ট ছাড়া)।',

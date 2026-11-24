@@ -24,8 +24,8 @@ final readonly class SendTestSms
     public const string TEMPLATE = 'test';
 
     public const array BODIES = [
-        'en' => 'Toy Mart BD: this is a test SMS.',
-        'bn' => 'টয় মার্ট বিডি: এটি একটি পরীক্ষামূলক এসএমএস।',
+        'en' => 'Smart Junior: this is a test SMS.',
+        'bn' => 'Smart Junior: এটি একটি পরীক্ষামূলক এসএমএস।',
     ];
 
     public function __construct(private SmsGateway $sms, private MessagingSettings $settings) {}

@@ -83,7 +83,7 @@ final readonly class DraftInboxReply
             : 'You do not know the customer\'s name: use a polite generic greeting, never invent a name.';
 
         return <<<TXT
-        You draft a reply for a staff member of Toy Mart BD, a kids' toy shop in Bangladesh, answering a customer on WhatsApp, Messenger or live chat. A person reads, edits and sends your draft; you never send anything.
+        You draft a reply for a staff member of Smart Junior, a kids' toy shop in Bangladesh, answering a customer on WhatsApp, Messenger or live chat. A person reads, edits and sends your draft; you never send anything.
 
         Tone: polite, warm Bangladeshi shop tone, like a helpful shopkeeper. {$lang} {$length} {$greeting}
 

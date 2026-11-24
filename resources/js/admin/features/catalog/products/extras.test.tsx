@@ -100,7 +100,7 @@ describe('product form extras (P4 batch 5)', () => {
         expect(within(panel).getByText('280 / 580 px · 27 chars')).toBeTruthy();
         expect(within(panel).getByText('SEO checklist · 6 of 7')).toBeTruthy();
         expect(within(panel).getByText('2 images missing Bangla alt text')).toBeTruthy();
-        expect(within(panel).getByText('Brick Box 500 | Toy Mart BD')).toBeTruthy();
+        expect(within(panel).getByText('Brick Box 500 | Smart Junior')).toBeTruthy();
 
         fireEvent.change(within(panel).getByRole('textbox', { name: 'Meta title' }), { target: { value: 'Brick Box 500 pcs — Classic Building Set' } });
         await waitFor(() => expect(urls(calls).some((u) => u.endsWith('/products/seo-measure'))).toBe(true));

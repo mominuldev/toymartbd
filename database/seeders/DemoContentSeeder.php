@@ -111,8 +111,8 @@ class DemoContentSeeder extends Seeder
             'title' => 'The best educational toys by age (2026 guide)', 'title_bn' => 'বয়স অনুযায়ী সেরা শিক্ষামূলক খেলনা (২০২৬ গাইড)',
             'excerpt' => 'From the first rattle to the first microscope: what helps a child learn at each stage, and what we would buy.',
             'excerpt_bn' => 'প্রথম ঝুনঝুনি থেকে প্রথম মাইক্রোস্কোপ: প্রতিটি বয়সে শিশুর শেখায় কী সাহায্য করে, আর আমরা কী কিনতাম।',
-            'body' => '<p>Children learn by doing. The right toy at the right age invites exactly the kind of play a child is ready for — grasping, sorting, building, then asking why.</p><p>Every pick below is in stock at Toy Mart BD and chosen by our team with parents in Dhaka and Chattogram.</p>',
-            'body_bn' => '<p>শিশুরা করে করে শেখে। সঠিক বয়সে সঠিক খেলনা ঠিক সেই খেলাটাই ডেকে আনে, যার জন্য শিশু তৈরি — ধরা, সাজানো, বানানো, তারপর প্রশ্ন করা।</p><p>নিচের প্রতিটি খেলনা টয় মার্ট বিডিতে পাওয়া যায়।</p>',
+            'body' => '<p>Children learn by doing. The right toy at the right age invites exactly the kind of play a child is ready for — grasping, sorting, building, then asking why.</p><p>Every pick below is in stock at Smart Junior and chosen by our team with parents in Dhaka and Chattogram.</p>',
+            'body_bn' => '<p>শিশুরা করে করে শেখে। সঠিক বয়সে সঠিক খেলনা ঠিক সেই খেলাটাই ডেকে আনে, যার জন্য শিশু তৈরি — ধরা, সাজানো, বানানো, তারপর প্রশ্ন করা।</p><p>নিচের প্রতিটি খেলনা Smart Junior-এ পাওয়া যায়।</p>',
             'category' => 'play-and-learning', 'tags' => ['stem', 'toddlers'], 'author' => 'sabina-yasmin', 'cover' => 'TMB-CLE-MICRO',
         ],
         'screen-free-activities-for-rainy-days' => [
@@ -241,7 +241,7 @@ class DemoContentSeeder extends Seeder
         $authors = [
             'tanvir-ahmed' => BlogAuthor::query()->where('slug', 'tanvir-ahmed')->first() ?? self::at($start, fn () => $terms->handle(new BlogAuthor, new BlogTermData(
                 'Tanvir Ahmed', 'তানভীর আহমেদ', 'tanvir-ahmed',
-                'Content editor at Toy Mart BD and father of two toy testers.', 'টয় মার্ট বিডির কনটেন্ট এডিটর, দুই খেলনা-পরীক্ষকের বাবা।',
+                'Content editor at Smart Junior and father of two toy testers.', 'Smart Junior-এর কনটেন্ট এডিটর, দুই খেলনা-পরীক্ষকের বাবা।',
                 userId: $editor?->id,
             ), $actor)),
             'sabina-yasmin' => BlogAuthor::query()->where('slug', 'sabina-yasmin')->first() ?? self::at($start, fn () => $terms->handle(new BlogAuthor, new BlogTermData(
@@ -284,7 +284,7 @@ class DemoContentSeeder extends Seeder
                 guideBudgetMax: $guide ? Money::of('6000.00') : null,
                 sections: $guide ? self::guideSections() : [],
                 relatedProductIds: array_map(self::productId(...), $p['related'] ?? []),
-                seo: ['title' => $p['title'].' | Toy Mart BD', 'title_bn' => $p['title_bn'].' | টয় মার্ট বিডি', 'description' => $p['excerpt'], 'description_bn' => $p['excerpt_bn']],
+                seo: ['title' => $p['title'].' | Smart Junior', 'title_bn' => $p['title_bn'].' | Smart Junior', 'description' => $p['excerpt'], 'description_bn' => $p['excerpt_bn']],
             );
 
             self::at($savedAt, fn (): BlogPost => $posts->handle(null, $data, $postActor));
@@ -395,7 +395,7 @@ class DemoContentSeeder extends Seeder
                     new MenuItemData('Track your order', 'অর্ডার ট্র্যাক করুন', MenuLinkType::Custom, url: '/track'),
                     $page('delivery-policy'), $page('returns-policy'), $page('faq'), $page('contact'),
                 ]),
-                new MenuItemData('Toy Mart BD', 'টয় মার্ট বিডি', MenuLinkType::None, children: [
+                new MenuItemData('Smart Junior', 'Smart Junior', MenuLinkType::None, children: [
                     $page('about'),
                     new MenuItemData('Blog', 'ব্লগ', MenuLinkType::Custom, url: '/blog'),
                     $page('privacy-policy'), $page('terms'),

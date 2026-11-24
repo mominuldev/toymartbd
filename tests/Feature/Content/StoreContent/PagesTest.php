@@ -94,10 +94,10 @@ it('keeps a draft off the storefront and its list', function (): void {
 
 it('serves a live page in both locales with effective SEO', function (): void {
     $id = $this->postJson('/api/v1/admin/content/pages', scPagePayload([
-        'seo' => ['title_bn' => 'ডেলিভারি | টয় মার্ট', 'description' => 'How we deliver.'],
+        'seo' => ['title_bn' => 'ডেলিভারি | Smart Junior', 'description' => 'How we deliver.'],
     ]))->assertCreated()->json('id');
 
-    expect(SeoMeta::query()->where('seoable_type', 'page')->where('seoable_id', $id)->value('title_bn'))->toBe('ডেলিভারি | টয় মার্ট');
+    expect(SeoMeta::query()->where('seoable_type', 'page')->where('seoable_id', $id)->value('title_bn'))->toBe('ডেলিভারি | Smart Junior');
 
     $this->withToken(scPageToken())->getJson('/api/v1/storefront/pages/delivery-policy')
         ->assertOk()
@@ -105,7 +105,7 @@ it('serves a live page in both locales with effective SEO', function (): void {
         ->assertJsonPath('title_bn', 'ডেলিভারি নীতি')
         ->assertJsonPath('content_bn', '<p>ঢাকায় ২৪ ঘণ্টায় ডেলিভারি।</p>')
         ->assertJsonPath('seo.title', 'Delivery policy')
-        ->assertJsonPath('seo.title_bn', 'ডেলিভারি | টয় মার্ট')
+        ->assertJsonPath('seo.title_bn', 'ডেলিভারি | Smart Junior')
         ->assertJsonPath('seo.description', 'How we deliver.')
         ->assertJsonPath('seo.robots', 'index,follow');
 });
@@ -195,7 +195,7 @@ it('purges the page body AND its SEO document fetch when a page is saved with SE
     Queue::fake();
 
     $this->putJson("/api/v1/admin/content/pages/{$id}", scPagePayload([
-        'seo' => ['title_bn' => 'ডেলিভারি | টয় মার্ট', 'description' => 'How we deliver.'],
+        'seo' => ['title_bn' => 'ডেলিভারি | Smart Junior', 'description' => 'How we deliver.'],
     ]))->assertOk();
 
     // The storefront caches /{slug} under content:page:{slug} and its SEO document
@@ -209,8 +209,8 @@ it('purges the page body AND its SEO document fetch when the SEO panel saves a p
     Queue::fake();
 
     $this->putJson("/api/v1/admin/seo/meta/page/{$id}", [
-        'title' => 'Delivery policy | Toy Mart BD',
-        'title_bn' => 'ডেলিভারি নীতি | টয় মার্ট',
+        'title' => 'Delivery policy | Smart Junior',
+        'title_bn' => 'ডেলিভারি নীতি | Smart Junior',
         'description' => 'How we deliver across Bangladesh.',
     ])->assertOk();
 

@@ -22,7 +22,7 @@ use Tests\Feature\Inbox\InboxFixtures;
 use Tests\Support\RoleMatrix;
 
 /*
- * Inbox › Channels: "Continue with Facebook" (Meta's manual login flow on Toy Mart's own app),
+ * Inbox › Channels: "Continue with Facebook" (Meta's manual login flow on Smart Junior's own app),
  * Disconnect, the Reconnect-needed state and the card counts. Meta's answers are hand-authored
  * from its reference pages (docs/api/inbox.md) — no Meta app or Page exists. Page tokens never
  * reach the browser, never sit in plain text in the database, and never appear in an audit row.
@@ -73,7 +73,7 @@ function fblFakeGraph(?array $pages = null, bool $subscribed = true): void
             ->push(['access_token' => FBL_USER_SHORT, 'token_type' => 'bearer'])
             ->push(['access_token' => FBL_USER_LONG, 'token_type' => 'bearer', 'expires_in' => 5183944]),
         FBL_GRAPH.'me/accounts*' => Http::response(['data' => $pages ?? [
-            ['id' => FBL_PAGE_ID, 'name' => 'Toy Mart BD', 'access_token' => FBL_PAGE_TOKEN, 'tasks' => ['ANALYZE', 'ADVERTISE', 'MESSAGING', 'MODERATE', 'CREATE_CONTENT', 'MANAGE']],
+            ['id' => FBL_PAGE_ID, 'name' => 'Smart Junior', 'access_token' => FBL_PAGE_TOKEN, 'tasks' => ['ANALYZE', 'ADVERTISE', 'MESSAGING', 'MODERATE', 'CREATE_CONTENT', 'MANAGE']],
         ]]),
         FBL_GRAPH.FBL_PAGE_ID.'/subscribed_apps*' => Http::response(['success' => $subscribed]),
     ]);
@@ -122,12 +122,12 @@ it('exchanges the code, lists the shared Pages without their tokens, and connect
     $state = fblState();
 
     $finish = $this->postJson(FBL_URL.'/messenger/login/finish', ['code' => 'AQD-code-TEST', 'state' => $state])->assertOk();
-    expect($finish->json('pages'))->toBe([['id' => FBL_PAGE_ID, 'name' => 'Toy Mart BD', 'can_message' => true]])
+    expect($finish->json('pages'))->toBe([['id' => FBL_PAGE_ID, 'name' => 'Smart Junior', 'can_message' => true]])
         ->and($finish->getContent())->not->toContain(FBL_PAGE_TOKEN)->not->toContain(FBL_USER_LONG);
 
     $settings = $this->postJson(FBL_URL.'/messenger/connect', ['session' => $finish->json('session'), 'page_id' => FBL_PAGE_ID])->assertOk();
     $settings->assertJsonPath('messenger.account_id', FBL_PAGE_ID)
-        ->assertJsonPath('messenger.page_name', 'Toy Mart BD')
+        ->assertJsonPath('messenger.page_name', 'Smart Junior')
         ->assertJsonPath('messenger.connected_by', 'Mominul Islam')
         ->assertJsonPath('messenger.driver', 'messenger')
         ->assertJsonPath('messenger.send_token.set', true)
@@ -186,7 +186,7 @@ it('says why when Facebook refuses the code or cannot be reached', function (): 
 
 it('refuses a Page this account cannot message, and a Page that was not shared', function (): void {
     fblAdmin();
-    fblFakeGraph([['id' => FBL_PAGE_ID, 'name' => 'Toy Mart BD', 'access_token' => FBL_PAGE_TOKEN, 'tasks' => ['ANALYZE']]]);
+    fblFakeGraph([['id' => FBL_PAGE_ID, 'name' => 'Smart Junior', 'access_token' => FBL_PAGE_TOKEN, 'tasks' => ['ANALYZE']]]);
     $session = $this->postJson(FBL_URL.'/messenger/login/finish', ['code' => 'c', 'state' => fblState()])->assertOk()->json('session');
 
     $this->postJson(FBL_URL.'/messenger/connect', ['session' => $session, 'page_id' => '999'])->assertStatus(409);
@@ -209,7 +209,7 @@ it('disconnects the Page: Meta stops sending, the saved Page and token go, repli
     Setting::put('inbox.messenger.app_secret', InboxFixtures::FB_SECRET, SettingGroup::Notification, true);
     Setting::put('inbox.messenger.page_id', FBL_PAGE_ID, SettingGroup::Notification);
     Setting::put('inbox.messenger.page_access_token', FBL_PAGE_TOKEN, SettingGroup::Notification, true);
-    Setting::put('inbox.messenger.page_name', 'Toy Mart BD', SettingGroup::Notification);
+    Setting::put('inbox.messenger.page_name', 'Smart Junior', SettingGroup::Notification);
     Setting::put('inbox.messenger.driver', 'messenger', SettingGroup::Notification);
     Http::fake([FBL_GRAPH.FBL_PAGE_ID.'/subscribed_apps*' => Http::response(['success' => true])]);
 
@@ -256,7 +256,7 @@ it('shows Reconnect needed after a failed test with error 190 or a dropped subsc
     Http::fake(function (Request $r) use (&$subscribedApp) {
         return str_contains($r->url(), '/subscribed_apps')
             ? Http::response(['data' => [['id' => $subscribedApp, 'name' => 'An app']]])
-            : Http::response(['name' => 'Toy Mart BD', 'id' => FBL_PAGE_ID]);
+            : Http::response(['name' => 'Smart Junior', 'id' => FBL_PAGE_ID]);
     });
     $this->postJson(FBL_URL.'/messenger/test')->assertOk()->assertJsonPath('error_code', 'not_subscribed');
     $this->getJson(FBL_URL)->assertJsonPath('messenger.connection.state', 'reconnect')->assertJsonPath('messenger.connection.reason', 'not_subscribed');

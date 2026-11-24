@@ -105,10 +105,10 @@ it('saves and reads the invoice company details', function (): void {
         ->assertJsonPath('name_en', null)
         ->assertJsonPath('placeholders', ['name_en', 'name_bn', 'address_en', 'address_bn', 'hotline', 'trade_licence', 'bin']);
 
-    $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি', 'bin' => 'not-a-bin!'])->assertUnprocessable()->assertJsonPath('errors.0.field', 'bin');
-    $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি', 'bin' => '000111222-0101', 'logo_media_id' => 999999])->assertUnprocessable()->assertJsonPath('errors.0.field', 'logo_media_id');
-    $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি', 'bin' => '000111222-0101'])
-        ->assertOk()->assertJsonPath('bin', '000111222-0101')->assertJsonPath('name_bn', 'টয় মার্ট বিডি');
+    $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Smart Junior', 'name_bn' => 'Smart Junior', 'bin' => 'not-a-bin!'])->assertUnprocessable()->assertJsonPath('errors.0.field', 'bin');
+    $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Smart Junior', 'name_bn' => 'Smart Junior', 'bin' => '000111222-0101', 'logo_media_id' => 999999])->assertUnprocessable()->assertJsonPath('errors.0.field', 'logo_media_id');
+    $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Smart Junior', 'name_bn' => 'Smart Junior', 'bin' => '000111222-0101'])
+        ->assertOk()->assertJsonPath('bin', '000111222-0101')->assertJsonPath('name_bn', 'Smart Junior');
 });
 
 describe('role matrix', function (): void {
@@ -136,7 +136,7 @@ describe('role matrix', function (): void {
 
     it('guards invoice settings: read settings.view, write settings.update', function (): void {
         RoleMatrix::assert($this, Permission::SettingsView, fn () => $this->getJson('/api/v1/admin/settings/invoice'));
-        RoleMatrix::assert($this, Permission::SettingsUpdate, fn () => $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Toy Mart BD']));
+        RoleMatrix::assert($this, Permission::SettingsUpdate, fn () => $this->putJson('/api/v1/admin/settings/invoice', ['name_en' => 'Smart Junior']));
     });
 
     it('refuses a guest with 401', function (): void {

@@ -109,11 +109,11 @@ it('versions every edit, keeps the replaced default as version 1, and restores w
         'body_en' => $en, 'body_bn' => $template->body_bn, 'is_active' => true,
     ]);
 
-    $put('Toy Mart BD: {order_number} received. Thanks {name}!')->assertOk()
+    $put('Smart Junior: {order_number} received. Thanks {name}!')->assertOk()
         ->assertJsonPath('updated_by_name', 'Rafi Ahmed');
-    $put('Toy Mart BD: order {order_number} is in.')->assertOk();
+    $put('Smart Junior: order {order_number} is in.')->assertOk();
     // Saving the same copy again is not a new version.
-    $put('Toy Mart BD: order {order_number} is in.')->assertOk();
+    $put('Smart Junior: order {order_number} is in.')->assertOk();
 
     $versions = $this->getJson("/api/v1/admin/notifications/templates/{$template->id}/versions")->assertOk()->json('data');
     expect(collect($versions)->pluck('version')->all())->toBe([3, 2, 1])

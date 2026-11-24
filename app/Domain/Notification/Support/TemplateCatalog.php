@@ -42,12 +42,12 @@ final class TemplateCatalog
                 'variables' => ['code', 'minutes'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD verification code: {code}. Valid {minutes} minutes. Do not share this code.',
-                        'body_bn' => 'টয় মার্ট বিডি কোড: {code}। {minutes} মিনিট কাজ করবে। কাউকে দেবেন না।',
+                        'body_en' => 'Smart Junior verification code: {code}. Valid {minutes} minutes. Do not share this code.',
+                        'body_bn' => 'Smart Junior কোড: {code}। {minutes} মিনিট কাজ করবে। কাউকে দেবেন না।',
                     ],
                     'email' => [
-                        'subject_en' => 'Your Toy Mart BD code is {code}',
-                        'subject_bn' => 'আপনার টয় মার্ট বিডি কোড {code}',
+                        'subject_en' => 'Your Smart Junior code is {code}',
+                        'subject_bn' => 'আপনার Smart Junior কোড {code}',
                         'preheader_en' => 'Valid {minutes} minutes. We never ask for this code on a call.',
                         'preheader_bn' => '{minutes} মিনিট কাজ করবে। ফোনে আমরা কখনো এই কোড চাই না।',
                         'body_en' => "Your verification code is {code}. It is valid for {minutes} minutes.\nWe never ask for this code on a call. Do not share it with anyone.",
@@ -62,17 +62,17 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['name', 'order_number', 'item_count', 'total'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} received. BDT {total}, cash on delivery. We will call you to confirm. {track_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} পেয়েছি। BDT {total}, ক্যাশ অন ডেলিভারি। কনফার্ম করতে ফোন করব। {track_url}',
+                        'body_en' => 'Smart Junior: order {order_number} received. BDT {total}, cash on delivery. We will call you to confirm. {track_url}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} পেয়েছি। BDT {total}, ক্যাশ অন ডেলিভারি। কনফার্ম করতে ফোন করব। {track_url}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_placed',
-                        'body_en' => 'Hello {name}, we have your Toy Mart BD order *{order_number}*. {item_count} items, total BDT {total}, cash on delivery. We will call this number within 2 hours on working days to confirm. Keep BDT {total} ready for the rider on delivery day.',
-                        'body_bn' => '{name}, আপনার টয় মার্ট বিডি অর্ডার *{order_number}* আমাদের কাছে পৌঁছেছে। {item_count}টি পণ্য, সর্বমোট BDT {total}, ক্যাশ অন ডেলিভারি। কর্মদিবসে 2 ঘণ্টার মধ্যে এই নম্বরে ফোন করে কনফার্ম করব। ডেলিভারির দিন রাইডারের জন্য BDT {total} হাতে রাখুন।',
+                        'body_en' => 'Hello {name}, we have your Smart Junior order *{order_number}*. {item_count} items, total BDT {total}, cash on delivery. We will call this number within 2 hours on working days to confirm. Keep BDT {total} ready for the rider on delivery day.',
+                        'body_bn' => '{name}, আপনার Smart Junior অর্ডার *{order_number}* আমাদের কাছে পৌঁছেছে। {item_count}টি পণ্য, সর্বমোট BDT {total}, ক্যাশ অন ডেলিভারি। কর্মদিবসে 2 ঘণ্টার মধ্যে এই নম্বরে ফোন করে কনফার্ম করব। ডেলিভারির দিন রাইডারের জন্য BDT {total} হাতে রাখুন।',
                     ],
                     'email' => [
-                        'subject_en' => 'Order {order_number} received - Toy Mart BD',
-                        'subject_bn' => 'অর্ডার {order_number} পেয়েছি - টয় মার্ট বিডি',
+                        'subject_en' => 'Order {order_number} received - Smart Junior',
+                        'subject_bn' => 'অর্ডার {order_number} পেয়েছি - Smart Junior',
                         'preheader_en' => 'We will call you within 2 hours to confirm.',
                         'preheader_bn' => 'কনফার্ম করতে 2 ঘণ্টার মধ্যে ফোন করব।',
                         'body_en' => "Thank you, we have your order {order_number}: {item_count} items, total BDT {total}, cash on delivery.\nWe will call you within 2 hours on working days to confirm it.",
@@ -87,8 +87,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['order_number', 'date_range'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} is confirmed and being packed. Delivery {date_range}. {track_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} কনফার্ম হয়েছে, প্যাক করা হচ্ছে। {date_range} ডেলিভারি। {track_url}',
+                        'body_en' => 'Smart Junior: order {order_number} is confirmed and being packed. Delivery {date_range}. {track_url}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} কনফার্ম হয়েছে, প্যাক করা হচ্ছে। {date_range} ডেলিভারি। {track_url}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_confirmed',
@@ -112,8 +112,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['order_number', 'courier', 'consignment', 'eta'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} handed to {courier}. Consignment {consignment}. The rider will call before delivery. {track_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} {courier}-কে দেওয়া হয়েছে। কনসাইনমেন্ট {consignment}। রাইডার ফোন করবে। {track_url}',
+                        'body_en' => 'Smart Junior: order {order_number} handed to {courier}. Consignment {consignment}. The rider will call before delivery. {track_url}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} {courier}-কে দেওয়া হয়েছে। কনসাইনমেন্ট {consignment}। রাইডার ফোন করবে। {track_url}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_shipped',
@@ -137,8 +137,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['order_number', 'cod_amount', 'rider_phone'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} is out for delivery today. Please keep BDT {cod_amount} ready. Rider: {rider_phone}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} আজ ডেলিভারি হবে। BDT {cod_amount} হাতে রাখুন। রাইডার: {rider_phone}',
+                        'body_en' => 'Smart Junior: order {order_number} is out for delivery today. Please keep BDT {cod_amount} ready. Rider: {rider_phone}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} আজ ডেলিভারি হবে। BDT {cod_amount} হাতে রাখুন। রাইডার: {rider_phone}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_out_for_delivery',
@@ -159,10 +159,10 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['order_number', 'cod_amount'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} is out for delivery today. Please keep BDT {cod_amount} ready.',
+                        'body_en' => 'Smart Junior: order {order_number} is out for delivery today. Please keep BDT {cod_amount} ready.',
                         // "অর্ডার" dropped so the Bangla fits ONE UCS-2 segment (66 of 70 with the
                         // sample; 05-content-and-assets-spec A.17.1 `.short` does the same).
-                        'body_bn' => 'টয় মার্ট বিডি: {order_number} আজ ডেলিভারি হবে। BDT {cod_amount} হাতে রাখুন।',
+                        'body_bn' => 'Smart Junior: {order_number} আজ ডেলিভারি হবে। BDT {cod_amount} হাতে রাখুন।',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_out_for_delivery_no_rider',
@@ -178,8 +178,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['order_number', 'date'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} delivered. Thank you. 7-day return applies. Problem? Call {hotline}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} ডেলিভারি হয়েছে। ধন্যবাদ। 7 দিনের রিটার্ন সুবিধা আছে। সমস্যা হলে: {hotline}',
+                        'body_en' => 'Smart Junior: order {order_number} delivered. Thank you. 7-day return applies. Problem? Call {hotline}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} ডেলিভারি হয়েছে। ধন্যবাদ। 7 দিনের রিটার্ন সুবিধা আছে। সমস্যা হলে: {hotline}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_delivered',
@@ -203,8 +203,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['order_number', 'refund_sentence'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: order {order_number} has been cancelled. Nothing is owed. To order again: {store_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} বাতিল করা হয়েছে। কোনো টাকা দিতে হবে না। আবার অর্ডার: {store_url}',
+                        'body_en' => 'Smart Junior: order {order_number} has been cancelled. Nothing is owed. To order again: {store_url}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} বাতিল করা হয়েছে। কোনো টাকা দিতে হবে না। আবার অর্ডার: {store_url}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'order_cancelled',
@@ -228,8 +228,8 @@ final class TemplateCatalog
                 'variables' => ['name', 'item_count', 'restore_url', 'store_url'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: your cart with {item_count} items is saved. Finish your order here: {restore_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: আপনার কার্টে {item_count}টি পণ্য রাখা আছে। অর্ডার শেষ করুন: {restore_url}',
+                        'body_en' => 'Smart Junior: your cart with {item_count} items is saved. Finish your order here: {restore_url}',
+                        'body_bn' => 'Smart Junior: আপনার কার্টে {item_count}টি পণ্য রাখা আছে। অর্ডার শেষ করুন: {restore_url}',
                     ],
                 ],
             ],
@@ -244,8 +244,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['name', 'order_number', 'review_url'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: how are the toys from order {order_number}? Please rate them: {review_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: অর্ডার {order_number} এর খেলনা কেমন লাগল? রিভিউ দিন: {review_url}',
+                        'body_en' => 'Smart Junior: how are the toys from order {order_number}? Please rate them: {review_url}',
+                        'body_bn' => 'Smart Junior: অর্ডার {order_number} এর খেলনা কেমন লাগল? রিভিউ দিন: {review_url}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'review_request',
@@ -268,8 +268,8 @@ final class TemplateCatalog
                 'whatsapp_parameters' => ['name', 'child_possessive', 'birthday_date', 'offer_sentence'],
                 'channels' => [
                     'sms' => [
-                        'body_en' => 'Toy Mart BD: {child_possessive} birthday is on {birthday_date}! {offer_sentence} Gifts: {store_url}',
-                        'body_bn' => 'টয় মার্ট বিডি: {birthday_date} {child_possessive} জন্মদিন! {offer_sentence} {store_url}',
+                        'body_en' => 'Smart Junior: {child_possessive} birthday is on {birthday_date}! {offer_sentence} Gifts: {store_url}',
+                        'body_bn' => 'Smart Junior: {birthday_date} {child_possessive} জন্মদিন! {offer_sentence} {store_url}',
                     ],
                     'whatsapp' => [
                         'provider_template' => 'child_birthday_reminder',
@@ -325,7 +325,7 @@ final class TemplateCatalog
             'cod_amount' => '2450',
             'track_url' => $short.'/TMB-26-00482',
             'hotline' => (string) config('notifications.hotline', '09600123456'),
-            'store_url' => (string) config('notifications.store_url', 'toymartbd.com'),
+            'store_url' => (string) config('notifications.store_url', 'smartjunior.com.bd'),
             'date_range' => (string) trans('notifications.delivery_window', [], $locale),
             'eta' => (string) trans('notifications.shipping_eta', [], $locale),
             'courier' => $bn ? 'পাঠাও' : 'Pathao',
@@ -345,8 +345,8 @@ final class TemplateCatalog
             ], $locale),
             // A real restore link is 24 random characters under the storefront origin.
             // A review link: the storefront PDP of a typical product slug, `#reviews`.
-            'review_url' => rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://toymartbd.com')), '/').($bn ? '/bn' : '').'/products/remote-control-racing-car-red#reviews',
-            'restore_url' => rtrim((string) config('cart_recovery.storefront_url', 'https://toymartbd.com'), '/').($bn ? '/bn' : '').'/cart/restore/'.str_repeat('x', 24),
+            'review_url' => rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://smartjunior.com.bd')), '/').($bn ? '/bn' : '').'/products/remote-control-racing-car-red#reviews',
+            'restore_url' => rtrim((string) config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'), '/').($bn ? '/bn' : '').'/cart/restore/'.str_repeat('x', 24),
         ];
     }
 }

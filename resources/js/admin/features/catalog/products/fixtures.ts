@@ -76,7 +76,7 @@ export const listItem: ProductListItem = {
     slug: 'brick-box-500',
     type: 'variable',
     status: 'active',
-    brand: { id: 3, name: 'Toy Mart Originals' },
+    brand: { id: 3, name: 'Smart Junior Originals' },
     primary_category_id: 5,
     sku: 'TM-00042-RED-S',
     price_min: '1250.00',
@@ -120,7 +120,7 @@ export const product: Product = {
     type: 'variable',
     status: 'active',
     brand_id: 3,
-    brand: { id: 3, name: 'Toy Mart Originals', name_bn: null },
+    brand: { id: 3, name: 'Smart Junior Originals', name_bn: null },
     primary_category_id: 5,
     category_ids: [5],
     categories: [{ id: 5, name: 'Building & Construction', name_bn: null, slug: 'building' }],
@@ -162,7 +162,7 @@ export const product: Product = {
         twitter_card: 'summary_large_image',
         schema_override: null,
         focus_keyword: null,
-        defaults: { title: 'Brick Box 500 | Toy Mart BD', title_bn: 'ব্রিক বক্স 500 | Toy Mart BD', description: '500 colourful bricks.', description_bn: '500টি রঙিন ব্রিক।', og_image: null },
+        defaults: { title: 'Brick Box 500 | Smart Junior', title_bn: 'ব্রিক বক্স 500 | Smart Junior', description: '500 colourful bricks.', description_bn: '500টি রঙিন ব্রিক।', og_image: null },
         url: 'https://toymartbd.com/products/brick-box-500',
         measure: { title: { px: 280, chars: 27, max: 580, fits: true }, description: { px: 150, chars: 21, max: 920, fits: true, fits_mobile: true } },
         checklist: {
@@ -216,7 +216,7 @@ export function productApi(me: Me, handler?: (url: string, init?: RequestInit) =
         if (/\/products\/\d+\/images$/.test(url)) return { status: 200, body: { data: [] } };
         if (url.endsWith('/attributes')) return { status: 200, body: { data: [color, size] } };
         if (url.includes('/categories')) return { status: 200, body: { data: [category] } };
-        if (url.includes('/brands')) return { status: 200, body: page([{ id: 3, name: 'Toy Mart Originals', name_bn: null, slug: 'tmo', description: null, description_bn: null, is_active: true, logo_url: null, created_at: '', updated_at: '' }]) };
+        if (url.includes('/brands')) return { status: 200, body: page([{ id: 3, name: 'Smart Junior Originals', name_bn: null, slug: 'tmo', description: null, description_bn: null, is_active: true, logo_url: null, created_at: '', updated_at: '' }]) };
         if (/\/products\/42$/.test(url) && (!init?.method || init.method === 'GET')) return { status: 200, body: me.permissions.includes('catalog.view_cost') ? product : withoutCost(product) };
         if (url.includes('/products?') || url.endsWith('/products')) return { status: 200, body: page([listItem]) };
         if (url.endsWith('/products/seo-measure')) return { status: 200, body: product.seo.measure };

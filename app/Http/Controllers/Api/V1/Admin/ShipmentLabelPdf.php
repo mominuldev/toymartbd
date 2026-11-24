@@ -56,7 +56,7 @@ final class ShipmentLabelPdf
             'autoScriptToLang' => false,
             'autoLangToFont' => false,
         ]);
-        $mpdf->SetTitle('Toy Mart BD — shipping labels');
+        $mpdf->SetTitle('Smart Junior — shipping labels');
         $mpdf->WriteHTML(view('labels.shipments', ['labels' => $labels, 'locale' => $locale])->render());
 
         return $mpdf->Output('', 'S');

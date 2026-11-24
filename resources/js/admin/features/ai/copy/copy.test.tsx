@@ -14,7 +14,7 @@ const draft: ProductCopyDraft = {
     en: {
         title: 'Brick Box 500 — Building Set',
         description_html: '<p>Build <strong>anything</strong>.</p><ul><li>For ages 4 to 8 years</li></ul>',
-        seo_title: 'Brick Box 500 Building Set | Toy Mart BD',
+        seo_title: 'Brick Box 500 Building Set | Smart Junior',
         meta_description: 'A building set for ages 4 to 8 years.',
         too_long: [],
         unknown_figures: [],
@@ -76,7 +76,7 @@ describe('Write with AI (Figma 538:82911)', () => {
         expect(dialog.getByText('The AI only uses these facts. It is told never to invent safety claims or certifications.')).toBeTruthy();
         expect((dialog.getByRole('textbox', { name: 'Title' }) as HTMLInputElement).value).toBe('Brick Box 500 — Building Set');
         expect(dialog.getByText('28 / 70')).toBeTruthy();
-        expect(dialog.getByText('40 / 60')).toBeTruthy();
+        expect(dialog.getByText('41 / 60')).toBeTruthy();
 
         fireEvent.click(within(dialog.getByRole('group', { name: 'Draft language' })).getByRole('button', { name: 'বাংলা' }));
         expect((dialog.getByRole('textbox', { name: 'Title' }) as HTMLInputElement).value).toBe('ব্রিক বক্স 500 — বিল্ডিং সেট');
@@ -108,7 +108,7 @@ describe('Write with AI (Figma 538:82911)', () => {
         expect(put.name_bn).toBe('ব্রিক বক্স 500 — বিল্ডিং সেট');
         expect(put.slug).toBe('brick-box-500');
         expect(put.description).toBe('<p>Build <strong>anything</strong>.</p><ul><li>For ages 4 to 8 years</li></ul>');
-        expect(put.seo).toMatchObject({ title: 'Brick Box 500 Building Set | Toy Mart BD', title_bn: 'ব্রিক বক্স 500 বিল্ডিং সেট', description: 'A building set for ages 4 to 8 years.', description_bn: '4 থেকে 8 বছরের শিশুদের বিল্ডিং সেট।' });
+        expect(put.seo).toMatchObject({ title: 'Brick Box 500 Building Set | Smart Junior', title_bn: 'ব্রিক বক্স 500 বিল্ডিং সেট', description: 'A building set for ages 4 to 8 years.', description_bn: '4 থেকে 8 বছরের শিশুদের বিল্ডিং সেট।' });
     });
 
     it('Cancel closes without touching the form', async () => {

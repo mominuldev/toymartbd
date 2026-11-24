@@ -29,6 +29,7 @@ final class VideoReelSchema extends BlockSchema
         return [
             ...self::headerRules(),
             'band' => self::toneRule(),
+            ...self::sliderRules(),
             ...self::text('see_all_label', 60, false),
             'see_all_href' => [...self::href(), 'required_with:see_all_label'],
             'items' => ['sometimes', 'array', 'max:'.self::MAX_ITEMS],
@@ -57,6 +58,7 @@ final class VideoReelSchema extends BlockSchema
             'title' => 'Toys in action', 'title_bn' => 'খেলার মুহূর্ত', 'sub' => null, 'sub_bn' => null,
             'band' => 'purple', 'see_all_label' => null, 'see_all_label_bn' => null, 'see_all_href' => null,
             'items' => [],
+            'slider' => self::sliderDefaults(),
         ];
     }
 
@@ -67,6 +69,7 @@ final class VideoReelSchema extends BlockSchema
         $out['band'] = self::tone($content['band'] ?? null, null);
         self::copyText($content, $out, 'see_all_label');
         $out['see_all_href'] = self::str($content['see_all_href'] ?? null);
+        $out['slider'] = self::slider($content['slider'] ?? null);
         $out['items'] = [];
         foreach (self::items($content, 'items', self::MAX_ITEMS) as $item) {
             $row = [];

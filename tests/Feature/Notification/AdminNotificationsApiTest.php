@@ -75,7 +75,7 @@ it('updates a template and re-measures both locales server-side', function (): v
     $longBn = str_repeat('অ', 140).' {order_number}';
 
     $response = $this->putJson("/api/v1/admin/notifications/templates/{$template->id}", [
-        'body_en' => 'Toy Mart BD: {order_number} received.',
+        'body_en' => 'Smart Junior: {order_number} received.',
         'body_bn' => $longBn,
         'is_active' => true,
     ])->assertOk();

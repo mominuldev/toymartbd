@@ -37,8 +37,8 @@ it('answers nulls (the storefront shows its marked samples) until the owner sets
     $this->withToken($this->token)->getJson(STORE_INFO_URL)
         ->assertOk()
         ->assertExactJson([
-            'name_en' => 'Toy Mart BD',
-            'name_bn' => 'টয় মার্ট বিডি',
+            'name_en' => 'Smart Junior',
+            'name_bn' => 'Smart Junior',
             'hotline' => null,
             'hotline_tel' => null,
             'whatsapp' => null,
@@ -63,7 +63,7 @@ it('answers nulls (the storefront shows its marked samples) until the owner sets
 });
 
 it('serves what the owner saved in Business and invoice details', function (): void {
-    foreach (['name_en' => 'Toy Mart BD Ltd', 'hotline' => '09610-777888', 'email' => 'hello@toymartbd.com', 'trade_licence' => 'TRAD/DNCC/1/2026', 'bin' => '001122334-0101', 'address_bn' => 'মিরপুর, ঢাকা'] as $field => $value) {
+    foreach (['name_en' => 'Smart Junior Ltd', 'hotline' => '09610-777888', 'email' => 'hello@toymartbd.com', 'trade_licence' => 'TRAD/DNCC/1/2026', 'bin' => '001122334-0101', 'address_bn' => 'মিরপুর, ঢাকা'] as $field => $value) {
         Setting::put(CompanyDetails::PREFIX.$field, $value, SettingGroup::Store, false, null);
     }
     Setting::put(CompanyDetails::WHATSAPP_KEY, '+8801711000222', SettingGroup::Store, false, null);
@@ -71,7 +71,7 @@ it('serves what the owner saved in Business and invoice details', function (): v
 
     $this->withToken($this->token)->getJson(STORE_INFO_URL)
         ->assertOk()
-        ->assertJsonPath('name_en', 'Toy Mart BD Ltd')
+        ->assertJsonPath('name_en', 'Smart Junior Ltd')
         ->assertJsonPath('hotline', '09610-777888')
         ->assertJsonPath('hotline_tel', 'tel:+8809610777888')
         ->assertJsonPath('whatsapp', '+8801711000222')
@@ -96,7 +96,7 @@ it('purges the storefront store-info cache when Business or invoice details are 
     $this->actingAs(User::factory()->withRole(Role::SuperAdmin)->create()->refresh(), 'web');
     Queue::fake();
 
-    $this->putJson('/api/v1/admin/settings/business', ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি', 'hotline' => '09610-777888', 'trade_licence' => 'TRAD/1', 'bin' => '001122334-0101', 'whatsapp' => null])->assertOk();
+    $this->putJson('/api/v1/admin/settings/business', ['name_en' => 'Smart Junior', 'name_bn' => 'Smart Junior', 'hotline' => '09610-777888', 'trade_licence' => 'TRAD/1', 'bin' => '001122334-0101', 'whatsapp' => null])->assertOk();
     Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => $job->tags === ['store-info'] && $job->afterCommit === true);
 
     $invoice = $this->getJson('/api/v1/admin/settings/invoice')->assertOk()->json();
@@ -109,7 +109,7 @@ it('serves the Messenger Page saved in Business, and null again once it is clear
     (new RolesAndPermissionsSeeder)->run();
     $this->actingAs(User::factory()->withRole(Role::SuperAdmin)->create()->refresh(), 'web');
     Queue::fake();
-    $body = ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি', 'hotline' => '09610-777888', 'trade_licence' => 'TRAD/1', 'bin' => '001122334-0101', 'whatsapp' => '01711-000222'];
+    $body = ['name_en' => 'Smart Junior', 'name_bn' => 'Smart Junior', 'hotline' => '09610-777888', 'trade_licence' => 'TRAD/1', 'bin' => '001122334-0101', 'whatsapp' => '01711-000222'];
 
     $this->putJson('/api/v1/admin/settings/business', [...$body, 'messenger' => 'toymart.bd'])->assertOk();
     Queue::assertPushed(RevalidateStorefrontTags::class, fn (RevalidateStorefrontTags $job): bool => $job->tags === ['store-info']);
@@ -124,15 +124,15 @@ it('serves Site & branding: texts per locale, the logos at ~480 px and the share
     $dark = Media::factory()->create(['width' => 400, 'height' => 100, 'renditions' => [['w' => 160, 'f' => 'webp', 'b' => 1], ['w' => 320, 'f' => 'webp', 'b' => 1], ['w' => 400, 'f' => 'webp', 'b' => 1]]]);
     $share = Media::factory()->create(['width' => 2400, 'height' => 1256, 'renditions' => [['w' => 800, 'f' => 'webp', 'b' => 1], ['w' => 1200, 'f' => 'webp', 'b' => 1]]]);
     Setting::put(CompanyDetails::PREFIX.'logo_media_id', $logo->id, SettingGroup::Store);
-    foreach (['site_name_en' => 'Toy Mart', 'site_name_bn' => 'টয় মার্ট', 'tagline_en' => 'Toys that teach', 'tagline_bn' => 'খেলনায় শেখা', 'description_en' => 'Educational toys, COD across Bangladesh.', 'description_bn' => 'শিক্ষামূলক খেলনা, সারা দেশে ক্যাশ অন ডেলিভারি।', 'logo_dark_media_id' => $dark->id, 'share_image_media_id' => $share->id] as $field => $value) {
+    foreach (['site_name_en' => 'Smart Junior', 'site_name_bn' => 'Smart Junior', 'tagline_en' => 'Toys that teach', 'tagline_bn' => 'খেলনায় শেখা', 'description_en' => 'Educational toys, COD across Bangladesh.', 'description_bn' => 'শিক্ষামূলক খেলনা, সারা দেশে ক্যাশ অন ডেলিভারি।', 'logo_dark_media_id' => $dark->id, 'share_image_media_id' => $share->id] as $field => $value) {
         Setting::put(StoreBranding::PREFIX.$field, $value, SettingGroup::Store);
     }
 
     $this->withToken($this->token)->getJson(STORE_INFO_URL)
         ->assertOk()
-        ->assertJsonPath('name_en', 'Toy Mart BD')
-        ->assertJsonPath('site_name_en', 'Toy Mart')
-        ->assertJsonPath('site_name_bn', 'টয় মার্ট')
+        ->assertJsonPath('name_en', 'Smart Junior')
+        ->assertJsonPath('site_name_en', 'Smart Junior')
+        ->assertJsonPath('site_name_bn', 'Smart Junior')
         ->assertJsonPath('tagline_bn', 'খেলনায় শেখা')
         ->assertJsonPath('description_bn', 'শিক্ষামূলক খেলনা, সারা দেশে ক্যাশ অন ডেলিভারি।')
         ->assertJsonPath('logo', ['url' => $logo->url(480), 'width' => 480, 'height' => 144])

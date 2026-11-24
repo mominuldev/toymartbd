@@ -186,7 +186,7 @@ describe('order detail', () => {
 
         expect(await screen.findByRole('heading', { level: 1, name: 'TMB-26-00126' })).toBeTruthy();
         expect(screen.getByText('Where this order is')).toBeTruthy();
-        expect(screen.getByText('Toy Mart risk score')).toBeTruthy();
+        expect(screen.getByText('Smart Junior risk score')).toBeTruthy();
         expect(screen.getByText('High risk · 80 / 100')).toBeTruthy();
         // Rule 33b: the courier panel says "not connected", never a zero.
         expect(await screen.findByText('Provider not connected')).toBeTruthy();

@@ -104,7 +104,7 @@ it('reminds the parent lead days before each child\'s birthday, from 10:00 Dhaka
     $send = AutomationSend::query()->sole();
     expect($send->subject_id)->toBe($ayaan->id)->and($send->period)->toBe('2026')->and($send->coupon_id)->toBeNull()
         ->and($sms->sent[0]['to'])->toBe(Customer::query()->find($ayaan->customer_id)?->phone)
-        ->and($sms->sent[0]['body'])->toBe("Toy Mart BD: Ayaan's birthday is on 20 Nov 2026! Gifts: toymartbd.com");
+        ->and($sms->sent[0]['body'])->toBe("Smart Junior: Ayaan's birthday is on 20 Nov 2026! Gifts: toymartbd.com");
 
     expect(remind('2026-11-15 04:00:00'))->toBe(['queued' => 1, 'skipped' => 0]) // Mehrin, 7 days ahead
         ->and(AutomationSend::query()->where('subject_id', $mehrin->id)->exists())->toBeTrue()
@@ -171,7 +171,7 @@ it('mints no coupon while the offer is off, and sends without a code', function 
     expect(remind('2026-11-13 04:00:00'))->toBe(['queued' => 1, 'skipped' => 0])
         ->and(Coupon::query()->count())->toBe(0)
         ->and(AutomationSend::query()->sole()->coupon_id)->toBeNull()
-        ->and($sms->sent[0]['body'])->toBe("Toy Mart BD: your child's birthday is on 20 Nov 2026! Gifts: toymartbd.com");
+        ->and($sms->sent[0]['body'])->toBe("Smart Junior: your child's birthday is on 20 Nov 2026! Gifts: toymartbd.com");
 });
 
 it('does not mint from the placeholder values that were never saved', function (): void {
@@ -209,7 +209,7 @@ it('mints one personal single-use coupon per send with the offer on; a replay mi
         ->and($coupon->ends_at?->toIso8601String())->toBe('2026-11-27T18:00:00+00:00');
 
     $body = collect($sms->sent)->firstWhere('to', Customer::query()->find($child->customer_id)?->phone)['body'] ?? '';
-    expect($body)->toBe("Toy Mart BD: Ayaan's birthday is on 20 Nov 2026! Gift code {$coupon->code}: 10% off, valid till 27 Nov 2026. Gifts: toymartbd.com")
+    expect($body)->toBe("Smart Junior: Ayaan's birthday is on 20 Nov 2026! Gift code {$coupon->code}: 10% off, valid till 27 Nov 2026. Gifts: toymartbd.com")
         ->and($other->id)->toBeInt();
 
     // A second scheduler racing the first fails on UNIQUE and mints nothing either.
@@ -228,7 +228,7 @@ it('writes a fixed offer as BDT in English and Bangla', function (): void {
     remind('2026-11-13 04:00:00');
     $coupon = Coupon::query()->sole();
     expect($coupon->type)->toBe(CouponType::Fixed)->and($coupon->max_discount)->toBeNull()
-        ->and($sms->sent[0]['body'])->toBe("টয় মার্ট বিডি: 20 নভেম্বর 2026 আয়ান-এর জন্মদিন! উপহার কোড {$coupon->code}: BDT 200 ছাড়, 20 নভেম্বর 2026 পর্যন্ত। toymartbd.com");
+        ->and($sms->sent[0]['body'])->toBe("Smart Junior: 20 নভেম্বর 2026 আয়ান-এর জন্মদিন! উপহার কোড {$coupon->code}: BDT 200 ছাড়, 20 নভেম্বর 2026 পর্যন্ত। toymartbd.com");
 });
 
 it('lets only that customer redeem the personal coupon', function (): void {
@@ -322,7 +322,7 @@ it('sends WhatsApp first when on with a non-empty offer line, falling back to SM
     expect($refusing->sent)->toBe([['template' => 'child_birthday_reminder', 'parameters' => ['নুসরাত', 'আয়ান-এর', '20 নভেম্বর 2026', 'সব বয়সের জন্য উপহার আছে আমাদের কাছে।']]])
         ->and($logs->pluck('channel')->all())->toBe([NotificationChannel::WhatsApp, NotificationChannel::Sms])
         ->and($logs[1]->status)->toBe(NotificationStatus::Sent)
-        ->and($sms->sent[0]['body'])->toStartWith('টয় মার্ট বিডি: 20 নভেম্বর 2026 আয়ান-এর জন্মদিন!');
+        ->and($sms->sent[0]['body'])->toStartWith('Smart Junior: 20 নভেম্বর 2026 আয়ান-এর জন্মদিন!');
 });
 
 it('measures the new copy: English SMS one segment with an offer, Bangla two', function (): void {
@@ -339,7 +339,7 @@ it('moves an untouched batch-1 template to the new copy, keeping the old one as 
     expect($replace->handle('customer.birthday', NotificationChannel::Sms, 'Something else', 'অন্য কিছু'))->toBeFalse()
         ->and($row?->refresh()->body_en)->toBe('Happy birthday, {name}!')
         ->and($replace->handle('customer.birthday', NotificationChannel::Sms, 'Happy birthday, {name}!', 'শুভ জন্মদিন, {name}!'))->toBeTrue()
-        ->and($row?->refresh()->body_en)->toStartWith('Toy Mart BD: {child_possessive}')
+        ->and($row?->refresh()->body_en)->toStartWith('Smart Junior: {child_possessive}')
         ->and(NotificationTemplateVersion::query()->where('notification_template_id', $row?->id)->orderBy('version')->pluck('body_en')->all())
         ->toBe(['Happy birthday, {name}!', $row?->body_en]);
 });

@@ -20,7 +20,7 @@ final class CustomTemplateVariables
     {
         return [
             ...TemplateCatalog::sampleValues($locale),
-            'store_name' => $locale === 'bn' ? 'টয় মার্ট বিডি' : 'Toy Mart BD',
+            'store_name' => $locale === 'bn' ? 'Smart Junior' : 'Smart Junior',
         ];
     }
 }

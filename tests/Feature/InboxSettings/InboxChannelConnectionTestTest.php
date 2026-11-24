@@ -55,12 +55,12 @@ function connAdmin(): User
 
 it('tests WhatsApp with the phone number fields, stores the result and shows it on the card', function (): void {
     $admin = connAdmin();
-    Http::fake([CONN_WA_GRAPH => Http::response(['verified_name' => 'Toy Mart BD', 'display_phone_number' => '+880 1700-000000', 'quality_rating' => 'GREEN', 'id' => '106540352242922'])]);
+    Http::fake([CONN_WA_GRAPH => Http::response(['verified_name' => 'Smart Junior', 'display_phone_number' => '+880 1700-000000', 'quality_rating' => 'GREEN', 'id' => '106540352242922'])]);
 
     $this->postJson(CONN_URL.'/whatsapp/test')->assertOk()->assertJson([
         'channel' => 'whatsapp',
         'ok' => true,
-        'display_name' => 'Toy Mart BD',
+        'display_name' => 'Smart Junior',
         'display_number' => '+880 1700-000000',
         'quality_rating' => 'GREEN',
         'error_code' => null,
@@ -73,7 +73,7 @@ it('tests WhatsApp with the phone number fields, stores the result and shows it 
 
     $card = $this->getJson(CONN_URL)->assertOk();
     $card->assertJsonPath('whatsapp.last_check.ok', true)
-        ->assertJsonPath('whatsapp.last_check.display_name', 'Toy Mart BD')
+        ->assertJsonPath('whatsapp.last_check.display_name', 'Smart Junior')
         ->assertJsonPath('whatsapp.verified', false)
         ->assertJsonPath('messenger.last_check', null);
     expect($card->getContent())->not->toContain(CONN_WA_TOKEN);
@@ -87,11 +87,11 @@ it('tests WhatsApp with the phone number fields, stores the result and shows it 
 
 it('tests Messenger with the Page name', function (): void {
     connAdmin();
-    Http::fake([CONN_FB_GRAPH => Http::response(['name' => 'Toy Mart BD', 'id' => '104857300112233'])]);
+    Http::fake([CONN_FB_GRAPH => Http::response(['name' => 'Smart Junior', 'id' => '104857300112233'])]);
 
     $this->postJson(CONN_URL.'/messenger/test')->assertOk()
         ->assertJsonPath('ok', true)
-        ->assertJsonPath('display_name', 'Toy Mart BD')
+        ->assertJsonPath('display_name', 'Smart Junior')
         ->assertJsonPath('display_number', null);
 
     Http::assertSent(fn (Request $r): bool => $r->hasHeader('Authorization', 'Bearer '.CONN_FB_TOKEN) && str_contains($r->url(), 'fields=name'));
@@ -141,7 +141,7 @@ it('refuses a channel it cannot test', function (): void {
 
 it('rate-limits the test', function (): void {
     connAdmin();
-    Http::fake([CONN_WA_GRAPH => Http::response(['verified_name' => 'Toy Mart BD'])]);
+    Http::fake([CONN_WA_GRAPH => Http::response(['verified_name' => 'Smart Junior'])]);
 
     for ($i = 0; $i < 5; $i++) {
         $this->postJson(CONN_URL.'/whatsapp/test')->assertOk();
@@ -193,6 +193,6 @@ it('falls back to config for HUMAN_AGENT', function (): void {
 });
 
 it('guards POST /settings/inbox-channels/{channel}/test with settings.manage_integrations', function (Role $role, bool $allowed): void {
-    Http::fake([CONN_WA_GRAPH => Http::response(['verified_name' => 'Toy Mart BD'])]);
+    Http::fake([CONN_WA_GRAPH => Http::response(['verified_name' => 'Smart Junior'])]);
     RoleMatrix::assertFor($this, $role, $allowed, fn () => $this->postJson(CONN_URL.'/whatsapp/test'));
 })->with(RoleMatrix::dataset(Permission::SettingsManageIntegrations));

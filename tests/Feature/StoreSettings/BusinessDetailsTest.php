@@ -21,8 +21,8 @@ const INVOICE_SETTINGS_URL = '/api/v1/admin/settings/invoice';
 function businessBody(array $overrides = []): array
 {
     return [
-        'name_en' => 'Toy Mart BD',
-        'name_bn' => 'টয় মার্ট বিডি',
+        'name_en' => 'Smart Junior',
+        'name_bn' => 'Smart Junior',
         'trade_licence' => 'TRAD/DNCC/045512/2025',
         'bin' => '004567891-0101',
         'hotline' => '09610-123456',
@@ -40,7 +40,7 @@ it('starts empty, with the brand names and env hotline as honest fallbacks', fun
         ->assertJsonPath('name_en', null)
         ->assertJsonPath('whatsapp', null)
         ->assertJsonPath('messenger', null)
-        ->assertJsonPath('default_names.name_en', 'Toy Mart BD')
+        ->assertJsonPath('default_names.name_en', 'Smart Junior')
         ->assertJsonPath('hotline_default', '09600123456')
         ->assertJsonPath('placeholders', ['name_en', 'name_bn', 'trade_licence', 'bin', 'hotline']);
 });
@@ -49,7 +49,7 @@ it('round-trips the business details, storing WhatsApp as E.164', function (): v
     Support::actingAs(Role::Manager);
 
     $this->putJson(BUSINESS_URL, businessBody())->assertOk()
-        ->assertJsonPath('name_bn', 'টয় মার্ট বিডি')
+        ->assertJsonPath('name_bn', 'Smart Junior')
         ->assertJsonPath('trade_licence', 'TRAD/DNCC/045512/2025')
         ->assertJsonPath('whatsapp', '+8801711000222')
         ->assertJsonPath('messenger', 'toymartbd')
@@ -66,18 +66,18 @@ it('shares its values with invoice details, both ways, without touching the invo
 
     // Invoice details sees the Business values, and keeps its own address and footer.
     $this->getJson(INVOICE_SETTINGS_URL)->assertOk()
-        ->assertJsonPath('name_en', 'Toy Mart BD')
+        ->assertJsonPath('name_en', 'Smart Junior')
         ->assertJsonPath('trade_licence', 'TRAD/DNCC/045512/2025')
         ->assertJsonPath('bin', '004567891-0101')
         ->assertJsonPath('hotline', '09610-123456')
         ->assertJsonPath('address_en', 'House 7, Mirpur')
         ->assertJsonPath('footer_en', 'Thanks!');
-    expect(app(CompanyDetails::class)->snapshot())->toMatchArray(['name_en' => 'Toy Mart BD', 'bin' => '004567891-0101']);
+    expect(app(CompanyDetails::class)->snapshot())->toMatchArray(['name_en' => 'Smart Junior', 'bin' => '004567891-0101']);
 
     // And an invoice-details save shows on Business, leaving WhatsApp alone.
-    $this->putJson(INVOICE_SETTINGS_URL, ['name_en' => 'Toy Mart Bangladesh', 'bin' => '004567891-0101'])->assertOk();
+    $this->putJson(INVOICE_SETTINGS_URL, ['name_en' => 'Smart Junior Bangladesh', 'bin' => '004567891-0101'])->assertOk();
     $this->getJson(BUSINESS_URL)->assertOk()
-        ->assertJsonPath('name_en', 'Toy Mart Bangladesh')
+        ->assertJsonPath('name_en', 'Smart Junior Bangladesh')
         ->assertJsonPath('trade_licence', null)
         ->assertJsonPath('whatsapp', '+8801711000222');
 });

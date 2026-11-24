@@ -7,7 +7,7 @@ import type { CmsBlock } from './api';
 import { BLOOM_TONES, bool, CONTACT_CHANNELS, ids, num, rows, str, TILE_ICONS, type Content } from './content';
 import { Bilingual, moved, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { BrandPicker, CategoryPicker, ProductPicker, useBrandSelectOptions, useCategoryOptions } from './pickers';
-import { AgeTilesForm, BandField, PromoBannersForm, SectionHeaderFields, VideoReelForm, WhyBandForm, type FormKit, type VideoLengthInfo } from './SectionForms';
+import { AgeTilesForm, BandField, PromoBannersForm, SectionHeaderFields, SliderFields, VideoReelForm, WhyBandForm, type FormKit, type VideoLengthInfo } from './SectionForms';
 
 /*
  * The Content and Style tabs of the B · 26 settings panel, one form per block type. Each edit
@@ -526,7 +526,12 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
 
     switch (block.type) {
         case 'hero':
-            return <SwitchRow label={t('homeBuilder.f.showAgePills')} checked={bool(content.show_age_pills, true)} onChange={(v) => set('show_age_pills', v)} disabled={ctx.disabled} />;
+            return (
+                <>
+                    <SwitchRow label={t('homeBuilder.f.showAgePills')} checked={bool(content.show_age_pills, true)} onChange={(v) => set('show_age_pills', v)} disabled={ctx.disabled} />
+                    <SliderFields kit={styleKit} />
+                </>
+            );
         case 'category_tiles':
             return (
                 <>
@@ -558,6 +563,7 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
                         ctx={ctx}
                     />
                     <SwitchRow label={t('homeBuilder.f.showSeeAll')} checked={bool(content.show_see_all, true)} onChange={(v) => set('show_see_all', v)} disabled={ctx.disabled} />
+                    {(str(content.layout) || 'slider') === 'slider' && <SliderFields kit={styleKit} />}
                 </>
             );
         }
@@ -566,7 +572,12 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
         case 'testimonials':
             return howMany(1, 12, 6, count);
         case 'flash_sale':
-            return howMany(2, 12, 8, (n) => t('homeBuilder.f.howManyRail', { count: n }));
+            return (
+                <>
+                    {howMany(2, 12, 8, (n) => t('homeBuilder.f.howManyRail', { count: n }))}
+                    <SliderFields kit={styleKit} />
+                </>
+            );
         case 'blog_teaser':
             return (
                 <>
@@ -575,7 +586,12 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
                 </>
             );
         case 'video_reel':
-            return <BandField kit={styleKit} />;
+            return (
+                <>
+                    <BandField kit={styleKit} />
+                    <SliderFields kit={styleKit} />
+                </>
+            );
         case 'chat_band':
             return (
                 <SelectField

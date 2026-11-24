@@ -8,8 +8,8 @@ import type { PosReceipt } from '@/features/pos/api';
  */
 export const SAMPLE_RECEIPT: Omit<PosReceipt, 'print'> = {
     store: {
-        name_en: 'Toy Mart BD',
-        name_bn: 'টয় মার্ট বিডি',
+        name_en: 'Smart Junior',
+        name_bn: 'Smart Junior',
         address_en: null,
         address_bn: null,
         hotline: '09612-000000',

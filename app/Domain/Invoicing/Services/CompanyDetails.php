@@ -63,7 +63,7 @@ final class CompanyDetails
     public const string MESSENGER_KEY = 'store.messenger';
 
     /** Shown when the owner has not set a name yet (the brand, not a placeholder). */
-    public const array DEFAULT_NAMES = ['name_en' => 'Toy Mart BD', 'name_bn' => 'টয় মার্ট বিডি'];
+    public const array DEFAULT_NAMES = ['name_en' => 'Smart Junior', 'name_bn' => 'Smart Junior'];
 
     /**
      * Saved values only (null when unset), for the settings screen.

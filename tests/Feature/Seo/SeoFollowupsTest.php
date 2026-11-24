@@ -46,20 +46,20 @@ it('ends every server default title with the configured separator, " | " by defa
     $category = Category::factory()->create(['name' => 'Blocks', 'name_bn' => 'ব্লক']);
     expect(SiteTitle::separator())->toBe(' | ');
     $this->getJson("/api/v1/admin/seo/meta/category/{$category->id}")->assertOk()
-        ->assertJsonPath('defaults.title', 'Blocks | Toy Mart BD')
-        ->assertJsonPath('defaults.title_bn', 'ব্লক | Toy Mart BD');
+        ->assertJsonPath('defaults.title', 'Blocks | Smart Junior')
+        ->assertJsonPath('defaults.title_bn', 'ব্লক | Smart Junior');
 
     config(['seo.title_separator' => ' · ']);
     $this->getJson("/api/v1/admin/seo/meta/category/{$category->id}")->assertOk()
-        ->assertJsonPath('defaults.title', 'Blocks · Toy Mart BD');
+        ->assertJsonPath('defaults.title', 'Blocks · Smart Junior');
     $page = $this->postJson('/api/v1/admin/content/pages', ['title' => 'About', 'content' => '<p>Hi</p>', 'template' => 'default', 'status' => 'published'])->assertCreated()->json('id');
-    $this->getJson("/api/v1/admin/content/pages/{$page}")->assertOk()->assertJsonPath('seo.defaults.title', 'About · Toy Mart BD');
+    $this->getJson("/api/v1/admin/content/pages/{$page}")->assertOk()->assertJsonPath('seo.defaults.title', 'About · Smart Junior');
 });
 
 it('serves the separator to the storefront for its layout title template', function (): void {
     auth()->forgetGuards();
     $this->withToken(sfToken())->getJson('/api/v1/storefront/seo/settings')
-        ->assertOk()->assertExactJson(['site_name' => 'Toy Mart BD', 'title_separator' => ' | ']);
+        ->assertOk()->assertExactJson(['site_name' => 'Smart Junior', 'title_separator' => ' | ']);
 
     config(['seo.title_separator' => ' · ']);
     $this->withToken(sfToken())->getJson('/api/v1/storefront/seo/settings')->assertOk()->assertJsonPath('title_separator', ' · ');
@@ -108,11 +108,11 @@ it('records a page slug change through RecordSlugChange (redirect map refreshed)
 
     $this->putJson("/api/v1/admin/content/pages/{$id}", [
         'title' => 'Delivery policy', 'content' => '<p>x</p>', 'template' => 'default', 'status' => 'published',
-        'slug' => 'shipping', 'acknowledge_slug_redirect' => true, 'seo' => ['title' => 'Shipping | Toy Mart BD'],
+        'slug' => 'shipping', 'acknowledge_slug_redirect' => true, 'seo' => ['title' => 'Shipping | Smart Junior'],
     ])->assertOk();
 
     expect(SlugHistory::query()->where('sluggable_type', 'page')->get(['old_slug', 'new_slug'])->toArray())->toBe([['old_slug' => 'delivery-policy', 'new_slug' => 'shipping']])
-        ->and(SeoMeta::for('page', $id)->sole()->title)->toBe('Shipping | Toy Mart BD')
+        ->and(SeoMeta::for('page', $id)->sole()->title)->toBe('Shipping | Smart Junior')
         ->and(SeoMeta::for('page', $id)->sole()->og_title_bn)->toBe('প্যানেল');
     Event::assertDispatched(SeoPagesStale::class, static fn (SeoPagesStale $e): bool => $e->tags === ['redirects']);
 });

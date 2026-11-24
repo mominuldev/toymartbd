@@ -16,8 +16,8 @@ const manager: Me = { ...viewer, roles: ['manager'], permissions: ['dashboard.vi
 const readOnly: Me = { ...viewer, roles: ['viewer'], permissions: ['dashboard.view', 'settings.view'] };
 
 const company: InvoiceSettings = {
-    name_en: 'Toy Mart BD',
-    name_bn: 'টয় মার্ট বিডি',
+    name_en: 'Smart Junior',
+    name_bn: 'Smart Junior',
     address_en: 'House 12, Road 5, Dhanmondi, Dhaka',
     address_bn: 'বাড়ি 12, রোড 5, ধানমন্ডি, ঢাকা',
     hotline: '09600 111222',
@@ -170,8 +170,8 @@ describe('A4 invoice print settings', () => {
         await waitFor(() => expect(puts(calls, '/settings/print')).toHaveLength(1));
         expect(puts(calls, '/settings/invoice')).toEqual([
             {
-                name_en: 'Toy Mart BD',
-                name_bn: 'টয় মার্ট বিডি',
+                name_en: 'Smart Junior',
+                name_bn: 'Smart Junior',
                 address_en: 'House 7, Mirpur',
                 address_bn: 'বাড়ি 12, রোড 5, ধানমন্ডি, ঢাকা',
                 trade_licence: 'TRAD/DSCC/111111',

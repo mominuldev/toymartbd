@@ -30,7 +30,7 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
 final class ProductDescription
 {
     /** Hosts of the storefront itself: links there are not "external". */
-    private const array SITE_HOSTS = ['toymartbd.com', 'www.toymartbd.com'];
+    private const array SITE_HOSTS = ['smartjunior.com.bd', 'www.smartjunior.com.bd', 'toymartbd.com', 'www.toymartbd.com'];
 
     /** Elements removed together with everything inside them. */
     private const array DROPPED = [

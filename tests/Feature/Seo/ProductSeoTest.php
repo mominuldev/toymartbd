@@ -51,9 +51,9 @@ it('returns server defaults, measurement and checklist when no seo_meta exists',
 
     expect($seo['title'])->toBeNull()
         ->and($seo['robots'])->toBe('index,follow')
-        ->and($seo['defaults']['title'])->toBe('Wooden Train Set | Toy Mart BD')
+        ->and($seo['defaults']['title'])->toBe('Wooden Train Set | Smart Junior')
         ->and($seo['defaults']['description'])->toBe('A pine-wood train with 24 pieces.')
-        ->and($seo['url'])->toBe('https://toymartbd.com/products/'.$product->slug)
+        ->and($seo['url'])->toBe('https://smartjunior.com.bd/products/'.$product->slug)
         ->and($seo['measure']['title']['fits'])->toBeTrue()
         ->and($seo['checklist']['total'])->toBe(7)
         ->and(collect($seo['checklist']['items'])->pluck('status', 'key')->all())->toMatchArray([
@@ -76,14 +76,14 @@ it('saves seo_meta with the product document, Bangla included, and keeps it when
         'description' => 'Pine wood, 24 pieces, cash on delivery across Bangladesh.',
         'robots' => 'noindex,follow',
         'focus_keyword' => 'wooden train',
-        'schema_override' => ['brand' => ['@type' => 'Brand', 'name' => 'Toy Mart']],
+        'schema_override' => ['brand' => ['@type' => 'Brand', 'name' => 'Smart Junior']],
     ]]))
         ->assertOk()
         ->assertJsonPath('seo.title', 'Wooden Train Set for Toddlers')
         ->assertJsonPath('seo.title_bn', 'শিশুদের কাঠের ট্রেন সেট')
         ->assertJsonPath('seo.robots', 'noindex,follow')
         ->assertJsonPath('seo.focus_keyword', 'wooden train')
-        ->assertJsonPath('seo.schema.brand.name', 'Toy Mart');
+        ->assertJsonPath('seo.schema.brand.name', 'Smart Junior');
 
     expect(SeoMeta::forProduct($product->id)->sole()->title_bn)->toBe('শিশুদের কাঠের ট্রেন সেট');
 

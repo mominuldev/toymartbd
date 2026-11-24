@@ -224,7 +224,7 @@ final readonly class SendBirthdayMessages
             'offer_sentence' => $sentence,
             'coupon_code' => $code,
             'coupon_expiry' => $expiry,
-            'store_url' => (string) config('notifications.store_url', 'toymartbd.com'),
+            'store_url' => (string) config('notifications.store_url', 'smartjunior.com.bd'),
         ];
     }
 

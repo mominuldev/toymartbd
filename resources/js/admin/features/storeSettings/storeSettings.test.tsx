@@ -17,14 +17,14 @@ const readOnly: Me = { ...viewer, roles: ['viewer'], permissions: ['dashboard.vi
 const nobody: Me = { ...viewer, roles: ['viewer'], permissions: ['dashboard.view'] };
 
 const business: BusinessDetails = {
-    name_en: 'Toy Mart BD',
+    name_en: 'Smart Junior',
     name_bn: null,
     trade_licence: null,
     bin: '004567891-0101',
     hotline: null,
     whatsapp: '+8801711000222',
     messenger: null,
-    default_names: { name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি' },
+    default_names: { name_en: 'Smart Junior', name_bn: 'Smart Junior' },
     hotline_default: '09600123456',
     placeholders: ['name_bn', 'trade_licence', 'hotline'],
 };
@@ -178,8 +178,8 @@ describe('business', () => {
         renderApp('/settings/business');
 
         const name = (await screen.findByLabelText('Store name')) as HTMLInputElement;
-        expect(name.value).toBe('Toy Mart BD');
-        expect((screen.getByLabelText('দোকানের নাম') as HTMLInputElement).placeholder).toBe('টয় মার্ট বিডি');
+        expect(name.value).toBe('Smart Junior');
+        expect((screen.getByLabelText('দোকানের নাম') as HTMLInputElement).placeholder).toBe('Smart Junior');
         expect((screen.getByLabelText('WhatsApp') as HTMLInputElement).value).toBe('+880 1711-000222');
         expect(screen.getByText(/order messages use 09600123456/)).toBeTruthy();
         expect(screen.getByRole('status').textContent).toContain('Trade licence no.');
@@ -198,7 +198,7 @@ describe('business', () => {
 
         expect(await screen.findByText('Business details saved. New invoices will use them.')).toBeTruthy();
         expect(sent(calls, 'PUT', '/settings/business')).toEqual({
-            name_en: 'Toy Mart BD',
+            name_en: 'Smart Junior',
             name_bn: null,
             trade_licence: 'TRAD/DNCC/045512/2025',
             bin: null,

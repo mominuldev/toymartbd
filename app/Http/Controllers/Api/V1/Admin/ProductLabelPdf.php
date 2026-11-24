@@ -153,7 +153,7 @@ final class ProductLabelPdf
     private function renderLocked(LabelTemplate $template, array $labels, string $locale, bool $showPrice, bool $showName, bool $showOptions, ?string $store, bool $showDigits): string
     {
         $mpdf = $this->mpdf($template);
-        $mpdf->SetTitle('Toy Mart BD — barcode labels');
+        $mpdf->SetTitle('Smart Junior — barcode labels');
 
         $mpdf->WriteHTML(view('labels.products', [
             'template' => $template,

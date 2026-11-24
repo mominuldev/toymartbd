@@ -140,9 +140,9 @@ final class StaticPageSectionsSeeder extends Seeder
         return [
             [BlockType::StoryHero, 'Our story', [
                 'overline' => 'Our story', 'overline_bn' => 'আমাদের গল্প',
-                'title' => 'About Toy Mart BD', 'title_bn' => 'টয় মার্ট বিডি সম্পর্কে',
-                'lead' => 'We started Toy Mart BD in Dhanmondi because buying a good toy in Bangladesh was harder than it should be: unclear age ranges, copies sold as originals, and no way to send anything back.',
-                'lead_bn' => 'ধানমন্ডিতে টয় মার্ট বিডি শুরু করেছিলাম, কারণ বাংলাদেশে একটা ভালো খেলনা কেনা যতটা সহজ হওয়ার কথা, ততটা ছিল না: বয়সসীমা অস্পষ্ট, নকল জিনিস আসল বলে বিক্রি, আর ফেরত দেওয়ার কোনো উপায় নেই।',
+                'title' => 'About Smart Junior', 'title_bn' => 'Smart Junior সম্পর্কে',
+                'lead' => 'We started Smart Junior in Dhanmondi because buying a good toy in Bangladesh was harder than it should be: unclear age ranges, copies sold as originals, and no way to send anything back.',
+                'lead_bn' => 'ধানমন্ডিতে Smart Junior শুরু করেছিলাম, কারণ বাংলাদেশে একটা ভালো খেলনা কেনা যতটা সহজ হওয়ার কথা, ততটা ছিল না: বয়সসীমা অস্পষ্ট, নকল জিনিস আসল বলে বিক্রি, আর ফেরত দেওয়ার কোনো উপায় নেই।',
                 'body' => 'So we built the shop we wanted as parents: every toy checked for age and safety, honest prices, and a 7-day return if something is not right.',
                 'body_bn' => 'তাই বাবা-মা হিসেবে যে দোকানটা চেয়েছিলাম, সেটাই বানিয়েছি: প্রতিটি খেলনা বয়স ও নিরাপত্তার জন্য যাচাই করা, সৎ দাম, আর কিছু ঠিক না থাকলে 7 দিনে ফেরত।',
                 'media_ids' => $this->aboutPhotos(),
@@ -245,7 +245,7 @@ final class StaticPageSectionsSeeder extends Seeder
                 'status' => 'Online now · WhatsApp replies in about 15 minutes', 'status_bn' => 'এখন অনলাইনে · হোয়াটসঅ্যাপে প্রায় 15 মিনিটে উত্তর',
                 'bubbles' => [
                     ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Is the shape sorter OK for a 2-year-old?', 'text_bn' => 'শেপ সর্টারটা কি 2 বছরের বাচ্চার জন্য ঠিক আছে?'],
-                    ['from' => 'store', 'label' => 'Toy Mart', 'label_bn' => 'টয় মার্ট', 'text' => 'Yes. It is made for ages 1½ to 4, with chunky pieces too big to swallow.', 'text_bn' => 'হ্যাঁ। এটি দেড় থেকে 4 বছরের জন্য বানানো, টুকরোগুলো গিলে ফেলার মতো ছোট নয়।'],
+                    ['from' => 'store', 'label' => 'Smart Junior', 'label_bn' => 'Smart Junior', 'text' => 'Yes. It is made for ages 1½ to 4, with chunky pieces too big to swallow.', 'text_bn' => 'হ্যাঁ। এটি দেড় থেকে 4 বছরের জন্য বানানো, টুকরোগুলো গিলে ফেলার মতো ছোট নয়।'],
                     ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Perfect, can it reach Mirpur by tomorrow?', 'text_bn' => 'চমৎকার, কাল মিরপুরে পৌঁছাবে?'],
                 ],
             ], []],
@@ -385,7 +385,7 @@ final class StaticPageSectionsSeeder extends Seeder
     private function privacy(): array
     {
         return [[BlockType::RichText, 'Privacy policy', [
-            'html' => '<p>This policy explains what Toy Mart BD collects when you shop with us, why, and the choices you have. We collect as little as we need to deliver your order and look after you.</p>'
+            'html' => '<p>This policy explains what Smart Junior collects when you shop with us, why, and the choices you have. We collect as little as we need to deliver your order and look after you.</p>'
                 .'<h2>What we collect</h2>'
                 .'<ul><li><strong>Order details:</strong> your name, phone number, delivery address and landmark, and what you bought.</li>'
                 .'<li><strong>Account details</strong>, if you create one: your email address and saved addresses.</li>'
@@ -400,7 +400,7 @@ final class StaticPageSectionsSeeder extends Seeder
                 .'<h2>Your choices</h2>'
                 .'<p>You can ask to see, correct or delete the information we hold about you, or to stop marketing messages, by contacting us. We answer within 30 days.</p>'
                 .'<p>We may update this policy; the latest version is always on this page.</p>',
-            'html_bn' => '<p>আমাদের থেকে কেনাকাটার সময় টয় মার্ট বিডি কী তথ্য সংগ্রহ করে, কেন করে, আর আপনার কী কী সুযোগ আছে — এই নীতিতে তা বলা হলো। অর্ডার পৌঁছাতে ও আপনার যত্ন নিতে যতটুকু দরকার, তার বেশি আমরা সংগ্রহ করি না।</p>'
+            'html_bn' => '<p>আমাদের থেকে কেনাকাটার সময় Smart Junior কী তথ্য সংগ্রহ করে, কেন করে, আর আপনার কী কী সুযোগ আছে — এই নীতিতে তা বলা হলো। অর্ডার পৌঁছাতে ও আপনার যত্ন নিতে যতটুকু দরকার, তার বেশি আমরা সংগ্রহ করি না।</p>'
                 .'<h2>আমরা যা সংগ্রহ করি</h2>'
                 .'<ul><li><strong>অর্ডারের তথ্য:</strong> আপনার নাম, ফোন নম্বর, ডেলিভারির ঠিকানা ও ল্যান্ডমার্ক, আর কী কিনেছেন।</li>'
                 .'<li><strong>অ্যাকাউন্টের তথ্য</strong>, অ্যাকাউন্ট খুললে: ইমেইল ঠিকানা ও সংরক্ষিত ঠিকানা।</li>'
@@ -422,7 +422,7 @@ final class StaticPageSectionsSeeder extends Seeder
     private function terms(): array
     {
         return [[BlockType::RichText, 'Terms and conditions', [
-            'html' => '<p>These terms apply when you browse or buy from Toy Mart BD. By placing an order you agree to them.</p>'
+            'html' => '<p>These terms apply when you browse or buy from Smart Junior. By placing an order you agree to them.</p>'
                 .'<h2>Orders</h2>'
                 .'<ul><li>An order is confirmed when we accept it, which may include a call to check the details. We may decline or hold an order we cannot verify; we never cancel without telling you.</li>'
                 .'<li>We do our best to show every product accurately. Colours on screen can differ slightly from the real toy.</li>'
@@ -438,10 +438,10 @@ final class StaticPageSectionsSeeder extends Seeder
                 .'<h2>Your account</h2>'
                 .'<p>Keep your login details private. You are responsible for orders placed from your account; tell us at once if you think someone else is using it.</p>'
                 .'<h2>Our content</h2>'
-                .'<p>Text, photos and the Toy Mart BD name and logo on this site belong to us or to the brands we sell, and may not be copied for commercial use without permission.</p>'
+                .'<p>Text, photos and the Smart Junior name and logo on this site belong to us or to the brands we sell, and may not be copied for commercial use without permission.</p>'
                 .'<h2>Law</h2>'
                 .'<p>These terms are governed by the laws of Bangladesh. If we change them, the version on this page at the time of your order applies to that order.</p>',
-            'html_bn' => '<p>টয় মার্ট বিডিতে ব্রাউজ বা কেনাকাটা করলে এই শর্তাবলি প্রযোজ্য। অর্ডার দিলে আপনি এগুলোতে সম্মত হন।</p>'
+            'html_bn' => '<p>Smart Junior-এ ব্রাউজ বা কেনাকাটা করলে এই শর্তাবলি প্রযোজ্য। অর্ডার দিলে আপনি এগুলোতে সম্মত হন।</p>'
                 .'<h2>অর্ডার</h2>'
                 .'<ul><li>আমরা গ্রহণ করলে অর্ডার নিশ্চিত হয়, যার মধ্যে তথ্য যাচাইয়ের জন্য একটা কল থাকতে পারে। যাচাই করতে না পারা অর্ডার আমরা ফিরিয়ে দিতে বা আটকে রাখতে পারি; না জানিয়ে কখনো বাতিল করি না।</li>'
                 .'<li>প্রতিটি পণ্য সঠিকভাবে দেখাতে আমরা যথাসাধ্য চেষ্টা করি। পর্দার রং আসল খেলনা থেকে সামান্য আলাদা হতে পারে।</li>'
@@ -457,7 +457,7 @@ final class StaticPageSectionsSeeder extends Seeder
                 .'<h2>আপনার অ্যাকাউন্ট</h2>'
                 .'<p>লগইনের তথ্য গোপন রাখুন। আপনার অ্যাকাউন্ট থেকে দেওয়া অর্ডারের দায় আপনার; অন্য কেউ ব্যবহার করছে মনে হলে সঙ্গে সঙ্গে জানান।</p>'
                 .'<h2>আমাদের কনটেন্ট</h2>'
-                .'<p>এই সাইটের লেখা, ছবি এবং টয় মার্ট বিডির নাম ও লোগো আমাদের বা আমরা যে ব্র্যান্ড বিক্রি করি তাদের; অনুমতি ছাড়া বাণিজ্যিক কাজে নকল করা যাবে না।</p>'
+                .'<p>এই সাইটের লেখা, ছবি এবং Smart Junior-এর নাম ও লোগো আমাদের বা আমরা যে ব্র্যান্ড বিক্রি করি তাদের; অনুমতি ছাড়া বাণিজ্যিক কাজে নকল করা যাবে না।</p>'
                 .'<h2>আইন</h2>'
                 .'<p>এই শর্তাবলি বাংলাদেশের আইন অনুযায়ী পরিচালিত। আমরা এগুলো বদলালে, আপনার অর্ডারের সময় এই পাতায় থাকা সংস্করণটি সেই অর্ডারে প্রযোজ্য।</p>',
         ], []]];

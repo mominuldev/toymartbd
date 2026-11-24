@@ -40,7 +40,7 @@ const about: CmsPage = {
         og_image: null,
         twitter_card: 'summary_large_image',
         focus_keyword: null,
-        defaults: { title: 'About us | Toy Mart BD', title_bn: 'আমাদের কথা | Toy Mart BD', description: 'Hello' },
+        defaults: { title: 'About us | Smart Junior', title_bn: 'আমাদের কথা | Smart Junior', description: 'Hello' },
     },
     updated_at: '2026-11-08T06:00:00Z',
     created_at: '2026-11-01T04:00:00Z',
@@ -63,7 +63,7 @@ const richText: CmsBlock = {
     uuid: 'uuid-21',
     type: 'rich_text',
     label: null,
-    content: { title: 'About Toy Mart BD', title_bn: 'টয় মার্ট বিডি সম্পর্কে', body: '<p>Hello</p>', body_bn: null },
+    content: { title: 'About Smart Junior', title_bn: 'Smart Junior সম্পর্কে', body: '<p>Hello</p>', body_bn: null },
     position: 0,
     is_enabled: true,
     show_en: true,
@@ -96,8 +96,8 @@ const homeSeo = {
     sitemap_exclude: false,
     twitter_card: 'summary_large_image',
     focus_keyword: null,
-    defaults: { title: 'Toy Mart BD | Toys for every age, delivered across Bangladesh.', title_bn: 'টয় মার্ট বিডি | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', description: 'Toys.', description_bn: 'খেলনা।', og_image: null },
-    serp: { en: homeSerp('Toy Mart BD | Toys for every age, delivered across Bangladesh.', 'toymartbd.com'), bn: homeSerp('টয় মার্ট বিডি | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', 'toymartbd.com › bn') },
+    defaults: { title: 'Smart Junior | Toys for every age, delivered across Bangladesh.', title_bn: 'Smart Junior | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', description: 'Toys.', description_bn: 'খেলনা।', og_image: null },
+    serp: { en: homeSerp('Smart Junior | Toys for every age, delivered across Bangladesh.', 'toymartbd.com'), bn: homeSerp('Smart Junior | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', 'toymartbd.com › bn') },
     in_sitemap: true,
     checklist: { passed: 1, total: 2, items: [{ key: 'title_fits', status: 'pass', params: { px: 400, max: 580 } }, { key: 'social_image', status: 'warn', params: {} }] },
 };
@@ -230,7 +230,7 @@ describe('pages', () => {
         expect(await screen.findByRole('heading', { name: 'Home settings' }, { timeout: 5000 })).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Edit sections' }).getAttribute('href')).toBe('/store/home');
         expect(await screen.findByTestId('seo-score')).toBeTruthy();
-        expect((await screen.findByLabelText(/^Meta title/) as HTMLInputElement).placeholder).toBe('Toy Mart BD | Toys for every age, delivered across Bangladesh.');
+        expect((await screen.findByLabelText(/^Meta title/) as HTMLInputElement).placeholder).toBe('Smart Junior | Toys for every age, delivered across Bangladesh.');
         expect(calls.mock.calls.some(([url]) => String(url).endsWith('/seo/meta/home/1'))).toBe(true);
     });
 

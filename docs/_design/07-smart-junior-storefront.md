@@ -516,6 +516,8 @@ A hover state was designed (lift, brand border, photo zoom, Quick view chip) and
 
   **For the storefront:** clamp the title with `line-clamp: 2` (`-webkit-line-clamp`) and give it `min-height: calc(2 * line-height)`. Give the card `height: 100%` inside a grid row, so a translated title that wraps differently never changes the card height.
 
+**Superseded 2026-11-24 (owner):** the product card now has a hover state — a 2 px lift, the next elevation step and a 1.04 image zoom inside its frame, on motion tokens; pointer devices only (`@media (hover: hover)`), the same lift on keyboard focus, and no movement under `prefers-reduced-motion`. Storefront: `components/listing/ProductCard.tsx`, `app/tailwind.css`.
+
 ## 15. Vivid repalette: the Smart Junior brand colours (2026-11-24)
 
 The owner gave the Smart Junior brand palette and asked for it to **replace the Vivid values**. Light is unchanged. Section 7.1's Coolors ramps (`grape`, `bubblegum`, `lemon`, `splash`, `aqua`) and the owner's #F15BB5 button choice (§7.1, §12) are superseded for Vivid. The ramps stay in `SJ · Primitives`, but no `SJ · Color` token references them any more.

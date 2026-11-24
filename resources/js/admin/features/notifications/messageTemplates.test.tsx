@@ -22,8 +22,8 @@ const sms: NotificationTemplate = {
     subject_bn: null,
     preheader_en: null,
     preheader_bn: null,
-    body_en: 'Toy Mart BD: order {order_number} received.',
-    body_bn: 'টয় মার্ট বিডি: অর্ডার {order_number} পেয়েছি।',
+    body_en: 'Smart Junior: order {order_number} received.',
+    body_bn: 'Smart Junior: অর্ডার {order_number} পেয়েছি।',
     provider_template: null,
     is_active: true,
     kind: 'system',
@@ -76,8 +76,8 @@ const custom: NotificationTemplate = {
 };
 
 const preview: TemplatePreview = {
-    en: { rendered: 'Toy Mart BD: order TMB-26-00482 received.', chars: 41, encoding: 'gsm7', segments: 1, per_segment_limit: 160, cost: '0.26' },
-    bn: { rendered: 'টয় মার্ট বিডি: অর্ডার TMB-26-00482 পেয়েছি।', chars: 150, encoding: 'ucs2', segments: 3, per_segment_limit: 67, cost: '0.78' },
+    en: { rendered: 'Smart Junior: order TMB-26-00482 received.', chars: 41, encoding: 'gsm7', segments: 1, per_segment_limit: 160, cost: '0.26' },
+    bn: { rendered: 'Smart Junior: অর্ডার TMB-26-00482 পেয়েছি।', chars: 150, encoding: 'ucs2', segments: 3, per_segment_limit: 67, cost: '0.78' },
     unknown_variables: ['coupon'],
     missing_variables: [],
     warnings: ['long_sms_bn'],

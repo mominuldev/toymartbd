@@ -116,7 +116,7 @@ describe('two-factor setup', () => {
         renderApp('/account/two-factor');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Set up' }));
-        expect(await screen.findByRole('img', { name: 'QR code to add Toy Mart BD Admin to an authenticator app' })).toBeTruthy();
+        expect(await screen.findByRole('img', { name: 'QR code to add Smart Junior Admin to an authenticator app' })).toBeTruthy();
         // "Set up" is replaced by the key-and-code card: focus moves to its title.
         expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Scan this with your authenticator app' }));
         expect(screen.getByText('JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP')).toBeTruthy();

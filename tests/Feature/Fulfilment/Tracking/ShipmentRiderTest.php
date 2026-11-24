@@ -208,8 +208,8 @@ it('sends the no-rider variant when no rider is recorded — no hotline, no lite
         ->and($bodies[0])->not->toContain('Rider')
         ->and($bodies[0])->not->toContain('রাইডার');
 })->with([
-    'English' => ['en', 'Toy Mart BD: order {n} is out for delivery today. Please keep BDT {amount} ready.'],
-    'Bangla' => ['bn', 'টয় মার্ট বিডি: {n} আজ ডেলিভারি হবে। BDT {amount} হাতে রাখুন।'],
+    'English' => ['en', 'Smart Junior: order {n} is out for delivery today. Please keep BDT {amount} ready.'],
+    'Bangla' => ['bn', 'Smart Junior: {n} আজ ডেলিভারি হবে। BDT {amount} হাতে রাখুন।'],
 ]);
 
 it('does not resend when the rider is recorded after the message went out', function (): void {

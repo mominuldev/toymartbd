@@ -164,7 +164,7 @@ return [
     */
     'two_factor' => [
         'enforce' => (bool) env('TWO_FACTOR_ENFORCE', true),
-        'issuer' => env('TWO_FACTOR_ISSUER', 'Toy Mart BD Admin'),
+        'issuer' => env('TWO_FACTOR_ISSUER', 'Smart Junior Admin'),
         'challenge_minutes' => 5,
     ],
 

@@ -192,7 +192,7 @@ final class CmsHomeBlocksSeeder extends Seeder
                 'eyebrow' => 'Just in', 'eyebrow_bn' => 'নতুন এসেছে', 'eyebrow_tone' => 'purple',
                 'title' => 'New arrivals', 'title_bn' => 'সদ্য এসেছে',
                 'sub' => 'This week’s new picks — be the first to play.', 'sub_bn' => 'এই সপ্তাহের নতুন বাছাই — প্রথম খেলুন আপনিই।',
-                'layout' => 'slider', 'rule' => 'new',
+                'layout' => 'slider', 'rule' => 'new', 'see_all_label' => null, 'see_all_label_bn' => null,
             ], 'New arrivals'],
 
             // A hand-picked rail: the picks are demo products, so it exists only where they do. The
@@ -202,7 +202,7 @@ final class CmsHomeBlocksSeeder extends Seeder
                 'eyebrow' => 'Gift ideas', 'eyebrow_bn' => 'গিফট আইডিয়া', 'eyebrow_tone' => 'purple',
                 'title' => 'Gifts & combo sets', 'title_bn' => 'উপহার ও কম্বো সেট',
                 'sub' => 'The best gifts for a little one’s birthday or any occasion.', 'sub_bn' => 'জন্মদিন বা যেকোনো উপলক্ষে প্রিয় শিশুর জন্য সেরা উপহার',
-                'layout' => 'slider', 'band' => 'pink', 'rule' => 'manual', 'product_ids' => $gifts, 'show_see_all' => false,
+                'layout' => 'slider', 'band' => 'pink', 'rule' => 'manual', 'product_ids' => $gifts, 'show_see_all' => false, 'see_all_label' => null, 'see_all_label_bn' => null,
             ], 'Gifts & combos'],
 
             [BlockType::WhyBand, [

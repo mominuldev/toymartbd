@@ -99,7 +99,7 @@ final class SendCartRecoveryMessage implements ShouldQueue
 
         $body = $template->render($log->locale, $log->variables() + [
             'restore_url' => self::restoreUrl($log->locale, $token),
-            'store_url' => (string) config('notifications.store_url', 'toymartbd.com'),
+            'store_url' => (string) config('notifications.store_url', 'smartjunior.com.bd'),
         ]);
         $result = $sms->driver()->send($check['phone']->e164(), $body, $log->template);
 
@@ -131,7 +131,7 @@ final class SendCartRecoveryMessage implements ShouldQueue
     /** `{storefront}/cart/restore/{token}` — Bangla under `/bn` (rule 35). No PII, not the cart token. */
     public static function restoreUrl(string $locale, string $token): string
     {
-        $base = rtrim((string) config('cart_recovery.storefront_url', 'https://toymartbd.com'), '/');
+        $base = rtrim((string) config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'), '/');
 
         return $base.($locale === 'bn' ? '/bn' : '').'/cart/restore/'.$token;
     }

@@ -204,7 +204,7 @@ describe('customer profile', () => {
         expect(screen.getByRole('row', { name: /TMB-26-00118/ })).toBeTruthy();
         expect(screen.getByText('Delivered 04 Nov')).toBeTruthy();
         expect(screen.getByText(/House 22, Road 9\/A, Dhanmondi, Dhaka · beside Abahani field/)).toBeTruthy();
-        expect(screen.getByRole('heading', { name: 'Toy Mart risk score' })).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Smart Junior risk score' })).toBeTruthy();
         expect(screen.getByRole('heading', { name: 'Courier-verified delivery record' })).toBeTruthy();
         expect(screen.getByText('Buys birthday gifts in Feb and Aug')).toBeTruthy();
         expect(screen.getByRole('link', { name: /Phone risk lookup/ }).getAttribute('href')).toBe('/risk/lookup?phone=%2B8801711258046');
@@ -218,7 +218,7 @@ describe('customer profile', () => {
         expect(await screen.findByText('Phone, e-mail and street addresses are masked for your role.')).toBeTruthy();
         expect(screen.getByText(/017\*\*\*\*8046/)).toBeTruthy();
         expect(screen.getByText('Street line and landmark hidden for your role')).toBeTruthy();
-        expect(screen.queryByRole('heading', { name: 'Toy Mart risk score' })).toBeNull();
+        expect(screen.queryByRole('heading', { name: 'Smart Junior risk score' })).toBeNull();
         expect(screen.queryByRole('link', { name: /Phone risk lookup/ })).toBeNull();
         expect(document.body.textContent ?? '').not.toContain('Road 9/A');
 

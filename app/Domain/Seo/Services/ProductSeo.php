@@ -26,9 +26,9 @@ use App\Domain\Seo\Models\SlugHistory;
 final readonly class ProductSeo
 {
     /** Fallback only: the site name is config('seo.site_name') — see {@see SiteTitle}. */
-    public const string SITE_NAME = 'Toy Mart BD';
+    public const string SITE_NAME = 'Smart Junior';
 
-    public const string SITE_URL = 'https://toymartbd.com';
+    public const string SITE_URL = 'https://smartjunior.com.bd';
 
     /** Google's preferred minimum for a product image (Merchant Center and rich results). */
     public const int PRIMARY_IMAGE_MIN = 1200;

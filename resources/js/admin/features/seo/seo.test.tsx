@@ -60,10 +60,10 @@ const doc: SeoDocument = {
     sitemap_exclude: false,
     twitter_card: 'summary_large_image',
     focus_keyword: null,
-    defaults: { title: 'LEGO | Toy Mart BD', title_bn: 'লেগো | Toy Mart BD', description: 'Genuine LEGO sets.', description_bn: 'আসল লেগো সেট।', og_image: null },
+    defaults: { title: 'LEGO | Smart Junior', title_bn: 'লেগো | Smart Junior', description: 'Genuine LEGO sets.', description_bn: 'আসল লেগো সেট।', og_image: null },
     serp: {
         en: serp('A very long LEGO brand title that Google will certainly cut', 'A very long LEGO brand title that Google …', true, 'toymartbd.com › brands › lego'),
-        bn: serp('লেগো | Toy Mart BD', 'লেগো | Toy Mart BD', false, 'toymartbd.com › bn › brands › lego'),
+        bn: serp('লেগো | Smart Junior', 'লেগো | Smart Junior', false, 'toymartbd.com › bn › brands › lego'),
     },
     in_sitemap: true,
     checklist: {
@@ -106,7 +106,7 @@ describe('SeoPanel', () => {
         fireEvent.click(screen.getByRole('tab', { name: 'বাংলা' }));
         const bnPreview = await screen.findByTestId('serp-preview');
         expect(within(bnPreview).getByText('toymartbd.com › bn › brands › lego')).toBeTruthy();
-        expect((screen.getByLabelText(/Meta title \(বাংলা\)/) as HTMLInputElement).placeholder).toBe('লেগো | Toy Mart BD');
+        expect((screen.getByLabelText(/Meta title \(বাংলা\)/) as HTMLInputElement).placeholder).toBe('লেগো | Smart Junior');
     });
 
     it('shows the server’s SEO score with a reason on each failing check', async () => {
@@ -127,8 +127,8 @@ describe('SeoPanel', () => {
         const card = await screen.findByTestId('social-preview', {}, { timeout: 5000 });
         expect(within(card).getByText('toymartbd.com')).toBeTruthy();
         expect(within(card).getByText('No share image')).toBeTruthy();
-        fireEvent.change(screen.getByLabelText(/^Share title/), { target: { value: 'LEGO at Toy Mart BD' } });
-        expect(await within(card).findByText('LEGO at Toy Mart BD')).toBeTruthy();
+        fireEvent.change(screen.getByLabelText(/^Share title/), { target: { value: 'LEGO at Smart Junior' } });
+        expect(await within(card).findByText('LEGO at Smart Junior')).toBeTruthy();
     });
 
     it('picks the share image from the Media Library or takes a pasted URL', async () => {
@@ -150,16 +150,16 @@ describe('SeoPanel', () => {
         let sent: Record<string, unknown> | null = null;
         brandApi(editor, (body) => {
             sent = body as Record<string, unknown>;
-            return { status: 200, body: { ...doc, og_title_bn: 'টয় মার্টে লেগো' } };
+            return { status: 200, body: { ...doc, og_title_bn: 'Smart Juniorে লেগো' } };
         });
         renderApp('/products/brands/1');
 
         fireEvent.click(await screen.findByRole('tab', { name: 'বাংলা' }));
-        fireEvent.change(screen.getByLabelText(/Share title \(বাংলা\)/), { target: { value: 'টয় মার্টে লেগো' } });
+        fireEvent.change(screen.getByLabelText(/Share title \(বাংলা\)/), { target: { value: 'Smart Juniorে লেগো' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save SEO' }));
 
         expect(await screen.findByText('SEO saved.')).toBeTruthy();
-        expect(sent).toMatchObject({ og_title_bn: 'টয় মার্টে লেগো', title_bn: null, robots: 'index,follow', title: doc.title });
+        expect(sent).toMatchObject({ og_title_bn: 'Smart Juniorে লেগো', title_bn: null, robots: 'index,follow', title: doc.title });
     });
 
     it('puts a 422 on the matching field', async () => {

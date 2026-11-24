@@ -40,7 +40,7 @@ it('refuses every send through the unverified sms.net.bd driver, with no HTTP ca
     Http::preventStrayRequests();
     config(['notifications.sms.drivers.sms_net_bd.verified' => $verified]);
 
-    $result = (new SmsNetBdGateway)->send('+8801712345678', 'Toy Mart BD: hello', 'test');
+    $result = (new SmsNetBdGateway)->send('+8801712345678', 'Smart Junior: hello', 'test');
 
     expect($result->accepted)->toBeFalse()
         ->and($result->providerMessageId)->toBeNull()

@@ -56,8 +56,8 @@ function brandingIconWithMaster(int $width, int $height): Media
 function brandingBody(array $overrides = []): array
 {
     return [
-        'site_name_en' => 'Toy Mart BD',
-        'site_name_bn' => 'টয় মার্ট বিডি',
+        'site_name_en' => 'Smart Junior',
+        'site_name_bn' => 'Smart Junior',
         'tagline_en' => 'Toys that teach',
         'tagline_bn' => 'খেলনায় শেখা',
         'description_en' => 'Educational toys delivered across Bangladesh, cash on delivery.',
@@ -78,12 +78,12 @@ it('starts empty, with the business name as the site-name fallback', function ()
         ->assertJsonPath('values.logo_media_id', null)
         ->assertJsonPath('media.logo', null)
         ->assertJsonPath('media.share_image', null)
-        ->assertJsonPath('fallbacks', ['site_name_en' => 'Toy Mart BD', 'site_name_bn' => 'টয় মার্ট বিডি'])
+        ->assertJsonPath('fallbacks', ['site_name_en' => 'Smart Junior', 'site_name_bn' => 'Smart Junior'])
         ->assertJsonPath('storefront_host', 'toymartbd.com')
         ->assertJsonPath('limits', ['site_name' => 60, 'tagline' => 80, 'description' => 160]);
 
-    Setting::put(CompanyDetails::PREFIX.'name_en', 'Toy Mart Bangladesh', SettingGroup::Store);
-    $this->getJson(BRANDING_URL)->assertOk()->assertJsonPath('fallbacks.site_name_en', 'Toy Mart Bangladesh');
+    Setting::put(CompanyDetails::PREFIX.'name_en', 'Smart Junior Bangladesh', SettingGroup::Store);
+    $this->getJson(BRANDING_URL)->assertOk()->assertJsonPath('fallbacks.site_name_en', 'Smart Junior Bangladesh');
 });
 
 it('round-trips the section, Bangla included, with each image described', function (): void {
@@ -95,7 +95,7 @@ it('round-trips the section, Bangla included, with each image described', functi
 
     $body = brandingBody(['logo_media_id' => $logo->id, 'logo_dark_media_id' => $dark->id, 'icon_media_id' => $icon->id, 'share_image_media_id' => $share->id]);
     $this->putJson(BRANDING_URL, $body)->assertOk()
-        ->assertJsonPath('values.site_name_bn', 'টয় মার্ট বিডি')
+        ->assertJsonPath('values.site_name_bn', 'Smart Junior')
         ->assertJsonPath('values.description_bn', 'সারা বাংলাদেশে শিক্ষামূলক খেলনা, ক্যাশ অন ডেলিভারি।')
         ->assertJsonPath('values.icon_media_id', $icon->id)
         ->assertJsonPath('media.logo.id', $logo->id)
@@ -130,11 +130,11 @@ it('shares the logo with invoice details, both ways', function (): void {
 
 it('leaves the invoice-only details alone', function (): void {
     Support::actingAs(Role::Manager);
-    $this->putJson(BRANDING_INVOICE_URL, ['name_en' => 'Toy Mart BD Ltd', 'address_en' => 'House 7, Mirpur'])->assertOk();
+    $this->putJson(BRANDING_INVOICE_URL, ['name_en' => 'Smart Junior Ltd', 'address_en' => 'House 7, Mirpur'])->assertOk();
 
     $this->putJson(BRANDING_URL, brandingBody())->assertOk();
 
-    $this->getJson(BRANDING_INVOICE_URL)->assertOk()->assertJsonPath('name_en', 'Toy Mart BD Ltd')->assertJsonPath('address_en', 'House 7, Mirpur');
+    $this->getJson(BRANDING_INVOICE_URL)->assertOk()->assertJsonPath('name_en', 'Smart Junior Ltd')->assertJsonPath('address_en', 'House 7, Mirpur');
 });
 
 it('clears a value sent as null or blank', function (): void {

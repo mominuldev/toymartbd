@@ -37,7 +37,7 @@ final class AgeTilesSchema extends BlockSchema
         return [
             'eyebrow' => 'Age guide', 'eyebrow_bn' => 'বয়স গাইড', 'eyebrow_tone' => 'blue',
             'title' => 'Shop by age', 'title_bn' => 'বয়স অনুযায়ী কিনুন',
-            'sub' => null, 'sub_bn' => null,
+            'sub' => 'Every age plays differently. Start with your child’s age.', 'sub_bn' => 'প্রতিটি বয়সের খেলা আলাদা। আপনার শিশুর বয়স দিয়ে শুরু করুন।',
             'show_see_all' => true,
             'cards' => [],
         ];

@@ -165,7 +165,7 @@ it('mails the owner channel and texts critical alerts, with no PII in the SMS', 
         && str_contains($m->subjectLine, 'Critical alert: Backup overdue'));
     expect($this->sms->sent)->toHaveCount(1)
         ->and($this->sms->sent[0]['phone'])->toBe('+8801712345678')
-        ->and($this->sms->sent[0]['body'])->toContain('Toy Mart BD FIRING backup_stale');
+        ->and($this->sms->sent[0]['body'])->toContain('Smart Junior FIRING backup_stale');
 });
 
 it('does not text a warning-level alert unless the owner lowers the SMS threshold', function (): void {
@@ -286,7 +286,7 @@ it('fires a [TEST] alert through the real channel without touching alert state',
     $this->artisan('toymart:alerts:test', ['name' => 'no_orders'])->assertSuccessful();
 
     Mail::assertSent(MonitoringAlertMail::class, fn (MonitoringAlertMail $m): bool => $m->isTest && str_starts_with($m->subjectLine, '[TEST]'));
-    expect($this->sms->sent[0]['body'])->toStartWith('[TEST] Toy Mart BD FIRING no_orders');
+    expect($this->sms->sent[0]['body'])->toStartWith('[TEST] Smart Junior FIRING no_orders');
     $alert = MonitoringAlert::query()->findOrFail('no_orders');
     expect($alert->state->value)->toBe('ok')->and($alert->last_test_at)->not->toBeNull()->and($alert->notify_count)->toBe(0);
 });

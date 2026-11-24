@@ -73,7 +73,7 @@ const quote = (tenders: SentTender[]): PosQuote => {
 const sale: PosSale = { id: 40, order_id: 900, order_number: 'TMB-26-00042', grand_total: '3455.00', tendered_total: '4000.00', cash_tendered: '4000.00', change_due: '545.00', due_amount: '0.00', created_at: '2026-11-15T05:00:00+00:00' };
 
 const receipt: PosReceipt = {
-    store: { name_en: 'Toy Mart BD', name_bn: 'টয় মার্ট বিডি', address_en: null, address_bn: null, hotline: null, bin: null, trade_licence: null, footer_en: null, footer_bn: null, placeholders: [] },
+    store: { name_en: 'Smart Junior', name_bn: 'Smart Junior', address_en: null, address_bn: null, hotline: null, bin: null, trade_licence: null, footer_en: null, footer_bn: null, placeholders: [] },
     branch: { name: 'Chattogram · Agrabad', name_bn: null, address: null },
     register: 'Register 1',
     cashier: 'Sadia Haque',

@@ -33,7 +33,7 @@ return [
     'min_cart_value' => env('CART_RECOVERY_MIN_CART_VALUE', '0.00'),
 
     // Public storefront origin the restore link points at (no trailing slash).
-    'storefront_url' => env('CART_RECOVERY_STOREFRONT_URL', 'https://'.env('STORE_PUBLIC_DOMAIN', 'toymartbd.com')),
+    'storefront_url' => env('CART_RECOVERY_STOREFRONT_URL', 'https://'.env('STORE_PUBLIC_DOMAIN', 'smartjunior.com.bd')),
 
     // Messaging hours in Dhaka time: a cart abandoned at night waits for the morning run.
     'quiet_hours' => ['from' => '21:00', 'to' => '09:00'],

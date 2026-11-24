@@ -124,8 +124,8 @@ it('refuses to add a branch or switch one back on while single (409 single-branc
     expect($old->fresh()?->is_active)->toBeFalse();
 
     // Editing the shop itself, or a switched-off location, still works.
-    $this->putJson(BRANCH_MODE_LOCATIONS_URL.'/'.StockLocation::defaultId(), branchModeLocationBody(['name' => 'Toy Mart · Mirpur']))
-        ->assertOk()->assertJsonPath('name', 'Toy Mart · Mirpur');
+    $this->putJson(BRANCH_MODE_LOCATIONS_URL.'/'.StockLocation::defaultId(), branchModeLocationBody(['name' => 'Smart Junior · Mirpur']))
+        ->assertOk()->assertJsonPath('name', 'Smart Junior · Mirpur');
     $this->putJson(BRANCH_MODE_LOCATIONS_URL."/{$old->id}", branchModeLocationBody(['is_active' => false, 'name' => 'Old shop']))
         ->assertOk()->assertJsonPath('is_active', false);
 

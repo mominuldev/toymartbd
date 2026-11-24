@@ -106,8 +106,8 @@ final class InboxReplyContext
     /** The public tracking page, as text (the customer still enters their phone digits, rule 22). */
     public static function trackUrl(string $language): string
     {
-        $base = config('inbox.storefront_url', 'https://toymartbd.com');
-        $host = preg_replace('#^https?://#i', '', rtrim(is_string($base) ? $base : 'https://toymartbd.com', '/'));
+        $base = config('inbox.storefront_url', 'https://smartjunior.com.bd');
+        $host = preg_replace('#^https?://#i', '', rtrim(is_string($base) ? $base : 'https://smartjunior.com.bd', '/'));
 
         return $host.($language === 'bn' ? '/bn' : '').'/track';
     }

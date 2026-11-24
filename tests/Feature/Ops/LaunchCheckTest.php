@@ -506,7 +506,7 @@ it('requires the invoice company details, trade licence and BIN', function (): v
     expect(launchStatus('business.company_details'))->toBe('fail')
         ->and(launchDetail('business.company_details'))->toContain('trade_licence');
 
-    foreach (['name_en' => 'Toy Mart BD Ltd', 'name_bn' => 'টয় মার্ট বিডি লিমিটেড', 'address_en' => 'House 1, Road 2, Dhanmondi, Dhaka', 'address_bn' => 'বাড়ি 1, রোড 2, ধানমন্ডি, ঢাকা', 'hotline' => '09612000111', 'trade_licence' => 'TRAD/DNCC/001234/2026', 'bin' => '001234567-0101'] as $field => $value) {
+    foreach (['name_en' => 'Smart Junior Ltd', 'name_bn' => 'Smart Junior লিমিটেড', 'address_en' => 'House 1, Road 2, Dhanmondi, Dhaka', 'address_bn' => 'বাড়ি 1, রোড 2, ধানমন্ডি, ঢাকা', 'hotline' => '09612000111', 'trade_licence' => 'TRAD/DNCC/001234/2026', 'bin' => '001234567-0101'] as $field => $value) {
         Setting::put(CompanyDetails::PREFIX.$field, $value, SettingGroup::Store);
     }
     expect(launchStatus('business.company_details'))->toBe('pass');

@@ -70,7 +70,7 @@ it('prints with the Figma defaults when nothing is saved and nothing but items i
 
     // roll_50x25: one label per page; store, name, options, price and digits all on.
     expect(pageCount($response))->toBe(2)
-        ->and($text)->toContain('TOY MART BD')
+        ->and($text)->toContain('SMART JUNIOR')
         ->and($text)->toContain('Kids Tricycle')
         ->and($text)->toContain('Red')
         ->and($text)->toContain('4,900')->and($text)->toContain('৳')
@@ -85,7 +85,7 @@ it('takes the template and every toggle from the saved settings', function (): v
     $text = labelText($response);
 
     expect(pageCount($response))->toBe(1)
-        ->and($text)->not->toContain('TOY MART BD')
+        ->and($text)->not->toContain('SMART JUNIOR')
         ->and($text)->not->toContain('Kids Tricycle')
         ->and($text)->not->toContain('Red')
         ->and($text)->not->toContain('৳')
@@ -102,7 +102,7 @@ it('lets the request override the saved settings', function (): void {
 
     expect(pageCount($response))->toBe(2)
         ->and($text)->toContain('Kids Tricycle')
-        ->and($text)->toContain('TOY MART BD')
+        ->and($text)->toContain('SMART JUNIOR')
         ->and($text)->toContain('4,900')->and($text)->toContain('৳');
 });
 
@@ -194,7 +194,7 @@ it('gives the barcode all the height that is left, so no label ends in a blank b
     $mpdf = new Mpdf\Mpdf(['tempDir' => App\Support\MpdfCache::path(), 'fontDir' => [...(new Mpdf\Config\ConfigVariables)->getDefaults()['fontDir'], resource_path('fonts/invoice')], 'fontdata' => (new Mpdf\Config\FontVariables)->getDefaults()['fontdata'] + [App\Http\Controllers\Api\V1\Admin\OrderInvoicePdf::FONT => ['R' => 'HindSiliguri-Regular.ttf', 'B' => 'HindSiliguri-SemiBold.ttf']]]);
     $label = ['name' => 'Kids Tricycle with Push Handle and Bell', 'variant' => 'Red · 2–5 years', 'price' => '৳4,900', 'sku' => 'TRI-RED', 'barcode' => '2000000001173'];
 
-    [$box] = $pdf->boxes($mpdf, $template, [$label], 'en', $price, $name, true, $store ? 'Toy Mart BD' : null, true);
+    [$box] = $pdf->boxes($mpdf, $template, [$label], 'en', $price, $name, true, $store ? 'Smart Junior' : null, true);
     $style = App\Http\Controllers\Api\V1\Admin\ProductLabelPdf::style($template);
     $innerH = $template->labelSize()[1] - 2 * $style['padding'];
     $mm = 25.4 / 72;
@@ -204,7 +204,7 @@ it('gives the barcode all the height that is left, so no label ends in a blank b
 
     expect($filled)->toBeGreaterThan($innerH - 0.3)->toBeLessThanOrEqual($innerH)
         ->and($box['bar_mm'])->toBeGreaterThanOrEqual($innerH * 0.38 - 0.01)
-        ->and($box['store'])->toBe($store ? 'TOY MART BD' : null);
+        ->and($box['store'])->toBe($store ? 'SMART JUNIOR' : null);
 })->with(LabelTemplate::cases())->with([
     'everything' => [true, true, true],
     'no store' => [false, true, true],

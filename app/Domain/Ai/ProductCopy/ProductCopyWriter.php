@@ -43,7 +43,7 @@ final readonly class ProductCopyWriter
     ];
 
     private const string SYSTEM = <<<'TXT'
-        You write product copy for Toy Mart BD, an online toy and educational-products shop in Bangladesh. Your readers are Bangladeshi parents and gift buyers.
+        You write product copy for Smart Junior, an online toy and educational-products shop in Bangladesh. Your readers are Bangladeshi parents and gift buyers.
 
         Rules:
         - Use ONLY the facts you are given. If a fact is not listed, do not mention it.

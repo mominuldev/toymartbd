@@ -78,7 +78,7 @@ export const printInvoiceEn = {
     'printInvoice.doc.track': 'Track your order',
     'printInvoice.doc.signCustomer': 'Received by (customer)',
     'printInvoice.doc.signStore': 'Authorised signature',
-    'printInvoice.doc.thanks': 'Thank you for shopping with Toy Mart BD.',
+    'printInvoice.doc.thanks': 'Thank you for shopping with Smart Junior.',
     'printInvoice.doc.page': 'Page 1 of 1',
     'printInvoice.doc.placeholder': '[placeholder]',
 } as const;
@@ -154,7 +154,7 @@ export const printInvoiceBn: Record<keyof typeof printInvoiceEn, string> = {
     'printInvoice.doc.track': 'অর্ডার ট্র্যাক করুন',
     'printInvoice.doc.signCustomer': 'গ্রহণকারী (ক্রেতা)',
     'printInvoice.doc.signStore': 'অনুমোদিত স্বাক্ষর',
-    'printInvoice.doc.thanks': 'টয় মার্ট বিডি থেকে কেনাকাটার জন্য ধন্যবাদ।',
+    'printInvoice.doc.thanks': 'Smart Junior থেকে কেনাকাটার জন্য ধন্যবাদ।',
     'printInvoice.doc.page': 'পৃষ্ঠা 1 / 1',
     'printInvoice.doc.placeholder': '[placeholder]',
 };

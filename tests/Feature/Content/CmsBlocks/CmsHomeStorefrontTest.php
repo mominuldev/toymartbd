@@ -68,7 +68,7 @@ it('renders the About blocks: collage photos with renditions, copy in the locale
 it('renders the Contact blocks with copy in the locale', function (): void {
     CmsKit::block('contact_hero', ['title' => 'Contact us', 'lead' => 'Ask us.', 'status' => 'Online now', 'bubbles' => [
         ['from' => 'customer', 'label' => 'Parent', 'label_bn' => 'অভিভাবক', 'text' => 'Is it OK for 2?'],
-        ['from' => 'store', 'label' => 'Toy Mart', 'text' => 'Yes.'],
+        ['from' => 'store', 'label' => 'Smart Junior', 'text' => 'Yes.'],
     ]]);
     CmsKit::block('contact_info', ['title' => null, 'whatsapp_note' => 'Fastest', 'address_label' => 'Dhanmondi, Dhaka']);
     CmsKit::block('contact_form', ['hours' => [['label' => 'Friday', 'label_bn' => 'শুক্রবার', 'value' => 'Closed']], 'visit_title' => 'Visit our shop',
@@ -84,7 +84,7 @@ it('renders the Contact blocks with copy in the locale', function (): void {
 
     $bn = CmsKit::home('bn')->assertOk();
     expect($bn->json('blocks.0.content.bubbles.0.label'))->toBe('অভিভাবক')
-        ->and($bn->json('blocks.0.content.bubbles.1.label'))->toBe('Toy Mart')
+        ->and($bn->json('blocks.0.content.bubbles.1.label'))->toBe('Smart Junior')
         ->and($bn->json('blocks.2.content.hours.0.label'))->toBe('শুক্রবার');
 });
 
@@ -377,7 +377,7 @@ it('keeps an old hero (no promos, no proof) answering as before', function (): v
 
 it('renders the category tiles heading chip and line, and each category tagline (Smart Junior 34:5706)', function (): void {
     $category = Category::factory()->create(['tagline' => 'Learn and play', 'tagline_bn' => 'শেখা ও খেলা', 'show_in_menu' => true]);
-    CmsKit::block('category_tiles', ['title' => 'Shop by category', 'eyebrow' => 'Categories', 'eyebrow_bn' => 'ক্যাটাগরি', 'sub' => 'Find the right toy fast.', 'source' => 'manual', 'category_ids' => [$category->id]]);
+    CmsKit::block('category_tiles', ['title' => 'Shop by category', 'eyebrow' => 'Categories', 'eyebrow_bn' => 'ক্যাটাগরি', 'sub' => 'Find the right toy fast.', 'sub_bn' => null, 'source' => 'manual', 'category_ids' => [$category->id]]);
     cmsPublish();
 
     $bn = CmsKit::home('bn')->assertOk();

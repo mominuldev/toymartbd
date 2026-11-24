@@ -102,7 +102,7 @@ final readonly class TestInboxChannelConnection
             }
             $ids = array_map(static fn (mixed $row): mixed => is_array($row) ? ($row['id'] ?? null) : null, (array) $apps->json('data'));
             if (! in_array($appId, $ids, true)) {
-                return self::failed('not_subscribed', 'The Page no longer sends its chats to the Toy Mart app.');
+                return self::failed('not_subscribed', 'The Page no longer sends its chats to the Smart Junior app.');
             }
         }
 
