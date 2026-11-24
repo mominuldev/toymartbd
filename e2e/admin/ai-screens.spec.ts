@@ -46,7 +46,7 @@ test('Ask AI pushes the page on a wide screen and docks over it on a narrower on
     const ask = page.getByRole('button', { name: 'Ask', exact: true });
     await ask.click();
     await expect(ask).toHaveAttribute('aria-pressed', 'true');
-    const panel = page.getByRole('region', { name: 'Ask Toy Mart AI' });
+    const panel = page.getByRole('region', { name: 'Ask Smart Junior AI' });
     await expect(panel.getByText('AI is not set up for this')).toBeVisible();
     // From 1720 it pushes: the page is 440 narrower once the slide ends.
     await expect.poll(async () => Math.round(before - (await main.boundingBox())!.width)).toBe(440);

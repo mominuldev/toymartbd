@@ -132,12 +132,12 @@ it('serves the UI and JSON at /api/docs in local only, or to staff with settings
     $staff = User::factory()->create();
     $staff->givePermissionTo(Permission::SettingsView->value);
 
-    $this->actingAs($staff)->get('/api/docs.json')->assertOk()->assertJsonPath('info.title', 'Smart Junior API');
+    $this->actingAs($staff)->get('/api/docs.json')->assertOk()->assertJsonPath('info.title', 'Toy Mart BD API');
     $this->actingAs($staff)->get('/api/docs')->assertOk();
 });
 
 it('is open without auth when APP_ENV=local', function (): void {
     app()->detectEnvironment(fn (): string => 'local');
 
-    $this->get('/api/docs.json')->assertOk()->assertJsonPath('info.title', 'Smart Junior API');
+    $this->get('/api/docs.json')->assertOk()->assertJsonPath('info.title', 'Toy Mart BD API');
 });

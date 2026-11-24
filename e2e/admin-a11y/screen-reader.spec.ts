@@ -72,7 +72,7 @@ async function expectShell(page: Page, h1: string | RegExp) {
     // The rail announces the shop's name once, not twice (sr-only copy for the collapsed rail only).
     const rail = page.getByRole('complementary').filter({ has: page.getByRole('navigation', { name: 'Main navigation' }) });
     const brand = await rail.evaluate((el) => (el as HTMLElement).innerText);
-    expect(brand.split('Toy Mart BD').length - 1, 'shop name announced once in the expanded rail').toBe(1);
+    expect(brand.split('Smart Junior').length - 1, 'shop name announced once in the expanded rail').toBe(1);
 }
 
 /** Heading levels never skip downward (h1 → h3 without an h2), in document order. */
@@ -372,7 +372,7 @@ test('orders board → order detail: filters, table, the three tracks, and the h
         - button "Copy phone number"
         - link "Call customer"
       - region "Delivery address"
-      - region "Toy Mart risk score"
+      - region "Smart Junior risk score"
       - region "What the couriers say"
     `);
     // Rule 24: our score and the courier's record are two separately named regions, never one.
