@@ -98,7 +98,7 @@ export function BrandPicker({ picked, onChange, ctx, path, legend }: { picked: n
     return <CheckList legend={legend} options={options} picked={picked} onChange={onChange} ctx={ctx} path={path} />;
 }
 
-export function ProductPicker({ picked, onChange, ctx, path }: { picked: number[]; onChange: (ids: number[]) => void; ctx: FieldCtx; path: string }) {
+export function ProductPicker({ picked, onChange, ctx, path, max = 24 }: { picked: number[]; onChange: (ids: number[]) => void; ctx: FieldCtx; path: string; max?: number }) {
     const { t, locale } = useI18n();
     const [term, setTerm] = useState('');
     const results = useProductSearch(term.trim());
@@ -120,7 +120,7 @@ export function ProductPicker({ picked, onChange, ctx, path }: { picked: number[
                         <li key={p.id}>
                             <button
                                 type="button"
-                                disabled={ctx.disabled || picked.length >= 24}
+                                disabled={ctx.disabled || picked.length >= max}
                                 onClick={() => onChange([...picked, p.id])}
                                 aria-label={t('homeBuilder.f.add', { name: nameOf(p) })}
                                 className="flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-start t-admin-body text-fg-primary hover:bg-subtle disabled:text-fg-disabled"

@@ -9226,9 +9226,12 @@ export interface components {
          *     | `contact_form` <br/> "Send us a message" (→ the admin Inbox) beside an optional visit card with hours and a quick-links card. |
          *     | `help_hero` <br/> Help hero (FAQ): centred overline, the page headline, a lead and a question search box. |
          *     | `chat_band` <br/> "Still need help?": a mint band with a button to the store's WhatsApp. |
+         *     | `promo_banners` <br/> One or two promo banners side by side (Smart Junior "Promo banners"), each copy, a button and a photo on a pastel. |
+         *     | `why_band` <br/> "Why Smart Junior": a dark band with a heading, a paragraph, up to four owner-typed figures and a photo. |
+         *     | `video_reel` <br/> Video reel: 9:16 posters linking to videos, each with a caption and an optional "shop this" product. |
          * @enum {string}
          */
-        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form" | "help_hero" | "chat_band";
+        BlockType: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form" | "help_hero" | "chat_band" | "promo_banners" | "why_band" | "video_reel";
         /**
          * BlogPostRequest
          * @description `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it).
@@ -10036,7 +10039,7 @@ export interface components {
             id: number;
             uuid: string;
             /** @enum {string} */
-            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form" | "help_hero" | "chat_band";
+            type: "hero" | "category_tiles" | "age_tiles" | "product_rail" | "flash_sale" | "brand_strip" | "usp_band" | "promo_split" | "testimonials" | "blog_teaser" | "rich_text" | "faq" | "contact_info" | "image" | "story_hero" | "feature_tiles" | "numbered_cards" | "cta_band" | "contact_hero" | "contact_form" | "help_hero" | "chat_band" | "promo_banners" | "why_band" | "video_reel";
             label: string | null;
             content: {
                 [key: string]: unknown;
@@ -18922,6 +18925,8 @@ export interface components {
             rating_avg: string | null;
             rating_count: number;
             is_featured: boolean;
+            /** @description Published within the last `catalog.new_badge_days` days: the card's "New" badge. */
+            is_new: boolean;
             variant_count: number;
             /**
              * @description The one active variant of a single-variant product, so a card can add it to the

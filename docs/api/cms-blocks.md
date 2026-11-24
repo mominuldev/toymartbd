@@ -19,20 +19,24 @@ builder `241:44102`). Storefront: `toymartbd-storefront/components/content/**`.
 Validated server-side by `BlockType::schema()` (`app/Domain/Content/Blocks/Schemas/*`), applied by the
 block FormRequests under `content.*`; stored normalised (unknown keys dropped, empty strings → null,
 rich text sanitised with the product-description allowlist). Copy is a pair `x` (English) / `x_bn`
-(Bangla, optional — the storefront falls back to English).
+(Bangla, optional — the storefront falls back to English). A **tone** is one of `pink`, `green`,
+`blue`, `yellow`, `purple`, `orange` (the Smart Junior pastels); `eyebrow_tone` colours a section
+header's chip and `band` the section background. Every word a section shows is block content: the
+storefront draws no copy of its own beyond generic controls (arrows, "Play", fallbacks for an
+empty optional label).
 
 | Type | Content |
 |---|---|
 | `hero` | `show_age_pills`, `slides[1..5]`: `headline`*, `accent` (words of the headline drawn in the sun colour), `overline`, `sub`, `cta_label`, `cta_href` (store path or https), `cta2_label`, `cta2_href` (the outline button), `media_id` (library image; none = built-in art), `alt`; `promos[0..2]` (the mini promo cards beside the slides, Smart Junior 34:5686): `title`*, `overline`, `cta_label`, `cta_href`, `media_id`, `alt`, `tone` pink\|green\|blue\|yellow\|purple\|orange; `proof` (null or the row under the first slide's copy): `rating` 0–5, `label`, `media_ids[0..3]` (avatars) — the storefront gets `promos[].image` and `proof.avatars[]`; figures are editor-entered, never defaulted |
 | `category_tiles` | `title`*, `eyebrow` (chip above the heading), `sub` (line under it), `source` `top_level`\|`manual`, `category_ids` (manual), `limit` 2–12, `show_see_all` — each category node carries its `tagline` / `tagline_bn` (the tile's short line, edited on the category) |
-| `age_tiles` | `title`*, `show_see_all` — counts are live |
-| `product_rail` | `title`*, `rule` `new`\|`best_sellers`\|`category`\|`brand`\|`manual`, `category_id`, `brand_id`, `product_ids` (≤ 24), `window_days` 7\|30\|90, `limit` 2–12, `min_items` ≤ limit, `hide_sold_out`, `show_see_all` |
+| `age_tiles` | Header: `eyebrow`, `eyebrow_tone`, `title`*, `sub`; `show_see_all`; `cards[0..8]` (Smart Junior photo cards 34:5737): `title`*, `line`, `href`* (store path or https), `media_id`, `alt`, `tone` — the storefront gets `content.cards[].image`. With no cards it shows the seven live age bands (`age_counts`) |
+| `product_rail` | Header: `eyebrow`, `eyebrow_tone`, `title`*, `sub`; `layout` `slider` (one row, see-all + prev/next in the header) \| `grid` (every product in rows, the see-all button under them); `band` (a pastel behind the section, none = page canvas); `see_all_label` (none = the storefront's own words); `chip_category_ids` (≤ 6 filter chips, led by `all_label`) — the storefront gets `chips[]`: `{id, name, slug, products}`, the same rule run inside each category, chips without products left out; `rule` `new`\|`best_sellers`\|`category`\|`brand`\|`manual`, `category_id`, `brand_id`, `product_ids` (≤ 24), `window_days` 7\|30\|90, `limit` 2–12, `min_items` ≤ limit, `hide_sold_out`, `show_see_all` |
 | `flash_sale` | `title`*, `sub` (line under the heading; none = the sale's end time), `limit` 2–12 — a slot: the storefront reads the running sale from `GET /storefront/flash-sales` (tags `flash-sale`, `products`) and hides the block when none runs |
 | `brand_strip` | `title`*, `brand_ids` (none = active brands with a logo), `limit` 3–24 |
 | `usp_band` | `eyebrow`, `title`*, `items[2..4]`: `icon` (cod, return, authentic, support, delivery, gift, educational), `title`*, `detail` (`{phone}` = hotline) |
 | `promo_split` | `headline`*, `overline`, `body`, `cta_label`, `cta_href`, `media_id`, `alt`, `image_side` left\|right |
 | `testimonials` | `title`*, `limit` 1–12 — published testimonials, in their order |
-| `blog_teaser` | `title`*, `sub`, `limit` 1–6 — latest live posts (StorefrontBlogPostCard) |
+| `blog_teaser` | Header: `eyebrow`, `eyebrow_tone`, `title`*, `sub`; `show_see_all` (→ `see_all_href` `/blog`); `limit` 1–6 — latest live posts (StorefrontBlogPostCard) |
 | `rich_text` | `html`*, `html_bn` |
 | `faq` | `title`*, `icon` (optional, as feature_tiles — the group's glyph in the topic list), `items[1..20]`: `question`*, `answer`* (plain text; the storefront adds FAQPage JSON-LD) |
 | `image` | `media_id` (library image; a block without one is removed on the storefront), `alt`, `caption`, `href` (store path or https), `width` content\|wide |
@@ -44,7 +48,10 @@ rich text sanitised with the product-description allowlist). Copy is a pair `x` 
 | `contact_hero` | `overline`, `title`*, `lead`*, `status` (pill with a green dot), `bubbles[0..4]`: `from`* customer\|store, `label`, `text`* — placed first on a page built from sections it replaces the page header and its title is the page's H1 (Contact us 165:9891) |
 | `contact_form` | `title`*, `intro`, `privacy` — the "Send us a message" card; its fields are fixed and post to `POST /storefront/contact-messages` (→ admin Inbox, channel `web_form`). Beside it: `visit_title`, `visit_body`, `visit_map_href`, `hours[0..6]`: `label`*, `value`*; `links_title`, `links[0..6]`: `icon`* (as feature_tiles, plus `clock`), `label`*, `href`* — a side card without its title is not shown |
 | `help_hero` | `overline`, `title`*, `lead`, `show_search` (default true; filters the page's FAQ sections in the browser), `search_placeholder` — placed first it replaces the page header and its title is the page's H1 (Common questions 171:10981) |
-| `chat_band` | `title`*, `body`, `button_label` — "Still need help?"; the button links to the store's WhatsApp from `GET /storefront/store-info` and is left out while that is the sample |
+| `chat_band` | `title`*, `body`, `button_label`, `tone` mint\|yellow (yellow = Smart Junior Help CTA 34:5872), `show_hotline` (a call button) — "Still need help?"; the buttons link to the store's WhatsApp and hotline from `GET /storefront/store-info` and each is left out while its number is the sample |
+| `promo_banners` | `items[1..2]` (Smart Junior Promo banners 34:5763): `overline`, `title`*, `body`, `cta_label`, `cta_href`, `media_id`, `alt`, `tone` — the storefront gets `content.items[].image` |
+| `why_band` | `eyebrow`, `title`*, `body`, `stats[0..4]`: `value`* (as typed, Western digits, both languages, e.g. `50,000+`), `label`*; `media_id`, `alt` (Why Smart Junior 34:5786) — the storefront gets `content.image`. Figures are the owner's; nothing is defaulted |
+| `video_reel` | Header: `eyebrow`, `eyebrow_tone`, `title`*, `sub`; `band`; `see_all_label` + `see_all_href`; `items[0..12]` (Video reel 55:12790): `title`*, `video_url`* (a YouTube Shorts/watch/youtu.be, Facebook or Instagram video link, or an https `.mp4`/`.webm` file — anything else is a 422; it plays in the storefront's popup player), `media_id`* (the 9:16 poster), `alt`, `duration` (`m:ss`), `views` (caption as typed), `product_id` — the storefront gets `content.items[].poster`, `.embed` (`{kind: youtube|facebook|instagram|file, src}` — the player source: youtube-nocookie.com embed, Facebook video plugin, Instagram /embed, or the file itself; null for a link saved before this rule) and `.product` (`{name, slug}`, only while listable, else null). Reels whose poster is gone are dropped; a reel block with none is removed |
 
 ## Admin API (`/api/v1/admin`, content.view to read, content.manage to change)
 

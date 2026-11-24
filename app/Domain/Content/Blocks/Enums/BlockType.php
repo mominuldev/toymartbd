@@ -22,11 +22,14 @@ use App\Domain\Content\Blocks\Schemas\HeroSchema;
 use App\Domain\Content\Blocks\Schemas\ImageSchema;
 use App\Domain\Content\Blocks\Schemas\NumberedCardsSchema;
 use App\Domain\Content\Blocks\Schemas\ProductRailSchema;
+use App\Domain\Content\Blocks\Schemas\PromoBannersSchema;
 use App\Domain\Content\Blocks\Schemas\PromoSplitSchema;
 use App\Domain\Content\Blocks\Schemas\RichTextSchema;
 use App\Domain\Content\Blocks\Schemas\StoryHeroSchema;
 use App\Domain\Content\Blocks\Schemas\TestimonialsSchema;
 use App\Domain\Content\Blocks\Schemas\UspBandSchema;
+use App\Domain\Content\Blocks\Schemas\VideoReelSchema;
+use App\Domain\Content\Blocks\Schemas\WhyBandSchema;
 
 /**
  * Every CMS block type. Each has one JSON schema (BlockSchema): its validation rules, its
@@ -74,6 +77,12 @@ enum BlockType: string
     case HelpHero = 'help_hero';
     /** "Still need help?": a mint band with a button to the store's WhatsApp. */
     case ChatBand = 'chat_band';
+    /** One or two promo banners side by side (Smart Junior "Promo banners"), each copy, a button and a photo on a pastel. */
+    case PromoBanners = 'promo_banners';
+    /** "Why Smart Junior": a dark band with a heading, a paragraph, up to four owner-typed figures and a photo. */
+    case WhyBand = 'why_band';
+    /** Video reel: 9:16 posters linking to videos, each with a caption and an optional "shop this" product. */
+    case VideoReel = 'video_reel';
 
     public function schema(): BlockSchema
     {
@@ -100,6 +109,9 @@ enum BlockType: string
             self::ContactForm => new ContactFormSchema,
             self::HelpHero => new HelpHeroSchema,
             self::ChatBand => new ChatBandSchema,
+            self::PromoBanners => new PromoBannersSchema,
+            self::WhyBand => new WhyBandSchema,
+            self::VideoReel => new VideoReelSchema,
         };
     }
 

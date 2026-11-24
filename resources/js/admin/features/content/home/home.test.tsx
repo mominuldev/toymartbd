@@ -144,6 +144,60 @@ describe('homepage builder', () => {
         expect(screen.getByRole('button', { name: 'Add promo card' })).toHaveProperty('disabled', false);
     });
 
+    it('edits the owner-typed figures of “Why Smart Junior” (34:5786)', { timeout: 20_000 }, async () => {
+        const why = block(1, 'why_band', { title: 'Why us', eyebrow: null, body: null, stats: [], media_id: null, alt: null });
+        const calls = api(editor, (url, init) => {
+            if (url.endsWith('/content/home/blocks/1') && init?.method === 'PATCH') return { status: 200, body: why };
+            if (url.endsWith('/content/home')) return { status: 200, body: draft({ blocks: [why] }) };
+            return null;
+        });
+        renderApp('/store/home');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Add figure' }, { timeout: 5000 }));
+        fireEvent.change(await screen.findByLabelText('Figure'), { target: { value: '50,000+' } });
+        fireEvent.change(screen.getByLabelText('Caption (EN)'), { target: { value: 'happy families' } });
+
+        await waitFor(
+            () => {
+                const patch = calls.mock.calls.filter(([url, init]) => String(url).endsWith('/content/home/blocks/1') && init?.method === 'PATCH').pop();
+                expect(patch ? JSON.parse(String(patch[1]!.body)).content.stats : null).toEqual([{ value: '50,000+', label: 'happy families' }]);
+            },
+            { timeout: 4000 },
+        );
+    });
+
+    it('edits a video reel: link, length, views caption and the section colour', { timeout: 20_000 }, async () => {
+        const reel = block(2, 'video_reel', { title: 'Toys in action', eyebrow_tone: 'pink', band: 'purple', items: [] });
+        const calls = api(editor, (url, init) => {
+            if (url.endsWith('/content/home/blocks/2') && init?.method === 'PATCH') return { status: 200, body: reel };
+            if (url.endsWith('/content/home')) return { status: 200, body: draft({ blocks: [reel] }) };
+            return null;
+        });
+        renderApp('/store/home');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Add video' }, { timeout: 5000 }));
+        fireEvent.change(await screen.findByLabelText('Video link'), { target: { value: 'https://youtube.com/shorts/abc' } });
+        fireEvent.change(screen.getByLabelText('Length'), { target: { value: '0:42' } });
+        fireEvent.change(screen.getByLabelText('Views caption (EN)'), { target: { value: '12.4k views' } });
+
+        await waitFor(
+            () => {
+                const patch = calls.mock.calls.filter(([url, init]) => String(url).endsWith('/content/home/blocks/2') && init?.method === 'PATCH').pop();
+                const content = patch ? JSON.parse(String(patch[1]!.body)).content : null;
+                expect(content?.items).toEqual([expect.objectContaining({ video_url: 'https://youtube.com/shorts/abc', duration: '0:42', views: '12.4k views', product_id: null })]);
+                expect(content?.band).toBe('purple');
+            },
+            { timeout: 4000 },
+        );
+    });
+
+    it('summarises the Smart Junior sections', () => {
+        expect(blockSummary(block(1, 'age_tiles', { title: 'Age', cards: [{ title: '0–2' }, { title: '2–4' }] }), t, 'en')).toBe('2 photo cards');
+        expect(blockSummary(block(1, 'age_tiles', { title: 'Age', cards: [] }), t, 'en')).toBe('7 age bands, live counts');
+        expect(blockSummary(block(1, 'promo_banners', { items: [{ title: 'Gifts' }] }), t, 'en')).toBe('1 banners');
+        expect(blockSummary(block(1, 'video_reel', { title: 'Reel', items: [{}, {}, {}] }), t, 'en')).toBe('3 videos');
+    });
+
     it('is a live editor: canvas clicks select a section, autosaves refresh the frame in place', { timeout: 20_000 }, async () => {
         api(editor, (url, init) => (url.endsWith('/content/home/blocks/2') && init?.method === 'PATCH' ? { status: 200, body: { ...blocks[1]!, content: { ...blocks[1]!.content, title: 'Eid best sellers' } } } : null));
         renderApp('/store/home');

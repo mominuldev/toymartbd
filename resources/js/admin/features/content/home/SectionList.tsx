@@ -4,10 +4,12 @@ import {
     ChatsCircleIcon,
     ChatTeardropTextIcon,
     ClockIcon,
+    ColumnsIcon,
     DotsSixVerticalIcon,
     EnvelopeSimpleIcon,
     EyeIcon,
     EyeSlashIcon,
+    FilmStripIcon,
     GridFourIcon,
     IdentificationCardIcon,
     ImageIcon,
@@ -21,6 +23,7 @@ import {
     PlusIcon,
     QuestionIcon,
     ReadCvLogoIcon,
+    SealCheckIcon,
     ShieldCheckIcon,
     SquaresFourIcon,
     StorefrontIcon,
@@ -58,6 +61,9 @@ export const typeIcons: Record<BlockType, Icon> = {
     contact_form: EnvelopeSimpleIcon,
     help_hero: LifebuoyIcon,
     chat_band: WhatsappLogoIcon,
+    promo_banners: ColumnsIcon,
+    why_band: SealCheckIcon,
+    video_reel: FilmStripIcon,
 };
 
 type Props = {

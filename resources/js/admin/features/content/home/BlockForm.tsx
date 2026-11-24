@@ -7,6 +7,7 @@ import type { CmsBlock } from './api';
 import { BLOOM_TONES, bool, CONTACT_CHANNELS, ids, num, rows, str, TILE_ICONS, type Content } from './content';
 import { Bilingual, moved, Repeater, SelectField, SwitchRow, TextField, type FieldCtx } from './fields';
 import { BrandPicker, CategoryPicker, ProductPicker, useBrandSelectOptions, useCategoryOptions } from './pickers';
+import { AgeTilesForm, BandField, PromoBannersForm, SectionHeaderFields, VideoReelForm, WhyBandForm, type FormKit } from './SectionForms';
 
 /*
  * The Content and Style tabs of the B · 26 settings panel, one form per block type. Each edit
@@ -59,6 +60,7 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
         if (next) pickedThisSession.set(next.media_id, next);
         apply(next?.media_id ?? null);
     };
+    const kit: FormKit = { content, set, setRow, listOps, pickImage, imageOf: (row) => imageValue(row, media, pickedThisSession), ctx };
 
     switch (block.type) {
         case 'hero': {
@@ -125,17 +127,19 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                 </>
             );
         case 'age_tiles':
+            return <AgeTilesForm kit={kit} />;
         case 'testimonials':
             return <Bilingual content={content} keyName="title" set={set} ctx={ctx} />;
         case 'blog_teaser':
-            return (
-                <>
-                    <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
-                    <Bilingual content={content} keyName="sub" set={set} ctx={ctx} />
-                </>
-            );
+            return <SectionHeaderFields kit={kit} tone="green" />;
         case 'product_rail':
-            return <RailContent content={content} set={set} setMany={(patch) => onChange({ ...content, ...patch })} ctx={ctx} block={block} onSettings={onSettings} />;
+            return <RailContent kit={kit} setMany={(patch) => onChange({ ...content, ...patch })} block={block} onSettings={onSettings} />;
+        case 'promo_banners':
+            return <PromoBannersForm kit={kit} />;
+        case 'why_band':
+            return <WhyBandForm kit={kit} />;
+        case 'video_reel':
+            return <VideoReelForm kit={kit} />;
         case 'brand_strip':
             return (
                 <>
@@ -448,14 +452,16 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                     <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
                     <Bilingual content={content} keyName="body" set={set} ctx={ctx} multiline />
                     <Bilingual content={content} keyName="button_label" set={set} ctx={ctx} />
+                    <SwitchRow label={t('homeBuilder.f.showHotline')} checked={bool(content.show_hotline, false)} onChange={(v) => set('show_hotline', v)} disabled={ctx.disabled} />
                     <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.chatBandSource')}</p>
                 </>
             );
     }
 }
 
-function RailContent({ content, set, setMany, ctx, block, onSettings }: { content: Content; set: (key: string, value: unknown) => void; setMany: (patch: Content) => void; ctx: FieldCtx; block: CmsBlock; onSettings: (patch: { show_mobile: boolean }) => void }) {
+function RailContent({ kit, setMany, block, onSettings }: { kit: FormKit; setMany: (patch: Content) => void; block: CmsBlock; onSettings: (patch: { show_mobile: boolean }) => void }) {
     const { t } = useI18n();
+    const { content, set, ctx } = kit;
     const categories = useCategoryOptions();
     const brands = useBrandSelectOptions();
     const rule = str(content.rule) || 'best_sellers';
@@ -469,7 +475,7 @@ function RailContent({ content, set, setMany, ctx, block, onSettings }: { conten
     ];
     return (
         <>
-            <Bilingual content={content} keyName="title" set={set} ctx={ctx} />
+            <SectionHeaderFields kit={kit} tone="yellow" />
             <SelectField
                 label={t('homeBuilder.f.products')}
                 value={source}
@@ -497,6 +503,9 @@ function RailContent({ content, set, setMany, ctx, block, onSettings }: { conten
                 ctx={ctx}
             />
             <SwitchRow label={t('homeBuilder.f.hideSoldOut')} checked={bool(content.hide_sold_out, true)} onChange={(v) => set('hide_sold_out', v)} disabled={ctx.disabled} />
+            <Bilingual content={content} keyName="see_all_label" set={set} ctx={ctx} hint={t('homeBuilder.f.see_all_labelHint')} />
+            <CategoryPicker legend={t('homeBuilder.f.chips')} picked={ids(content.chip_category_ids)} onChange={(v) => set('chip_category_ids', v.slice(0, 6))} ctx={ctx} path="chip_category_ids" />
+            {ids(content.chip_category_ids).length > 0 && <Bilingual content={content} keyName="all_label" set={set} ctx={ctx} />}
             <SwitchRow label={t('homeBuilder.v.showMobile')} checked={block.show_mobile} onChange={(v) => onSettings({ show_mobile: v })} disabled={ctx.disabled} />
         </>
     );
@@ -510,6 +519,8 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
         <SelectField label={t('homeBuilder.f.howMany')} value={num(content.limit, fallback)} options={Array.from({ length: max - min + 1 }, (_, i) => ({ value: min + i, label: label(min + i) }))} onChange={(v) => set('limit', v)} path="limit" ctx={ctx} />
     );
     const count = (n: number) => t('homeBuilder.f.howManyItems', { count: n });
+    const noop = () => () => undefined;
+    const styleKit: FormKit = { content, set, setRow: () => undefined, listOps: () => ({ onMove: () => undefined, onRemove: () => undefined }), pickImage: noop, imageOf: () => null, ctx };
 
     switch (block.type) {
         case 'hero':
@@ -527,6 +538,15 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
             const limit = num(content.limit, 8);
             return (
                 <>
+                    <SelectField
+                        label={t('homeBuilder.f.layout')}
+                        value={str(content.layout) || 'slider'}
+                        options={(['slider', 'grid'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.layout.${v}`) }))}
+                        onChange={(v) => set('layout', v)}
+                        path="layout"
+                        ctx={ctx}
+                    />
+                    <BandField kit={styleKit} />
                     <SelectField
                         label={t('homeBuilder.f.minItems')}
                         value={Math.min(num(content.min_items, 1), limit)}
@@ -546,7 +566,25 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
         case 'flash_sale':
             return howMany(2, 12, 8, (n) => t('homeBuilder.f.howManyRail', { count: n }));
         case 'blog_teaser':
-            return howMany(1, 6, 3, count);
+            return (
+                <>
+                    {howMany(1, 6, 3, count)}
+                    <SwitchRow label={t('homeBuilder.f.showSeeAll')} checked={bool(content.show_see_all, false)} onChange={(v) => set('show_see_all', v)} disabled={ctx.disabled} />
+                </>
+            );
+        case 'video_reel':
+            return <BandField kit={styleKit} />;
+        case 'chat_band':
+            return (
+                <SelectField
+                    label={t('homeBuilder.f.tone')}
+                    value={str(content.tone) || 'mint'}
+                    options={(['mint', 'yellow'] as const).map((v) => ({ value: v, label: t(`homeBuilder.f.chatTone.${v}`) }))}
+                    onChange={(v) => set('tone', v)}
+                    path="tone"
+                    ctx={ctx}
+                />
+            );
         case 'promo_split':
             return (
                 <SelectField

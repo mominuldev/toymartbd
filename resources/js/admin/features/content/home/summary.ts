@@ -18,7 +18,16 @@ export function blockSummary(block: CmsBlock, t: T, locale: string, now: number 
             parts.push(str(c.source) === 'manual' ? t('homeBuilder.summary.categoriesManual', { count: ids(c.category_ids).length }) : t('homeBuilder.summary.categoriesAuto', { count: num(c.limit, 8) }));
             break;
         case 'age_tiles':
-            parts.push(t('homeBuilder.summary.ageBands'));
+            parts.push(rows(c.cards).length ? t('homeBuilder.summary.cards', { count: rows(c.cards).length }) : t('homeBuilder.summary.ageBands'));
+            break;
+        case 'promo_banners':
+            parts.push(t('homeBuilder.summary.banners', { count: rows(c.items).length }));
+            break;
+        case 'why_band':
+            parts.push(t('homeBuilder.summary.stats', { count: rows(c.stats).length }));
+            break;
+        case 'video_reel':
+            parts.push(t('homeBuilder.summary.reels', { count: rows(c.items).length }));
             break;
         case 'product_rail':
             parts.push(t('homeBuilder.summary.products', { rule: t(`homeBuilder.f.rule.${str(c.rule) || 'best_sellers'}` as MessageKey, { days: num(c.window_days, 30) }), count: num(c.limit, 8) }));

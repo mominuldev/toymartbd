@@ -13,13 +13,30 @@ use Illuminate\Validation\Rule;
  * published, not archived, an active variant). With `hide_sold_out` sold-out products are left
  * out; a rail left with fewer than `min_items` products hides itself rather than degrading
  * (rule 25c). Never placed on checkout (rule 25b): the homepage is the only placement.
+ *
+ * Smart Junior (Bestsellers 34:5742, New arrivals 34:5779, Gifts & combos 57:12772): the section
+ * header (eyebrow chip, heading, line), a `layout` — `slider` (one row, "see all" and prev/next in
+ * the header) or `grid` (every product in rows, the "see all" button under them) — an optional
+ * pastel `band` behind the section, the button wording (`see_all_label`) and up to six category
+ * filter `chips` (`chip_category_ids`, led by `all_label`): the server runs the same rule inside
+ * each category, so the storefront never filters or ranks products itself (rule 1).
  */
 final class ProductRailSchema extends BlockSchema
 {
+    public const int MAX_CHIPS = 6;
+
+    public const array LAYOUTS = ['slider', 'grid'];
+
     public function rules(): array
     {
         return [
-            ...self::text('title', 120),
+            ...self::headerRules(),
+            'layout' => ['sometimes', Rule::in(self::LAYOUTS)],
+            'band' => self::toneRule(),
+            ...self::text('see_all_label', 60, false),
+            ...self::text('all_label', 30, false),
+            'chip_category_ids' => ['sometimes', 'array', 'max:'.self::MAX_CHIPS],
+            'chip_category_ids.*' => ['integer', 'distinct', Rule::exists('categories', 'id')],
             'rule' => ['required', Rule::enum(ProductRailRule::class)],
             'category_id' => ['nullable', 'integer', 'required_if:rule,category', Rule::exists('categories', 'id')],
             'brand_id' => ['nullable', 'integer', 'required_if:rule,brand', Rule::exists('brands', 'id')],
@@ -36,7 +53,11 @@ final class ProductRailSchema extends BlockSchema
     public function defaults(): array
     {
         return [
-            'title' => 'Best sellers', 'title_bn' => 'সবচেয়ে বেশি বিক্রি', 'rule' => ProductRailRule::BestSellers->value,
+            'eyebrow' => null, 'eyebrow_bn' => null, 'eyebrow_tone' => 'yellow',
+            'title' => 'Best sellers', 'title_bn' => 'সবচেয়ে বেশি বিক্রি', 'sub' => null, 'sub_bn' => null,
+            'layout' => 'slider', 'band' => null, 'see_all_label' => null, 'see_all_label_bn' => null,
+            'all_label' => 'All', 'all_label_bn' => 'সব', 'chip_category_ids' => [],
+            'rule' => ProductRailRule::BestSellers->value,
             'category_id' => null, 'brand_id' => null, 'product_ids' => [], 'window_days' => 30,
             'limit' => 8, 'min_items' => 1, 'hide_sold_out' => true, 'show_see_all' => true,
         ];
@@ -45,7 +66,11 @@ final class ProductRailSchema extends BlockSchema
     public function normalize(array $content): array
     {
         $out = [];
-        self::copyText($content, $out, 'title');
+        self::copyHeader($content, $out, 'yellow');
+        $out['layout'] = in_array($content['layout'] ?? null, self::LAYOUTS, true) ? $content['layout'] : 'slider';
+        $out['band'] = self::tone($content['band'] ?? null, null);
+        self::copyText($content, $out, 'see_all_label', 'all_label');
+        $out['chip_category_ids'] = array_slice(self::ids($content['chip_category_ids'] ?? []), 0, self::MAX_CHIPS);
         $rule = ProductRailRule::tryFrom(is_string($content['rule'] ?? null) ? $content['rule'] : '') ?? ProductRailRule::BestSellers;
         $out['rule'] = $rule->value;
         $out['category_id'] = $rule === ProductRailRule::Category ? self::int($content['category_id'] ?? null, 0) : null;

@@ -24,9 +24,6 @@ final class HeroSchema extends BlockSchema
 
     public const int MAX_AVATARS = 3;
 
-    /** The pastel tints a promo card can sit on (the storefront's `tile-*` tokens). */
-    public const array TONES = ['pink', 'green', 'blue', 'yellow', 'purple', 'orange'];
-
     public function rules(): array
     {
         $rules = [
@@ -153,10 +150,5 @@ final class HeroSchema extends BlockSchema
         $out['media_ids'] = array_slice(array_values(array_unique($ids)), 0, self::MAX_AVATARS);
 
         return $out['label'] === null && $out['rating'] === null ? null : $out;
-    }
-
-    private static function mediaId(mixed $value): ?int
-    {
-        return is_numeric($value) ? (int) $value : null;
     }
 }

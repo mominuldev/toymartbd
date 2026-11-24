@@ -640,19 +640,37 @@ These blocks are restyled to the Vivid frames on page `34:5658`, and the built-i
 
 Hero deviations still open: the page gutter is 80 px at 1440 (Figma 120) and 24 px at 834 (Figma 32) — a sitewide container value, not a hero change; the card radius is 32 (Figma `radius/2xl` 36 has no storefront token). The hero's promo and proof values on the local database are the Figma sample copy; the owner must enter the real promotions and figures in Pages › Home.
 
-Not built, because the data or decision is missing (owner or API work):
+### 16.2 Every home section from block content (2026-11-24)
 
-| Figma element | What is missing |
-|---|---|
-| Card "New" badge | The card API sends no new-arrival flag |
-| Bestsellers category chips | No data on the rail block |
-| Rail eyebrows and subtitles | The `product_rail` block has a title only |
-| Two-up promo pairing | A `HomeBlocks` layout change |
-| Age photo cards | We keep 7 bands with icons; there are no age photos (Figma has 4) |
+Owner rule: every word, link, image and figure on a home section is a block field edited in Pages › Home; the storefront draws no copy of its own beyond generic controls (arrows, "Play", the "New" badge, a fallback when an optional label is left empty). Contract: `docs/api/cms-blocks.md`.
 
-New block types are needed (rule 34a) before these sections can exist:
-- **Gifts & combos** (`57:12772`): a rail driven by a gift or combo collection.
-- **Video reel** (`55:12790`): video hosting is undecided (§10).
-- **Why Smart Junior** (`34:5786`): its stats (50,000+, 4.9/5, 64, 1,200+) are unconfirmed.
+| Figma section | Block | What the editor sets |
+|---|---|---|
+| Section header (every rail) | shared fields | `eyebrow`, `eyebrow_tone` (pink · green · blue · yellow · purple · orange), `title`, `sub` |
+| Shop by age `34:5735` | `age_tiles` | header; up to 8 photo cards (title, line, link, photo, tone). No cards = the 7 live age bands |
+| Bestsellers `34:5742` | `product_rail`, `layout: grid` | header; up to 6 category chips (`chip_category_ids`, first chip `all_label`) — the server runs the rule inside each category; the "more" button text (`see_all_label`) |
+| New arrivals `34:5779` | `product_rail`, `layout: slider` | header; see-all + prev/next in the header |
+| Gifts & combos `57:12772` | `product_rail` with `band: pink` | any rule (a gift category or a manual pick) on a full-width pastel band |
+| Promo banners `34:5763` | `promo_banners` (new) | 1–2 banners: eyebrow, title, line, button, photo, tone |
+| Why Smart Junior `34:5786` | `why_band` (new) | eyebrow, title, paragraph, up to 4 figures typed by the owner (never defaulted), photo |
+| Video reel `55:12790` | `video_reel` (new) | header, band, see-all; up to 12 reels: video link that plays in a popup on the page — YouTube (via youtube-nocookie.com), Facebook, Instagram, or a hosted .mp4/.webm; the player loads only on play, 9:16 poster, title, length, views caption, optional product chip (listable products only) |
+| Journal `34:5851` | `blog_teaser` | header, see-all switch (→ `/blog`) |
+| Help CTA `34:5872` | `chat_band`, `tone: yellow` | title, line, WhatsApp button text, hotline button switch (both numbers come from Settings › Store › Business and stay hidden while they are the sample) |
+| Product card "নতুন" | API `is_new` | published within `catalog.new_badge_days` (default 30) |
 
-The live home still has a `testimonials` block, which the design replaces with the reel.
+The local database carries the Figma sample copy and AI placeholder photos for these sections (version 8 of the home layout); the owner replaces the figures, videos and photos in Pages › Home. The `testimonials` block is no longer on the home layout; the reel took its place (§10).
+
+Remaining deviations (storefront):
+- **Headers.** Section headings are 34 px (`t-h1`) against Figma's 32. The pink eyebrow and the gifts band use `tile-pink` #FFE4E6 against Figma #FFF1F2. Purple text is `grape` #7C3AED against Figma #6D28D9.
+- **Age cards.** Titles are 27 px against 24. The sky card uses `tile-sky` #E0F2FE against Figma #BAE6FD.
+- **Promo banners.** Radius is 32 against 36. The card grows to fit three-line Bangla titles, where Figma has a fixed 300 px height.
+- **Why band.**
+  - Stat tiles are `surface/12` on navy; Figma uses ink/700, which has no token.
+  - Values use the deco tints.
+  - Radius is 32.
+- **Reel.**
+  - Only the poster is the video link, so it is not nested with the product-chip link.
+  - The sub-line stays visible on mobile.
+  - Product names follow the page language.
+- **Bestsellers on mobile.** The header link shows the editor's `see_all_label`.
+- **Help CTA on the phone.** The buttons show the hotline number and the editor's label, not Figma's short "কল করুন" / "WhatsApp".

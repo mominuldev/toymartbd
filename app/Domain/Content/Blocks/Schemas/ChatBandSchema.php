@@ -9,6 +9,9 @@ namespace App\Domain\Content\Blocks\Schemas;
  * title, a line of copy and a "Chat on WhatsApp" button. The WhatsApp number is never typed into
  * the block: the storefront links to the store's own number (Settings › Store › Business), and
  * leaves the button out while that number is still the sample.
+ *
+ * Smart Junior "Help CTA" (34:5872): `tone` yellow puts it on the sunshine card with confetti, and
+ * `show_hotline` adds a button that calls the store hotline (also from Settings, never typed here).
  */
 final class ChatBandSchema extends BlockSchema
 {
@@ -18,6 +21,8 @@ final class ChatBandSchema extends BlockSchema
             ...self::text('title', 120),
             ...self::text('body', 300, false),
             ...self::text('button_label', 40, false),
+            'tone' => ['sometimes', 'string', 'in:mint,yellow'],
+            'show_hotline' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -27,6 +32,7 @@ final class ChatBandSchema extends BlockSchema
             'title' => 'Still need help?', 'title_bn' => 'আরও সাহায্য দরকার?',
             'body' => null, 'body_bn' => null,
             'button_label' => 'Chat on WhatsApp', 'button_label_bn' => 'হোয়াটসঅ্যাপে কথা বলুন',
+            'tone' => 'mint', 'show_hotline' => false,
         ];
     }
 
@@ -34,6 +40,8 @@ final class ChatBandSchema extends BlockSchema
     {
         $out = [];
         self::copyText($content, $out, 'title', 'body', 'button_label');
+        $out['tone'] = ($content['tone'] ?? null) === 'yellow' ? 'yellow' : 'mint';
+        $out['show_hotline'] = self::bool($content['show_hotline'] ?? null, false);
 
         return $out;
     }

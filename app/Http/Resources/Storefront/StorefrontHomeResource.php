@@ -9,6 +9,7 @@ use App\Domain\Catalog\Models\Brand;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Content\Blocks\DTOs\ResolvedBlock;
 use App\Domain\Content\Blocks\Enums\BlockType;
+use App\Domain\Content\Blocks\ValueObjects\VideoEmbed;
 use App\Domain\Content\Models\Testimonial;
 use App\Http\Resources\Admin\BrandResource as AdminBrandResource;
 use App\Http\Resources\ApiResource;
@@ -22,10 +23,11 @@ use Illuminate\Support\Collection;
  * `{ version, published_at, preview, blocks: [{ id, type, show_mobile, show_desktop, content, … }] }`.
  *
  * `content` is single-language (Bangla falls back to English). Each type adds its data:
- * hero `content.slides[].image`, `content.promos[].image` and `content.proof.avatars`, promo_split and image `image`, story_hero `images` (0–3), category_tiles `categories` (the
- * StorefrontCategoryNode shape), age_tiles `age_counts`, product_rail `products`
- * (StorefrontProductCard) + `see_all_href`, brand_strip `brands`, testimonials `testimonials`,
- * blog_teaser `posts` (StorefrontBlogPostCard). Blocks that would render empty are already gone. `version` is null and
+ * hero `content.slides[].image`, `content.promos[].image` and `content.proof.avatars`, promo_split, why_band and image `image`, story_hero `images` (0–3), category_tiles `categories` (the
+ * StorefrontCategoryNode shape), age_tiles `age_counts` + `content.cards[].image`, product_rail `products`
+ * (StorefrontProductCard) + `see_all_href` + `chips` ({id, name, slug, products}), promo_banners `content.items[].image`,
+ * video_reel `content.items[].poster` + `.embed` ({kind: youtube|facebook|instagram|file, src} or null) + `.product` ({name, slug} or null), brand_strip `brands`, testimonials `testimonials`,
+ * blog_teaser `posts` (StorefrontBlogPostCard) + `see_all_href`. Blocks that would render empty are already gone. `version` is null and
  * `blocks` empty before the first publish — the storefront then shows its built-in home.
  *
  * @property array{version: int|null, published_at: string|null, preview: bool, locale: string, blocks: list<ResolvedBlock>} $resource
@@ -100,6 +102,7 @@ final class StorefrontHomeResource extends ApiResource
                 break;
 
             case BlockType::Image:
+            case BlockType::WhyBand:
             case BlockType::PromoSplit:
                 $content['image'] = self::image($media->get($content['media_id'] ?? 0), $content['alt'] ?? null, $locale);
                 unset($content['media_id'], $content['alt']);
@@ -130,13 +133,55 @@ final class StorefrontHomeResource extends ApiResource
 
             case BlockType::AgeTiles:
                 $out['age_counts'] = (object) $data['age_counts'];
+                $content['cards'] = array_map(static function (array $card) use ($media, $locale): array {
+                    $card['image'] = self::image($media->get($card['media_id'] ?? 0), $card['alt'] ?? null, $locale);
+                    unset($card['media_id'], $card['alt']);
+
+                    return $card;
+                }, array_values(array_filter(is_array($content['cards'] ?? null) ? $content['cards'] : [], is_array(...))));
+                break;
+
+            case BlockType::PromoBanners:
+                $content['items'] = array_map(static function (array $item) use ($media, $locale): array {
+                    $item['image'] = self::image($media->get($item['media_id'] ?? 0), $item['alt'] ?? null, $locale);
+                    unset($item['media_id'], $item['alt']);
+
+                    return $item;
+                }, array_values(array_filter(is_array($content['items'] ?? null) ? $content['items'] : [], is_array(...))));
+                break;
+
+            case BlockType::VideoReel:
+                /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Domain\Catalog\Models\Product> $reelProducts */
+                $reelProducts = $data['products'];
+                $content['items'] = array_map(static function (array $item) use ($media, $locale, $reelProducts): array {
+                    $item['poster'] = self::image($media->get($item['media_id'] ?? 0), $item['alt'] ?? null, $locale);
+                    $item['embed'] = VideoEmbed::fromUrl(is_string($item['video_url'] ?? null) ? $item['video_url'] : null)?->toArray();
+                    $product = $reelProducts->get((int) ($item['product_id'] ?? 0));
+                    $item['product'] = $product === null ? null : [
+                        'name' => $locale === 'bn' && $product->name_bn ? $product->name_bn : $product->name,
+                        'slug' => $product->slug,
+                    ];
+                    unset($item['media_id'], $item['alt'], $item['product_id']);
+
+                    return $item;
+                }, $content['items']);
                 break;
 
             case BlockType::ProductRail:
                 StorefrontProductCardResource::primeStock($data['products']); // one stock query per rail (Phase 9 P-10)
                 $out['products'] = StorefrontProductCardResource::collection($data['products'])->resolve($request);
                 $out['see_all_href'] = $data['see_all_href'] ?? null;
-                $content = ['title' => $content['title'] ?? null, 'limit' => $content['limit'] ?? null];
+                $out['chips'] = array_map(static function (array $chip) use ($request, $locale): array {
+                    StorefrontProductCardResource::primeStock($chip['products']);
+
+                    return [
+                        'id' => $chip['category']->id,
+                        'name' => $locale === 'bn' && $chip['category']->name_bn ? $chip['category']->name_bn : $chip['category']->name,
+                        'slug' => $chip['category']->slug,
+                        'products' => StorefrontProductCardResource::collection($chip['products'])->resolve($request),
+                    ];
+                }, $data['chips'] ?? []);
+                $content = array_intersect_key($content, array_flip(['eyebrow', 'eyebrow_tone', 'title', 'sub', 'layout', 'band', 'see_all_label', 'all_label', 'limit']));
                 break;
 
             case BlockType::BrandStrip:
@@ -162,6 +207,7 @@ final class StorefrontHomeResource extends ApiResource
             case BlockType::BlogTeaser:
                 // The blog's own card shape (StorefrontBlogPostCard), both languages, like every blog list.
                 $out['posts'] = StorefrontBlogPostCardResource::collection($data['posts'])->resolve($request);
+                $out['see_all_href'] = $data['see_all_href'] ?? null;
                 break;
 
             default:

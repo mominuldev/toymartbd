@@ -123,8 +123,25 @@ final class LayoutResolver
                 return $slides === [] ? null : [$content, ['media' => $media]];
 
             case BlockType::PromoSplit:
+            case BlockType::WhyBand: // the figures are the owner's, shown as typed
             case BlockType::StoryHero: // the collage keeps only the photos that still exist (the resource)
                 return [$content, ['media' => $media]];
+
+            case BlockType::PromoBanners:
+                return (is_array($content['items'] ?? null) ? $content['items'] : []) === [] ? null : [$content, ['media' => $media]];
+
+            case BlockType::VideoReel:
+                // A reel without its poster (deleted since) is left out; a block with no reel left is removed.
+                $items = array_values(array_filter(
+                    is_array($content['items'] ?? null) ? $content['items'] : [],
+                    static fn (mixed $item): bool => is_array($item) && $media->has((int) ($item['media_id'] ?? 0)),
+                ));
+                if ($items === []) {
+                    return null;
+                }
+                $content['items'] = $items;
+
+                return [$content, ['media' => $media, 'products' => $this->listableProducts(array_column($items, 'product_id'))]];
 
             case BlockType::Image:
                 // No image (or a deleted one): nothing to show, so the block is removed.
@@ -136,13 +153,13 @@ final class LayoutResolver
                 return $categories->isEmpty() ? null : [$content, ['categories' => $categories]];
 
             case BlockType::AgeTiles:
-                return [$content, ['age_counts' => $this->ageCounts()]];
+                return [$content, ['age_counts' => $this->ageCounts(), 'media' => $media]];
 
             case BlockType::ProductRail:
                 $products = $this->products($raw);
                 $min = max(1, (int) ($raw['min_items'] ?? 1));
 
-                return $products->count() < $min ? null : [$content, ['products' => $products, 'see_all_href' => $this->railHref($raw)]];
+                return $products->count() < $min ? null : [$content, ['products' => $products, 'see_all_href' => $this->railHref($raw), 'chips' => $this->railChips($raw)]];
 
             case BlockType::BrandStrip:
                 $brands = $this->brands($raw);
@@ -159,7 +176,7 @@ final class LayoutResolver
                 $posts = BlogPost::query()->live()->with(['cover', 'category', 'author'])
                     ->orderByDesc('published_at')->orderByDesc('id')->limit(max(1, (int) ($raw['limit'] ?? 3)))->get();
 
-                return $posts->isEmpty() ? null : [$content, ['posts' => $posts]];
+                return $posts->isEmpty() ? null : [$content, ['posts' => $posts, 'see_all_href' => (bool) ($raw['show_see_all'] ?? false) ? '/blog' : null]];
 
             case BlockType::RichText:
                 $content['html'] = ProductDescription::html(is_string($content['html'] ?? null) ? $content['html'] : null);
@@ -247,17 +264,65 @@ final class LayoutResolver
     }
 
     /**
+     * The rail's filter chips: the same rule run inside each chip's category (the server ranks and
+     * filters, never the storefront — rule 1). A chip whose category is gone or holds no product
+     * is left out; no chip left means no chip row.
+     *
      * @param  array<string, mixed>  $raw
+     * @return list<array{category: Category, products: Collection<int, Product>}>
+     */
+    private function railChips(array $raw): array
+    {
+        $ids = array_map(intval(...), is_array($raw['chip_category_ids'] ?? null) ? $raw['chip_category_ids'] : []);
+        if ($ids === []) {
+            return [];
+        }
+
+        $found = Category::query()->active()->whereIn('id', $ids)->get()->keyBy('id');
+        $chips = [];
+        foreach ($ids as $id) {
+            $category = $found->get($id);
+            if ($category === null) {
+                continue;
+            }
+            $products = $this->products($raw, $category->slug);
+            if ($products->isNotEmpty()) {
+                $chips[] = ['category' => $category, 'products' => $products];
+            }
+        }
+
+        return $chips;
+    }
+
+    /**
+     * Listable products (active, published, an active variant) among `$ids`, keyed by id.
+     *
+     * @param  array<array-key, mixed>  $ids
      * @return Collection<int, Product>
      */
-    private function products(array $raw): Collection
+    private function listableProducts(array $ids): Collection
+    {
+        $ids = array_values(array_unique(array_filter(array_map(intval(...), array_filter($ids, is_numeric(...))), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            return new Collection;
+        }
+
+        return $this->listing->filtered(new ProductListingFilters)->whereIn('products.id', $ids)->get(['products.*'])->keyBy('id');
+    }
+
+    /**
+     * @param  array<string, mixed>  $raw
+     * @param  string|null  $chip  a filter chip's category slug: the rule runs inside it
+     * @return Collection<int, Product>
+     */
+    private function products(array $raw, ?string $chip = null): Collection
     {
         $rule = ProductRailRule::tryFrom((string) ($raw['rule'] ?? '')) ?? ProductRailRule::BestSellers;
         $limit = max(1, (int) ($raw['limit'] ?? 8));
         $inStock = (bool) ($raw['hide_sold_out'] ?? true) ? true : null;
 
         $filters = new ProductListingFilters(
-            category: $rule === ProductRailRule::Category ? $this->categorySlug($raw['category_id'] ?? null) : null,
+            category: $chip ?? ($rule === ProductRailRule::Category ? $this->categorySlug($raw['category_id'] ?? null) : null),
             brands: $rule === ProductRailRule::Brand ? array_filter([$this->brandSlug($raw['brand_id'] ?? null)]) : [],
             inStock: $inStock,
         );

@@ -68,6 +68,87 @@ abstract class BlockSchema
         }
     }
 
+    /** The palette tints a chip, card or band can take (the storefront's `tile-*` / Smart Junior pastels). */
+    public const array TONES = ['pink', 'green', 'blue', 'yellow', 'purple', 'orange'];
+
+    /** @return list<mixed> */
+    protected static function toneRule(): array
+    {
+        return ['sometimes', 'nullable', 'string', 'in:'.implode(',', self::TONES)];
+    }
+
+    /** A tone from the palette, else `$default` (null: no tone). */
+    protected static function tone(mixed $value, ?string $default): ?string
+    {
+        return is_string($value) && in_array($value, self::TONES, true) ? $value : $default;
+    }
+
+    /**
+     * The Smart Junior section header (Figma "Section Header"): a coloured eyebrow chip, the
+     * heading and a line under it. `title` is required; the rest is optional.
+     *
+     * @return array<string, mixed>
+     */
+    protected static function headerRules(int $titleMax = 120): array
+    {
+        return [
+            ...self::text('eyebrow', 60, false),
+            'eyebrow_tone' => self::toneRule(),
+            ...self::text('title', $titleMax),
+            ...self::text('sub', 240, false),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $content
+     * @param  array<string, mixed>  $out
+     */
+    protected static function copyHeader(array $content, array &$out, string $tone): void
+    {
+        self::copyText($content, $out, 'eyebrow');
+        $out['eyebrow_tone'] = self::tone($content['eyebrow_tone'] ?? null, $tone);
+        self::copyText($content, $out, 'title', 'sub');
+    }
+
+    /**
+     * Prefix every key of a rule set (`items.*.` for a list item's fields).
+     *
+     * @param  array<string, mixed>  $rules
+     * @return array<string, mixed>
+     */
+    protected static function prefixed(string $prefix, array $rules): array
+    {
+        $out = [];
+        foreach ($rules as $key => $rule) {
+            $out[$prefix.$key] = $rule;
+        }
+
+        return $out;
+    }
+
+    /**
+     * The list items of `$content[$key]` that are arrays, at most `$max`.
+     *
+     * @param  array<string, mixed>  $content
+     * @return list<array<string, mixed>>
+     */
+    protected static function items(array $content, string $key, int $max): array
+    {
+        $out = [];
+        foreach (is_array($content[$key] ?? null) ? $content[$key] : [] as $item) {
+            if (is_array($item)) {
+                $out[] = $item;
+            }
+        }
+
+        return array_slice($out, 0, $max);
+    }
+
+    protected static function mediaId(mixed $value): ?int
+    {
+        return is_numeric($value) && (int) $value > 0 ? (int) $value : null;
+    }
+
     protected static function str(mixed $value): ?string
     {
         if (! is_string($value)) {

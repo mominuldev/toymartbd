@@ -18,4 +18,8 @@ return [
         'prefix' => (string) env('CATALOG_BARCODE_PREFIX', '20'),
     ],
 
+    // A product card shows the "New" badge for this many days after the product is published
+    // (StorefrontProductCardResource `is_new`; Smart Junior Product Card "নতুন").
+    'new_badge_days' => (int) env('CATALOG_NEW_BADGE_DAYS', 30),
+
 ];

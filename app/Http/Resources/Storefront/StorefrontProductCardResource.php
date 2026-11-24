@@ -85,6 +85,8 @@ final class StorefrontProductCardResource extends ApiResource
             'rating_avg' => $product->rating_avg === null ? null : number_format((float) $product->rating_avg, 2, '.', ''),
             'rating_count' => $product->rating_count,
             'is_featured' => $product->is_featured,
+            /** Published within the last `catalog.new_badge_days` days: the card's "New" badge. */
+            'is_new' => $product->published_at !== null && $product->published_at->greaterThanOrEqualTo(now()->subDays((int) config('catalog.new_badge_days', 30))),
             /** @var int */
             'variant_count' => $variants->count(),
             /**

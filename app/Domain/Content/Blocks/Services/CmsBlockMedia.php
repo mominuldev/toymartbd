@@ -40,7 +40,8 @@ final class CmsBlockMedia
 
     /**
      * Media ids in one block's content: `content.media_id`, `content.slides[].media_id`,
-     * `content.promos[].media_id` (the hero's mini promos), `content.media_ids[]` (the story hero's
+     * `content.promos[].media_id` (the hero's mini promos), `content.items[].media_id` (promo banners,
+     * video reel posters), `content.cards[].media_id` (age cards), `content.media_ids[]` (the story hero's
      * collage) and `content.proof.media_ids[]` (the hero's proof avatars).
      *
      * @param  array<string, mixed>  $content
@@ -52,7 +53,7 @@ final class CmsBlockMedia
         if (is_numeric($content['media_id'] ?? null)) {
             $ids[] = (int) $content['media_id'];
         }
-        foreach (['slides', 'promos'] as $list) {
+        foreach (['slides', 'promos', 'items', 'cards'] as $list) {
             foreach (is_array($content[$list] ?? null) ? $content[$list] : [] as $item) {
                 if (is_array($item) && is_numeric($item['media_id'] ?? null)) {
                     $ids[] = (int) $item['media_id'];
