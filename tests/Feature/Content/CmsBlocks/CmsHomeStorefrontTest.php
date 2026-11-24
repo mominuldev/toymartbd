@@ -315,6 +315,26 @@ it('seeds the default homepage once, published as version 1, without queueing a 
         ->and($hero['content']['promos'])->toBe([]);
 });
 
+it('replaces an edited homepage only when asked, as the next version, keeping the old one restorable', function (): void {
+    CmsKit::block('rich_text', ['html' => '<p>Owner copy</p>']);
+    cmsPublish();
+    $this->seed(CmsHomeBlocksSeeder::class);
+    expect(CmsLayoutVersion::query()->count())->toBe(1); // never overwritten by default
+
+    putenv(CmsHomeBlocksSeeder::REPLACE_ENV.'=1');
+    try {
+        $this->seed(CmsHomeBlocksSeeder::class);
+    } finally {
+        putenv(CmsHomeBlocksSeeder::REPLACE_ENV);
+    }
+
+    $latest = CmsLayoutVersion::latestFor(LayoutKey::home());
+    expect($latest?->version)->toBe(2)
+        ->and(array_column($latest?->blocks ?? [], 'type'))->not->toContain('rich_text')
+        ->and(array_column($latest?->blocks ?? [], 'type'))->toContain('why_band')
+        ->and(CmsLayoutVersion::query()->where('version', 1)->value('blocks'))->not->toBeNull();
+});
+
 it('renders the hero promos and proof row with their images, in the locale (Smart Junior hero)', function (): void {
     [$photo, $bear, $face] = [Media::factory()->create(), Media::factory()->create(['alt_text' => 'Teddy']), Media::factory()->create()];
     CmsKit::block('hero', [

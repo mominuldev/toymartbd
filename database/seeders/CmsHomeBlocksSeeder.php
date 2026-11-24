@@ -9,6 +9,7 @@ use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Content\Blocks\Actions\CreateBlock;
+use App\Domain\Content\Blocks\Actions\DeleteBlock;
 use App\Domain\Content\Blocks\Actions\PublishLayout;
 use App\Domain\Content\Blocks\DTOs\BlockSettings;
 use App\Domain\Content\Blocks\Enums\BlockType;
@@ -39,12 +40,29 @@ final class CmsHomeBlocksSeeder extends Seeder
     /** A CC0 clip from MDN, 5 seconds long; the sample reels play it. */
     public const string SAMPLE_VIDEO = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 
-    public function run(CreateBlock $create, PublishLayout $publish): void
+    /**
+     * Replace mode (`HOME_SEED_REPLACE=1`, the "replace_home" input of the CI and deploy workflow):
+     * the current draft blocks are deleted and this homepage is published as the NEXT version. Earlier
+     * versions are kept, so Pages › Home › Versions restores the replaced homepage.
+     */
+    public const string REPLACE_ENV = 'HOME_SEED_REPLACE';
+
+    public function run(CreateBlock $create, PublishLayout $publish, DeleteBlock $delete): void
     {
         $placement = LayoutKey::home();
+        // The process environment, not env(): the host caches its config, and env() then reads null.
+        $replace = filter_var(getenv(self::REPLACE_ENV), FILTER_VALIDATE_BOOL);
 
-        if (CmsBlock::query()->where('placement', $placement->value)->exists() || CmsLayoutVersion::latestFor($placement) !== null) {
+        if (! $replace && (CmsBlock::query()->where('placement', $placement->value)->exists() || CmsLayoutVersion::latestFor($placement) !== null)) {
             return;
+        }
+
+        if ($replace) {
+            $previous = CmsLayoutVersion::latestFor($placement)?->version;
+            foreach (CmsBlock::query()->inPlacement($placement)->get() as $block) {
+                $delete->handle($block);
+            }
+            $this->command?->warn('Replacing the homepage'.($previous !== null ? " (published version {$previous} stays restorable in Pages › Home › Versions)" : '').'.');
         }
 
         foreach ($this->blocks(self::sampleEnabled()) as [$type, $content, $label]) {
@@ -55,7 +73,14 @@ final class CmsHomeBlocksSeeder extends Seeder
             $create->handle($placement, $type, new BlockSettings(content: $schema->normalize($content), label: $label, present: ['label']), null, null);
         }
 
-        // Seeding is not an editorial publish: no storefront revalidation is queued (a fresh
+        // A replacement is a real publish on a live storefront: its cached home is revalidated.
+        if ($replace) {
+            $publish->handle($placement, null, 'Smart Junior homepage (seeded)');
+
+            return;
+        }
+
+        // A first seed is not an editorial publish: no storefront revalidation is queued (a fresh
         // storefront has nothing cached, and seeding must not need STOREFRONT_URL or a queue).
         Event::fakeFor(static fn () => $publish->handle($placement, null, 'Default homepage'), [CmsLayoutPublished::class]);
     }

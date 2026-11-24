@@ -341,3 +341,5 @@ First deploy:
    `cd <deploy path> && php artisan queue:work --queue=critical,courier,notify,index,reports --stop-when-empty --max-time=55`.
 
 `reset_database` (manual run only) drops and re-migrates every table for first-deploy recovery; it refuses once any order, customer, product or staff user exists (rule 12: orders are never deleted).
+
+`replace_home` (manual run only, added 2026-11-24) replaces the live homepage with the seeded one (`CmsHomeBlocksSeeder` with `HOME_SEED_REPLACE=1`): the draft blocks are deleted and the seeded home is published as the **next** version, with a storefront revalidation. Earlier versions are kept, so Pages › Home › Versions restores the replaced homepage. Off a developer machine it carries the design copy only — no sample figures, placeholder photos, demo picks or reels.

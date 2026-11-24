@@ -15,6 +15,10 @@ on:
         description: "DESTRUCTIVE: drop every table on the host and re-migrate. First-deploy recovery only — refused once any order, customer, product or staff user exists."
         type: boolean
         default: false
+      replace_home:
+        description: "Replace the live homepage with the seeded Smart Junior home, published as the next version (the old one stays restorable in Pages › Home › Versions)."
+        type: boolean
+        default: false
 
 # A newer push cancels an older run on a pull request, but never on main: cancelling a main run
 # could interrupt the deploy job between `rsync --delete` and `migrate --force`, leaving the host
@@ -539,6 +543,7 @@ jobs:
           PUBLIC_PATH: ${{ secrets.HOSTINGER_PUBLIC_PATH || vars.HOSTINGER_PUBLIC_PATH }}
           PHP_BIN_OVERRIDE: ${{ vars.HOSTINGER_PHP_BIN }}
           RESET_DATABASE: ${{ inputs.reset_database }}
+          REPLACE_HOME: ${{ inputs.replace_home }}
         run: |
           set -e
 
@@ -546,7 +551,7 @@ jobs:
           # quoting is lost: an empty "$PHP_BIN_OVERRIDE" vanished and every later argument shifted
           # left — reset_database received the public path and a requested reset silently ran a
           # plain migrate. printf %q quotes each value for the remote shell ('' for an empty one).
-          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH")
+          remote_args=$(printf '%q ' "$DEPLOY_PATH" "$PHP_BIN_OVERRIDE" "$RESET_DATABASE" "$PUBLIC_PATH" "$REPLACE_HOME")
 
           ssh -i ~/.ssh/id_rsa -p "$DEPLOY_SSH_PORT" -o StrictHostKeyChecking=no \
             "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
@@ -557,6 +562,7 @@ jobs:
           php_override=$2
           reset_database=$3
           public_path=$4
+          replace_home=$5
 
           [ -n "$deploy_path" ] || { echo "HOSTINGER_DEPLOY_PATH missing"; exit 1; }
           cd "$deploy_path"
@@ -659,6 +665,12 @@ jobs:
           if [ "$user_count" = "0" ]; then
             echo "Fresh install (no users yet): seeding the reference data."
             "$php_bin" artisan db:seed --force
+          fi
+
+          # The homepage, replaced only on a manual dispatch with replace_home ticked. The seeder
+          # publishes it as the next version; earlier versions stay restorable in the admin.
+          if [ "$replace_home" = "true" ]; then
+            HOME_SEED_REPLACE=1 "$php_bin" artisan db:seed --class='Database\Seeders\CmsHomeBlocksSeeder' --force
           fi
 
           "$php_bin" artisan storage:link || true
