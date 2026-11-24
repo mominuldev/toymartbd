@@ -59,6 +59,8 @@ final class StorefrontProductCardResource extends ApiResource
         }
 
         $image = $product->images->first(static fn (ProductImage $i): bool => $i->is_primary) ?? $product->images->first();
+        // The next photo with a file, after the card's own (a placeholder row without a file is skipped).
+        $hover = $image === null ? null : $product->images->first(static fn (ProductImage $i): bool => $i->id !== $image->id && $i->url(self::CARD_WIDTH) !== null);
         $brand = $product->brand;
 
         return [
@@ -114,6 +116,13 @@ final class StorefrontProductCardResource extends ApiResource
             'in_stock' => self::inStock($product),
             /** @var array{url: string, srcset_webp: string|null, srcset_avif: string|null, alt: string|null, alt_bn: string|null, width: int|null, height: int|null}|null */
             'image' => self::image($image),
+            /**
+             * The product's next photo after `image` (gallery order), which the card swaps in on
+             * hover; null when the product has only one photo.
+             *
+             * @var array{url: string, srcset_webp: string|null, srcset_avif: string|null, alt: string|null, alt_bn: string|null, width: int|null, height: int|null}|null
+             */
+            'hover_image' => self::image($hover),
             /**
              * P7: the cheapest running flash-sale offer on this product (badge + countdown to
              * `ends_at`, server time UTC), or null. Display only; the cart prices it.

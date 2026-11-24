@@ -79418,6 +79418,63 @@
                             "height"
                         ]
                     },
+                    "hover_image": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The product's next photo after `image` (gallery order), which the card swaps in on\nhover; null when the product has only one photo.",
+                        "properties": {
+                            "url": {
+                                "type": "string"
+                            },
+                            "srcset_webp": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "srcset_avif": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "alt": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "alt_bn": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "width": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            },
+                            "height": {
+                                "type": [
+                                    "integer",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "url",
+                            "srcset_webp",
+                            "srcset_avif",
+                            "alt",
+                            "alt_bn",
+                            "width",
+                            "height"
+                        ]
+                    },
                     "flash_sale": {
                         "type": [
                             "object",
@@ -79490,6 +79547,7 @@
                     "quick_add_variant",
                     "in_stock",
                     "image",
+                    "hover_image",
                     "flash_sale"
                 ],
                 "title": "StorefrontProductCard"

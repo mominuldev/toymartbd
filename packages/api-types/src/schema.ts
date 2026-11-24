@@ -18966,6 +18966,19 @@ export interface components {
                 height: number | null;
             } | null;
             /**
+             * @description The product's next photo after `image` (gallery order), which the card swaps in on
+             *     hover; null when the product has only one photo.
+             */
+            hover_image: {
+                url: string;
+                srcset_webp: string | null;
+                srcset_avif: string | null;
+                alt: string | null;
+                alt_bn: string | null;
+                width: number | null;
+                height: number | null;
+            } | null;
+            /**
              * @description P7: the cheapest running flash-sale offer on this product (badge + countdown to
              *     `ends_at`, server time UTC), or null. Display only; the cart prices it.
              */

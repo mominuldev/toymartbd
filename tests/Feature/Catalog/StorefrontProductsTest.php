@@ -77,7 +77,7 @@ it('returns cards in exactly the agreed shape', function (): void {
     expect(array_keys($response->json()))->toBe(['data', 'links', 'meta'])
         ->and(array_keys($response->json('data.0')))->toBe([
             'id', 'slug', 'name', 'name_bn', 'brand', 'price', 'compare_at_price', 'price_max', 'discount_percent', 'age_min_months',
-            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'is_new', 'variant_count', 'default_variant_id', 'quick_add_variant', 'in_stock', 'image', 'flash_sale',
+            'age_max_months', 'rating_avg', 'rating_count', 'is_featured', 'is_new', 'variant_count', 'default_variant_id', 'quick_add_variant', 'in_stock', 'image', 'hover_image', 'flash_sale',
         ])
         ->and($response->json('data.0'))->toMatchArray([
             'slug' => 'rainbow-stacker',
@@ -96,6 +96,7 @@ it('returns cards in exactly the agreed shape', function (): void {
             // Two options: the card sends the shopper to the product page to choose.
             'default_variant_id' => null,
             'image' => null,
+            'hover_image' => null,
         ])
         ->and($response->json('meta.total'))->toBe(1)
         ->and($response->json('meta.per_page'))->toBe(24)
@@ -160,6 +161,27 @@ it('renders the primary image with srcsets and both alts, or null without a file
         ->and($cards['with-file']['image']['url'])->toEndWith('products/1/abc/480.webp')
         ->and($cards['with-file']['image']['srcset_webp'])->toContain('160.webp 160w')
         ->and($cards['with-file']['image']['srcset_avif'])->toContain('1200.avif 1200w');
+});
+
+it('sends the next photo with a file as the hover image, or null with only one', function (): void {
+    $gallery = listed(['slug' => 'gallery']);
+    $file = static fn (int $position, string $path, array $extra = []): array => [
+        'position' => $position, 'path' => $path, 'width' => 1200, 'height' => 1200, 'rendition_widths' => [160, 480, 1200], ...$extra,
+    ];
+    ProductImage::factory()->for($gallery)->create($file(3, 'products/1/third'));
+    ProductImage::factory()->for($gallery)->create(['position' => 1, 'path' => null]);
+    ProductImage::factory()->for($gallery)->create($file(0, 'products/1/primary', ['is_primary' => true]));
+    ProductImage::factory()->for($gallery)->create($file(2, 'products/1/second', ['alt_text' => 'Side view', 'alt_text_bn' => 'পাশ থেকে']));
+    $single = listed(['slug' => 'single']);
+    ProductImage::factory()->for($single)->create($file(0, 'products/2/only', ['is_primary' => true]));
+
+    $cards = collect(listing(['sort' => 'name'])->assertOk()->json('data'))->keyBy('slug');
+
+    expect($cards['gallery']['image']['url'])->toEndWith('products/1/primary/480.webp')
+        ->and($cards['gallery']['hover_image']['url'])->toEndWith('products/1/second/480.webp')
+        ->and($cards['gallery']['hover_image'])->toMatchArray(['alt' => 'Side view', 'alt_bn' => 'পাশ থেকে'])
+        ->and($cards['single']['image'])->not->toBeNull()
+        ->and($cards['single']['hover_image'])->toBeNull();
 });
 
 it('never lists draft, archived, unpublished, deleted or variant-less products', function (): void {
