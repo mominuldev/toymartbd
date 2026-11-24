@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Console\Commands\IssueStorefrontToken;
 use App\Domain\Ordering\Models\Order;
 use App\Models\Enums\Role;
 use App\Models\User;
 use Database\Seeders\Demo\DemoLogin;
 use Database\Seeders\Demo\SettingsSnapshot;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Model events stay ON here. Laravel's default WithoutModelEvents trait silences the
@@ -82,6 +85,32 @@ class DatabaseSeeder extends Seeder
             if ((bool) config('demo.transactions')) {
                 $this->call(DemoDataSeeder::class);
             }
+        }
+
+        $this->localStorefrontToken();
+    }
+
+    /**
+     * The local storefront's API token, the same after every `migrate:fresh --seed`: a fresh
+     * database has no tokens, so the storefront (../toymartbd-storefront/.env.local) would get a
+     * 401 on every call and render an empty home. Its STOREFRONT_API_TOKEN is this value.
+     * Developer machine only — never on a host, where `toymart:storefront-token` mints a secret one.
+     */
+    public const string LOCAL_STOREFRONT_TOKEN = 'local-dev-storefront-token';
+
+    private function localStorefrontToken(): void
+    {
+        if (! app()->environment('local') || (bool) config('demo.live_seed')) {
+            return;
+        }
+
+        $account = User::query()->firstOrCreate(
+            ['email' => IssueStorefrontToken::SERVICE_EMAIL],
+            ['name' => 'Storefront server (service account)', 'password' => Hash::make(Str::random(64)), 'is_active' => false],
+        );
+        $hash = hash('sha256', self::LOCAL_STOREFRONT_TOKEN);
+        if (! $account->tokens()->where('token', $hash)->exists()) {
+            $account->tokens()->create(['name' => IssueStorefrontToken::TOKEN_NAME, 'token' => $hash, 'abilities' => IssueStorefrontToken::ABILITIES]);
         }
     }
 }
