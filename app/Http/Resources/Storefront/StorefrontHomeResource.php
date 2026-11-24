@@ -22,7 +22,7 @@ use Illuminate\Support\Collection;
  * `{ version, published_at, preview, blocks: [{ id, type, show_mobile, show_desktop, content, … }] }`.
  *
  * `content` is single-language (Bangla falls back to English). Each type adds its data:
- * hero `content.slides[].image`, promo_split and image `image`, story_hero `images` (0–3), category_tiles `categories` (the
+ * hero `content.slides[].image`, `content.promos[].image` and `content.proof.avatars`, promo_split and image `image`, story_hero `images` (0–3), category_tiles `categories` (the
  * StorefrontCategoryNode shape), age_tiles `age_counts`, product_rail `products`
  * (StorefrontProductCard) + `see_all_href`, brand_strip `brands`, testimonials `testimonials`,
  * blog_teaser `posts` (StorefrontBlogPostCard). Blocks that would render empty are already gone. `version` is null and
@@ -77,6 +77,26 @@ final class StorefrontHomeResource extends ApiResource
                     $slides[] = $slide;
                 }
                 $content['slides'] = $slides;
+                $promos = [];
+                foreach (is_array($content['promos'] ?? null) ? $content['promos'] : [] as $promo) {
+                    $promo['image'] = self::image($media->get($promo['media_id'] ?? 0), $promo['alt'] ?? null, $locale);
+                    unset($promo['media_id'], $promo['alt']);
+                    $promos[] = $promo;
+                }
+                $content['promos'] = $promos;
+                $proof = is_array($content['proof'] ?? null) ? $content['proof'] : null;
+                if ($proof !== null) {
+                    $avatars = [];
+                    foreach (is_array($proof['media_ids'] ?? null) ? $proof['media_ids'] : [] as $id) {
+                        $avatar = self::image($media->get((int) $id), null, $locale);
+                        if ($avatar !== null) {
+                            $avatars[] = $avatar;
+                        }
+                    }
+                    $proof['avatars'] = $avatars;
+                    unset($proof['media_ids']);
+                }
+                $content['proof'] = $proof;
                 break;
 
             case BlockType::Image:

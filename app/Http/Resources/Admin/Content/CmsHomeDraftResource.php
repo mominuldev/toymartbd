@@ -8,6 +8,7 @@ use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Content\Blocks\Enums\BlockType;
 use App\Domain\Content\Blocks\Models\CmsBlock;
 use App\Domain\Content\Blocks\Models\CmsLayoutVersion;
+use App\Domain\Content\Blocks\Services\CmsBlockMedia;
 use App\Http\Resources\ApiResource;
 use Dedoc\Scramble\Attributes\SchemaName;
 use Illuminate\Database\Eloquent\Collection;
@@ -55,15 +56,7 @@ final class CmsHomeDraftResource extends ApiResource
     {
         $ids = [];
         foreach ($blocks as $block) {
-            $content = $block->content;
-            if (is_numeric($content['media_id'] ?? null)) {
-                $ids[] = (int) $content['media_id'];
-            }
-            foreach (is_array($content['slides'] ?? null) ? $content['slides'] : [] as $slide) {
-                if (is_array($slide) && is_numeric($slide['media_id'] ?? null)) {
-                    $ids[] = (int) $slide['media_id'];
-                }
-            }
+            $ids = [...$ids, ...CmsBlockMedia::mediaIds($block->content)];
         }
 
         if ($ids === []) {

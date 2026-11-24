@@ -124,6 +124,26 @@ describe('homepage builder', () => {
         expect(await screen.findByText(/autosaved/)).toBeTruthy();
     });
 
+    it('edits the hero side promo cards and parents row (Smart Junior hero)', { timeout: 20_000 }, async () => {
+        const calls = api(editor, (url, init) => (url.endsWith('/content/home/blocks/1') && init?.method === 'PATCH' ? { status: 200, body: blocks[0]! } : null));
+        renderApp('/store/home');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Add promo card' }, { timeout: 5000 }));
+        fireEvent.change(await screen.findByLabelText('Heading (EN)'), { target: { value: 'Soft toys up to 40% off' } });
+        fireEvent.change(screen.getByLabelText('Star rating (0–5)'), { target: { value: '4.9' } });
+
+        await waitFor(
+            () => {
+                const patch = calls.mock.calls.filter(([url, init]) => String(url).endsWith('/content/home/blocks/1') && init?.method === 'PATCH').pop();
+                const content = patch ? JSON.parse(String(patch[1]!.body)).content : null;
+                expect(content?.promos).toEqual([expect.objectContaining({ title: 'Soft toys up to 40% off', tone: 'pink' })]);
+                expect(content?.proof).toEqual(expect.objectContaining({ rating: 4.9 }));
+            },
+            { timeout: 4000 },
+        );
+        expect(screen.getByRole('button', { name: 'Add promo card' })).toHaveProperty('disabled', false);
+    });
+
     it('is a live editor: canvas clicks select a section, autosaves refresh the frame in place', { timeout: 20_000 }, async () => {
         api(editor, (url, init) => (url.endsWith('/content/home/blocks/2') && init?.method === 'PATCH' ? { status: 200, body: { ...blocks[1]!, content: { ...blocks[1]!.content, title: 'Eid best sellers' } } } : null));
         renderApp('/store/home');

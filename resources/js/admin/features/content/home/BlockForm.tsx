@@ -71,10 +71,13 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                         return (
                             <Repeater key={i} title={title} index={i} count={slides.length} min={1} disabled={ctx.disabled} {...listOps('slides')}>
                                 <Bilingual content={slide} prefix={`slides.${i}.`} keyName="headline" set={setSlide} ctx={ctx} />
+                                <Bilingual content={slide} prefix={`slides.${i}.`} keyName="accent" set={setSlide} ctx={ctx} hint={t('homeBuilder.f.accentHint')} />
                                 <Bilingual content={slide} prefix={`slides.${i}.`} keyName="overline" set={setSlide} ctx={ctx} />
                                 <Bilingual content={slide} prefix={`slides.${i}.`} keyName="sub" set={setSlide} ctx={ctx} multiline />
                                 <Bilingual content={slide} prefix={`slides.${i}.`} keyName="cta_label" set={setSlide} ctx={ctx} />
                                 <TextField label={t('homeBuilder.f.cta_href')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(slide.cta_href)} onChange={(v) => setSlide('cta_href', v)} path={`slides.${i}.cta_href`} ctx={ctx} mono />
+                                <Bilingual content={slide} prefix={`slides.${i}.`} keyName="cta2_label" set={setSlide} ctx={ctx} />
+                                <TextField label={t('homeBuilder.f.cta2_href')} value={str(slide.cta2_href)} onChange={(v) => setSlide('cta2_href', v)} path={`slides.${i}.cta2_href`} ctx={ctx} mono />
                                 <MediaField
                                     label={t('homeBuilder.f.image')}
                                     hint={t('homeBuilder.f.imageDefault')}
@@ -93,6 +96,7 @@ export function ContentForm({ block, content, onChange, onSettings, ctx, media }
                         <PlusIcon size={16} aria-hidden />
                         {t('homeBuilder.f.addSlide')}
                     </Button>
+                    <HeroExtras content={content} set={set} setRow={setRow} listOps={listOps} pickImage={pickImage} ctx={ctx} media={media} />
                 </>
             );
         }
@@ -580,4 +584,108 @@ export function StyleForm({ block, content, onChange, ctx }: Omit<Props, 'media'
         default:
             return null;
     }
+}
+
+const PROMO_TONES = ['pink', 'green', 'blue', 'yellow', 'purple', 'orange'] as const;
+
+/** The hero's side promo cards (0–2) and its parents row (Smart Junior 34:5686, 34:5672). */
+function HeroExtras({
+    content,
+    set,
+    setRow,
+    listOps,
+    pickImage,
+    ctx,
+    media,
+}: {
+    content: Content;
+    set: (key: string, value: unknown) => void;
+    setRow: (listKey: string, index: number, key: string, value: unknown) => void;
+    listOps: (listKey: string) => { onMove: (from: number, to: number) => void; onRemove: (index: number) => void };
+    pickImage: (apply: (id: number | null) => void) => (next: PickedImage | null) => void;
+    ctx: FieldCtx;
+    media: ReadonlyMap<number, MediaThumb>;
+}) {
+    const { t } = useI18n();
+    const promos = rows(content.promos);
+    const proof: Content = content.proof !== null && typeof content.proof === 'object' && !Array.isArray(content.proof) ? (content.proof as Content) : {};
+    const setProof = (key: string, value: unknown) => set('proof', { ...proof, [key]: value });
+    const avatars = ids(proof.media_ids);
+    const setAvatar = (slot: number, id: number | null) => {
+        const next = [...avatars];
+        if (id === null) next.splice(slot, 1);
+        else next[slot] = id;
+        setProof('media_ids', next.filter((v, i, all) => all.indexOf(v) === i));
+    };
+    const rating = typeof proof.rating === 'number' ? String(proof.rating) : str(proof.rating);
+
+    return (
+        <>
+            <p className="t-admin-body-strong text-fg-primary">{t('homeBuilder.f.promos')}</p>
+            <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.promosHint')}</p>
+            {promos.map((promo, i) => {
+                const setPromo = (key: string, value: unknown) => setRow('promos', i, key, value);
+                return (
+                    <Repeater key={i} title={t('homeBuilder.f.promo', { n: i + 1 })} index={i} count={promos.length} min={0} disabled={ctx.disabled} {...listOps('promos')}>
+                        <Bilingual content={promo} prefix={`promos.${i}.`} keyName="title" set={setPromo} ctx={ctx} />
+                        <Bilingual content={promo} prefix={`promos.${i}.`} keyName="overline" set={setPromo} ctx={ctx} />
+                        <Bilingual content={promo} prefix={`promos.${i}.`} keyName="cta_label" set={setPromo} ctx={ctx} />
+                        <TextField label={t('homeBuilder.f.cta_href')} hint={t('homeBuilder.f.cta_hrefHint')} value={str(promo.cta_href)} onChange={(v) => setPromo('cta_href', v)} path={`promos.${i}.cta_href`} ctx={ctx} mono />
+                        <SelectField
+                            label={t('homeBuilder.f.promoTone')}
+                            value={str(promo.tone) || PROMO_TONES[i % PROMO_TONES.length]!}
+                            options={PROMO_TONES.map((v) => ({ value: v, label: t(`homeBuilder.f.promoTone.${v}`) }))}
+                            onChange={(v) => setPromo('tone', v)}
+                            path={`promos.${i}.tone`}
+                            ctx={ctx}
+                        />
+                        <MediaField
+                            label={t('homeBuilder.f.promoImage')}
+                            pickerTitle="homeBuilder.f.pickImage"
+                            value={imageValue(promo, media, pickedThisSession)}
+                            onChange={pickImage((id) => setPromo('media_id', id))}
+                            disabled={ctx.disabled}
+                            error={ctx.errors[`content.promos.${i}.media_id`]}
+                        />
+                        <Bilingual content={promo} prefix={`promos.${i}.`} keyName="alt" set={setPromo} ctx={ctx} hint={t('homeBuilder.f.altHint')} />
+                    </Repeater>
+                );
+            })}
+            {ctx.errors['content.promos'] && <p className="t-admin-caption text-fg-primary">{ctx.errors['content.promos']}</p>}
+            <Button
+                variant="outline"
+                size="sm"
+                className="self-start"
+                disabled={ctx.disabled || promos.length >= 2}
+                onClick={() => set('promos', [...promos, { title: '', cta_href: null, media_id: null, tone: PROMO_TONES[promos.length % PROMO_TONES.length] }])}
+            >
+                <PlusIcon size={16} aria-hidden />
+                {t('homeBuilder.f.addPromo')}
+            </Button>
+
+            <p className="t-admin-body-strong text-fg-primary">{t('homeBuilder.f.proof')}</p>
+            <p className="t-admin-caption text-fg-secondary">{t('homeBuilder.f.proofHint')}</p>
+            <TextField
+                label={t('homeBuilder.f.proofRating')}
+                value={rating}
+                onChange={(v) => setProof('rating', v.trim() === '' ? null : Number.isNaN(Number(v)) ? v : Number(v))}
+                path="proof.rating"
+                ctx={ctx}
+                mono
+            />
+            <Bilingual content={proof} prefix="proof." keyName="label" set={setProof} ctx={ctx} />
+            {[0, 1, 2].slice(0, Math.min(avatars.length + 1, 3)).map((slot) => (
+                <MediaField
+                    key={slot}
+                    label={t('homeBuilder.f.avatar', { n: slot + 1 })}
+                    pickerTitle="homeBuilder.f.pickImage"
+                    ratio={[1, 1]}
+                    value={pickedValue(avatars[slot] ?? null, media, pickedThisSession)}
+                    onChange={pickImage((id) => setAvatar(slot, id))}
+                    disabled={ctx.disabled}
+                    error={ctx.errors[`content.proof.media_ids.${slot}`] ?? (slot === 0 ? ctx.errors['content.proof.media_ids'] : undefined)}
+                />
+            ))}
+        </>
+    );
 }

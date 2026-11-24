@@ -306,3 +306,43 @@ it('seeds the default homepage once, published as version 1, without queueing a 
     // With an empty catalogue the data-driven blocks hide themselves; nothing renders empty.
     expect(CmsKit::types(CmsKit::home()))->toBe(['hero', 'flash_sale', 'age_tiles', 'usp_band']);
 });
+
+it('renders the hero promos and proof row with their images, in the locale (Smart Junior hero)', function (): void {
+    [$photo, $bear, $face] = [Media::factory()->create(), Media::factory()->create(['alt_text' => 'Teddy']), Media::factory()->create()];
+    CmsKit::block('hero', [
+        'slides' => [['headline' => 'Toys that grow with every age', 'accent' => 'every age', 'headline_bn' => 'প্রতিটি বয়সের সাথে বেড়ে ওঠা খেলনা', 'accent_bn' => 'খেলনা', 'cta_label' => 'New in', 'cta_href' => '/toys', 'cta2_label' => 'Shop by age', 'cta2_href' => '/toys?age=2-4', 'media_id' => $photo->id]],
+        'promos' => [
+            ['overline' => 'Flash sale', 'title' => 'Soft toys on sale', 'title_bn' => 'সফট টয়ে ছাড়', 'cta_label' => 'Shop the sale', 'cta_href' => '/flash-sale', 'media_id' => $bear->id, 'tone' => 'pink'],
+            ['title' => 'Science kits', 'tone' => 'unknown-is-dropped-by-validation-only'],
+        ],
+        'proof' => ['rating' => 4.94, 'label' => 'parents', 'label_bn' => 'অভিভাবক', 'media_ids' => [$face->id, 999999]],
+    ]);
+    cmsPublish();
+
+    $en = CmsKit::home('en')->assertOk();
+    $bn = CmsKit::home('bn')->assertOk();
+    expect($en->json('blocks.0.content.slides.0.accent'))->toBe('every age')
+        ->and($bn->json('blocks.0.content.slides.0.accent'))->toBe('খেলনা')
+        ->and($en->json('blocks.0.content.slides.0.cta2_href'))->toBe('/toys?age=2-4')
+        ->and($en->json('blocks.0.content.promos'))->toHaveCount(2)
+        ->and($en->json('blocks.0.content.promos.0.image.alt'))->toBe('Teddy')
+        ->and($en->json('blocks.0.content.promos.0.tone'))->toBe('pink')
+        ->and($en->json('blocks.0.content.promos.0'))->not->toHaveKey('media_id')
+        ->and($bn->json('blocks.0.content.promos.0.title'))->toBe('সফট টয়ে ছাড়')
+        ->and($en->json('blocks.0.content.promos.1.image'))->toBeNull()
+        ->and($en->json('blocks.0.content.promos.1.tone'))->toBe('green')
+        ->and($en->json('blocks.0.content.proof.rating'))->toEqual(4.9)
+        ->and($bn->json('blocks.0.content.proof.label'))->toBe('অভিভাবক')
+        ->and($en->json('blocks.0.content.proof.avatars'))->toHaveCount(1)
+        ->and($en->json('blocks.0.content.proof'))->not->toHaveKey('media_ids');
+});
+
+it('keeps an old hero (no promos, no proof) answering as before', function (): void {
+    CmsKit::block('hero', ['slides' => [['headline' => 'Eid toys']]]);
+    cmsPublish();
+
+    $en = CmsKit::home('en')->assertOk();
+    expect($en->json('blocks.0.content.promos'))->toBe([])
+        ->and($en->json('blocks.0.content.proof'))->toBeNull()
+        ->and($en->json('blocks.0.content.slides.0.accent'))->toBeNull();
+});

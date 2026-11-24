@@ -629,7 +629,7 @@ Code follows the plan in §5, with one change: the storefront keeps its existing
 ### 16.1 Home sections (2026-11-24)
 
 These blocks are restyled to the Vivid frames on page `34:5658`, and the built-in fallback home matches them:
-- **Hero.** A deep-blue card with confetti, a yellow eyebrow chip, the orange CTA and photo dots.
+- **Hero (2026-11-24, exact pass).** The deep-blue card with confetti, the yellow eyebrow chip, the headline with its `accent` words in sun, the orange CTA plus the white outline second button, and photo dots. Copy 440 | photo at 1440, copy 380 | photo from 768, photo on top below. Beside it at 1440 sits a 400-wide column of up to two mini promo cards (eyebrow, title, outline button, image multiplied into a pastel `tone`); below 1024 they sit under the card in two columns (no button; the card is the link). The parents row (avatars, stars, rating, line) shows at 1440 only. All of it is hero-block data (`promos`, `proof`, `accent`, `cta2_*`, docs/api/cms-blocks.md); nothing is defaulted, so the figures appear only when the owner enters them.
 - **Trust strip.** Tinted icon chips. On mobile it is a card scroller.
 - **Category tiles.** Pastel circles that morph into a squircle on hover, showing the API image or an icon.
 - **Age tiles.** Tinted cards with a "go" chip.
@@ -638,13 +638,12 @@ These blocks are restyled to the Vivid frames on page `34:5658`, and the built-i
 - **Flash deals.** A pink band with confetti and the countdown pill.
 - **Journal and blog cards, Help CTA / chat band, Promo banner, Testimonials.** Restyled to the Smart Junior card language.
 
+Hero deviations still open: the page gutter is 80 px at 1440 (Figma 120) and 24 px at 834 (Figma 32) — a sitewide container value, not a hero change; the card radius is 32 (Figma `radius/2xl` 36 has no storefront token). The hero's promo and proof values on the local database are the Figma sample copy; the owner must enter the real promotions and figures in Pages › Home.
+
 Not built, because the data or decision is missing (owner or API work):
 
 | Figma element | What is missing |
 |---|---|
-| Hero mini promo cards | A `promos` field on the hero block, plus the promo figures |
-| Hero social-proof row (★4.9, 12,000+ parents) | Unconfirmed business figures |
-| Headline accent word | No data marks which word to accent |
 | Card "New" badge | The card API sends no new-arrival flag |
 | Bestsellers category chips | No data on the rail block |
 | Rail eyebrows and subtitles | The `product_rail` block has a title only |
