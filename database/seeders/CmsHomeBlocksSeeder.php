@@ -47,6 +47,9 @@ final class CmsHomeBlocksSeeder extends Seeder
      */
     public const string REPLACE_ENV = 'HOME_SEED_REPLACE';
 
+    /** Sample figures and photos off a developer machine too (see sampleEnabled()). */
+    public const string SAMPLE_ENV = 'HOME_SEED_SAMPLE';
+
     public function run(CreateBlock $create, PublishLayout $publish, DeleteBlock $delete): void
     {
         $placement = LayoutKey::home();
@@ -63,6 +66,10 @@ final class CmsHomeBlocksSeeder extends Seeder
                 $delete->handle($block);
             }
             $this->command?->warn('Replacing the homepage'.($previous !== null ? " (published version {$previous} stays restorable in Pages › Home › Versions)" : '').'.');
+        }
+
+        if ($replace && self::sampleEnabled()) {
+            CategoryDemoSeeder::dressExisting(); // the category tiles' art and short lines
         }
 
         foreach ($this->blocks(self::sampleEnabled()) as [$type, $content, $label]) {
@@ -282,12 +289,14 @@ final class CmsHomeBlocksSeeder extends Seeder
     }
 
     /**
-     * Sample content (the design's figures, AI placeholder photos, demo picks) only on a developer
-     * machine: the photos are not licensed photography, so a host starts without them.
+     * Sample content (the design's figures, AI placeholder photos, demo picks) on a developer
+     * machine, or on a host only when the owner asks for it (`HOME_SEED_SAMPLE=1`, the
+     * "sample_home" input of the CI and deploy workflow; owner decision 2026-11-24). The photos are
+     * not licensed photography and the figures are not the business's: the owner replaces both.
      */
     public static function sampleEnabled(): bool
     {
-        return app()->environment('local');
+        return app()->environment('local') || filter_var(getenv(self::SAMPLE_ENV), FILTER_VALIDATE_BOOL);
     }
 
     /**

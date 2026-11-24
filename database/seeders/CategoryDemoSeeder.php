@@ -82,10 +82,25 @@ class CategoryDemoSeeder extends Seeder
     {
         foreach (self::TREE as $root) {
             $parent = $this->plant($root, null);
-            $this->dress($parent, $root);
+            self::dress($parent, $root);
 
             foreach ($root['children'] as $child) {
                 $this->plant($child, $parent);
+            }
+        }
+    }
+
+    /**
+     * The Smart Junior tile on categories that already exist (a host's own catalogue): each
+     * top-level category of the design whose slug is present gets its short line and art where
+     * blank. Nothing is created. CmsHomeBlocksSeeder calls it when it seeds the sample home.
+     */
+    public static function dressExisting(): void
+    {
+        foreach (self::TREE as $root) {
+            $category = Category::query()->where('slug', $root['slug'])->first();
+            if ($category !== null) {
+                self::dress($category, $root);
             }
         }
     }
@@ -95,7 +110,7 @@ class CategoryDemoSeeder extends Seeder
      *
      * @param  array{name: string, slug: string, tagline: string, tagline_bn: string}  $root
      */
-    private function dress(Category $category, array $root): void
+    private static function dress(Category $category, array $root): void
     {
         if ($category->tagline === null) {
             $category->forceFill(['tagline' => $root['tagline'], 'tagline_bn' => $root['tagline_bn']]);

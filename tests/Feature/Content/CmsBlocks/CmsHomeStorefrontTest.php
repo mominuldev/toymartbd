@@ -335,6 +335,22 @@ it('replaces an edited homepage only when asked, as the next version, keeping th
         ->and(CmsLayoutVersion::query()->where('version', 1)->value('blocks'))->not->toBeNull();
 });
 
+it('seeds the sample figures off a developer machine only when asked', function (): void {
+    expect(CmsHomeBlocksSeeder::sampleEnabled())->toBeFalse();
+
+    putenv(CmsHomeBlocksSeeder::SAMPLE_ENV.'=1');
+    try {
+        expect(CmsHomeBlocksSeeder::sampleEnabled())->toBeTrue();
+        $this->seed(CmsHomeBlocksSeeder::class);
+    } finally {
+        putenv(CmsHomeBlocksSeeder::SAMPLE_ENV);
+    }
+
+    $why = collect(CmsLayoutVersion::latestFor(LayoutKey::home())?->blocks)->firstWhere('type', 'why_band');
+    expect(array_column($why['content']['stats'], 'value'))->toBe(['50,000+', '4.9 / 5', '64', '1,200+'])
+        ->and($why['content']['media_id'])->toBeInt();
+});
+
 it('renders the hero promos and proof row with their images, in the locale (Smart Junior hero)', function (): void {
     [$photo, $bear, $face] = [Media::factory()->create(), Media::factory()->create(['alt_text' => 'Teddy']), Media::factory()->create()];
     CmsKit::block('hero', [
