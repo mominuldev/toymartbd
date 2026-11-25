@@ -446,6 +446,83 @@ Built on `34:5658` (Vivid · বাংলা), below Wishlist. The conventions a
   - Clipping frames inside these rows: **0**. The confetti `Section pattern` layers and the 404 illustration are decorative and keep their clipping.
 - The chips, buttons, inputs, steps and pills all keep 44 px targets wherever the component provides them.
 
+### 7.0 Placeholders (owner, 2026-11-25)
+
+The owner approved swapping the unconfirmed business values for marked placeholders in the shared Header `10:289` and
+`Footer — Vivid · বাংলা` `41:9166`, and in the same values elsewhere on `34:5658`.
+
+**How a placeholder is marked.**
+- The value sits in an auto-layout frame named `placeholder:<what>`, with no fill and a 1 px dashed (4/3) inside stroke bound to `border/default`.
+- The frame has `space/4` left and right padding, radius `radius/xs`, and `strokesIncludedInLayout = false`. Frames that wrap an instance (a button, Trust Item or Notice) also get `space/2` top and bottom padding.
+- The text keeps its node, fill and text style. Bangla placeholder text uses Anek Bangla at the original weight and size; `COD` stays in Fredoka.
+- Where the value sits inside a sentence, the frame wraps the whole text node and only the bracketed part is the placeholder.
+- Where the value sits inside an instance of another component (a Button, Trust Item or Notice), the frame wraps that instance, because an instance cannot take a new child.
+
+**Components (page `2:4`).** The Header is also used by 9 instances on the English page `Smart Junior`, so its main text uses English placeholders. The Vivid instances override them with Bangla.
+
+| Value | Node | Placeholder frame | Main text | Vivid instances |
+|---|---|---|---|---|
+| Free-delivery threshold, desktop announcement | `10:137` | `195:2724` `placeholder:free-delivery-threshold` | Free delivery in Dhaka over [free-delivery threshold] | ঢাকায় [ফ্রি ডেলিভারির সীমা]-এর বেশি অর্ডারে ফ্রি ডেলিভারি (27) |
+| Return window, desktop announcement | `10:145` | `195:2725` `placeholder:return-window` | [Return window] easy returns | [রিটার্নের মেয়াদ] সহজ রিটার্ন (27) |
+| Hotline, desktop main bar | `10:180` | `195:2726` `placeholder:hotline` | [Hotline number] | [হটলাইন নম্বর] (26) |
+| Free-delivery threshold, mobile announcement | `10:253` | `195:2727` `placeholder:free-delivery-threshold` | Free Dhaka delivery over [free-delivery threshold] · COD | ঢাকায় [ফ্রি ডেলিভারির সীমা]-এর বেশিতে ফ্রি ডেলিভারি · COD (24) |
+| Hotline, footer contact | `41:8183` | `195:2728` `placeholder:hotline` | [হটলাইন নম্বর] | inherits (26) |
+| Hours, footer contact | `41:8184` | `195:2729` `placeholder:hours` | [সময়সূচি] | inherits (26) |
+| WhatsApp reply time ("15 মিনিটের মধ্যে উত্তর") | `41:8190` | `195:2730` `placeholder:reply-time` | [উত্তরের সময়] | inherits (26) |
+| Email | `41:8195` | `195:2731` `placeholder:email` | [ইমেইল] | inherits (26) |
+| Email reply time ("এক দিনের মধ্যে উত্তর দিই") | `41:8196` | `195:2732` `placeholder:reply-time` | [উত্তরের সময়] | inherits (26) |
+| Address ("ধানমন্ডি, ঢাকা") | `41:8201` | `195:2733` `placeholder:address` | [ঠিকানা] | inherits (26) |
+| Address line ("পিক-আপ পয়েন্ট ও স্টুডিও") | `41:8202` | `195:2734` `placeholder:address-note` | [ঠিকানার বিবরণ] | inherits (26) |
+
+- The footer instances had no overrides on these nodes, so they took the main text directly.
+- The header hotline instance overrides had already collapsed into the main value, so all 26 were set again.
+- The footer contact column `41:8177` and its row and text frames no longer clip (rule 17). The four text stacks gained a `space/2` gap so the dashed outlines do not touch.
+- The mobile footer `41:8832` shows no contact values: its contact accordion is collapsed. The mobile header has no hotline.
+
+**Vivid page `34:5658`, outside the chrome.**
+
+| Value | Text node | Placeholder frame | New text |
+|---|---|---|---|
+| Hours, Home desktop Help CTA | `34:5878` | `196:42101` `placeholder:hours` | … সাজেস্ট করব। [সময়সূচি]। |
+| Hotline button, Home desktop Help CTA | `I34:5879;5:103` | `196:42116` wraps Button `34:5879` | [হটলাইন নম্বর] |
+| Return window, Home desktop Trust Item | `I34:5704;7:205` | `196:42114` wraps Trust Item `34:5704` | [রিটার্নের মেয়াদ] সহজ রিটার্ন |
+| Return window, Home mobile Trust | `42:12465` | `196:42103` `placeholder:return-window` | [রিটার্নের মেয়াদ]-এ রিটার্ন |
+| Hours, Home tablet Help CTA | `34:6103` | `196:42102` `placeholder:hours` | [সময়সূচি] |
+| Return window, Home tablet Trust Item | `I34:6040;7:205` | `196:42115` wraps Trust Item `34:6040` | [রিটার্নের মেয়াদ]-এ রিটার্ন |
+| Hotline button, Product desktop "Order by phone" | `I34:6481;5:107` | `196:42117` wraps Button `34:6481` | কল করুন [হটলাইন নম্বর] |
+| Return window, Product desktop delivery facts | `34:6509` | `196:42104` `placeholder:return-window` | [রিটার্নের মেয়াদ] সহজ রিটার্ন |
+| Return window, Cart desktop summary | `34:6908` | `196:42105` `placeholder:return-window` | নিরাপদ চেকআউট · [রিটার্নের মেয়াদ] সহজ রিটার্ন |
+| Hotline + hours, Cart desktop help | `34:6913` | `196:42106` `placeholder:hotline+hours` | কল করুন [হটলাইন নম্বর] · [সময়সূচি] |
+| Hotline, Checkout desktop header | `34:7029` | `196:42107` `placeholder:hotline` | সাহায্য লাগবে? [হটলাইন নম্বর] |
+| Return window, Checkout desktop reassurance | `34:7183` | `196:42108` `placeholder:return-window` | [রিটার্নের মেয়াদ] সহজ রিটার্ন, কোনো প্রশ্ন ছাড়াই |
+| Hotline, 07 sign-in error Notice (mobile) | `I156:13743;145:1862` | `196:42118` wraps Notice `156:13743` | … অথবা [হটলাইন নম্বর]-এ ফোন করুন। |
+| Hotline, 09 code help card ×4 | `159:16757`, `159:17338`, `159:17797`, `159:18259` | `196:42109`–`196:42112` `placeholder:hotline` | … অথবা [হটলাইন নম্বর]-এ ফোন করুন। |
+| Hotline, 22 maintenance A body | `183:35985` | `196:42113` `placeholder:hotline` | … দরকার হলে [হটলাইন নম্বর]-এ ফোন করুন। |
+| Hotline, 22 maintenance A call button | `I183:35987;5:55` | `196:42119` wraps Button `183:35987` | ফোন করুন [হটলাইন নম্বর] |
+
+The phase B and C screens used `[হটলাইন · placeholder]` for the hotline. Those now read `[হটলাইন নম্বর]`.
+
+**Left unchanged.**
+- These are not shop contact or policy values:
+  - customer phones and addresses (`01712 345 678`, Dhanmondi delivery addresses)
+  - prices, delivery-slot times and order data
+  - cash on delivery
+  - footer links "রিটার্ন ও বদল" and "স্টোরের ঠিকানা"
+  - the "যত্ন নিয়ে তৈরি, ঢাকায়" copyright line
+  - "WhatsApp-এ চ্যাট করুন"-style buttons that show no number
+- The flash-deal "প্রতিদিন সকাল 10টায় দাম কমে" (`9:184`) is a promotion schedule, not shop hours.
+- The product free-delivery nudge "আর ৳210 যোগ করলে ঢাকায় ফ্রি ডেলিভারি" (`34:6484`, `34:6729`) implies the threshold, but the amount is cart-derived. The owner should confirm whether it gets a placeholder too.
+- No screen shows a shop WhatsApp number, so `[WhatsApp নম্বর]` was not needed.
+- The backup and concept footer sets (`102:1042`, `109:1796`, `111:1959`, `115:1932`) and the English `Footer` `11:376` were not touched.
+
+**Audits.**
+- Top-level bounding-box audit on `34:5658` (94 nodes): **no intersections**.
+- All 19 page-level and 11 component-level placeholder strokes are bound to `border/default`.
+- Zoomed screenshots checked:
+  - header desktop (announcement and hotline) and mobile (announcement)
+  - the footer contact column, in a Vivid instance and on the component
+  - every body-copy spot in the tables above
+
 ### 7.1 Frames
 
 | Frame | Node id | Size | Position (x, y) |
@@ -552,10 +629,4 @@ Built on `34:5658` (Vivid · বাংলা), below Wishlist. The conventions a
   - category and tag archives (covered by the author frame plus the label)
   - the English-fallback body caption (described in the row label)
   - a separate empty desktop frame
-- **Not done: the header/footer placeholder pass** (owner request relayed 2026-11-25: hotline, hours, email, address, WhatsApp reply time, free-delivery threshold and return period as `[…]` placeholders with a dashed `placeholder:*` outline):
-  - The edit to `Header` `10:289` and `Footer — Vivid · বাংলা` `41:9166` on page `2:4` was refused by the session's permission check, because changing shared components was outside this agent's brief.
-  - Nothing was changed. Every Vivid screen, including rows 18–24, still shows `09612-345678`, the hours, the email, the Dhanmondi address and the "৳1,500 / 7 দিনের" announcement.
-  - Values found:
-    - Header: `10:137`, `10:145`, `10:180` (desktop) and `10:253` (mobile), overridden in 25 instances on `34:5658`.
-    - Footer Desktop: `41:8183`, `41:8184`, `41:8190`, `41:8195`, `41:8201` and `41:8202`, in 24 instances.
-    - Outside the chrome: the Help CTA "কল করুন 09612-345678 …" and "সাহায্য লাগবে? 09612-345678", plus "7 দিনের সহজ রিটার্ন" in a Trust Item and in the product and cart copy.
+- The header/footer placeholder pass was left out of phase C. It was done after the owner approved it; see §7.0.
