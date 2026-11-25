@@ -4,6 +4,10 @@ Built from the main logo in Figma (`2b6PVOOapPbcaKYIdHWZup`, node `291:3395`, in
 "Logo And Branding color"). The full wordmark is too wide to read at 16 px, so the icon uses the
 logo's own letterforms, with their path data copied unchanged from the Figma SVG export.
 
+**Figma source:** component `Favicon / Smart Junior` (node `296:3302`), in the `Favicon` frame
+(`296:3304`) beside the main logo on Foundations. The S is a clone of the logo's own S, filled
+with `purple/800`; the tile is `sunshine/400`. Export changes from there, not from these files.
+
 | File | What it is |
 |---|---|
 | `smart-junior-icon-s.svg` / `-1024.png` | **Recommended.** Purple `S` (#581C9C) on a yellow (#FDC403) rounded tile. Still reads at 16 px and stands out on both light and dark browser tabs. |
