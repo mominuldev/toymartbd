@@ -1148,3 +1148,9 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
   - The 17 desktop links in the footer main component (`200:2724`) are now instances, with each column's `Dot` fill bound to its accent. All 39 screen footers on the Vivid page follow, at an unchanged 619 px height.
   - The mobile footer has no visible links, because its sections are closed accordions.
 - **Code:** `.sj-foot-link` in `components/layout/footer/footer.css`. `SiteFooter.tsx` sets `--sj-foot-dot` per column.
+
+### 17.7 Toys in action (খেলার মুহূর্ত): four reels across on desktop (owner, 2026-11-26)
+
+- **Desktop (≥ 1024):** 4 columns, not 5. The header's prev/next arrows page to the rest. Tablet and mobile keep the sideways 156-px scroller.
+- **Figma:** in `Reels` (`55:12811`) on the Vivid desktop home, the fifth card (`55:12892`) is hidden and kept as the "next" slide. The four visible cards fill the row at 282 px, which makes the band about 110 px taller. The home frame is auto-layout, so it grew to 8,976 px with no overlap.
+- **Code:** in `VideoReelBlock.tsx`, the no-JS grid is `lg:grid-cols-4`, which hides from the 5th item, and the slider track is `*:w-1/4`. At 1440, measured: 4 reels of 326 px each.
