@@ -99,7 +99,7 @@ it('asks an opted-in customer for a review once, N days after delivery, with the
     expect($log->status)->toBe(NotificationStatus::Sent)
         ->and($log->channel)->toBe(NotificationChannel::Sms)
         ->and($sms->sent)->toHaveCount(1)
-        ->and($sms->sent[0]['body'])->toContain($order->number)->toContain("https://toymartbd.com/bn/products/{$slug}#reviews")
+        ->and($sms->sent[0]['body'])->toContain($order->number)->toContain("https://toymartbd.com/products/{$slug}#reviews")->not->toContain('/bn/')
         ->and(AutomationSend::query()->sole()->notification_log_id)->toBe($log->id);
 });
 

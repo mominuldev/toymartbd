@@ -92,7 +92,8 @@ return [
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
-    // English at the root, Bangla at /bn/ (CLAUDE.md rule 35). The first entry is the default.
+    // The API's locales; `?locale=` picks one per request. The storefront serves Bangla at the root
+    // and English at /en/ (CLAUDE.md rule 35, owner decision 2026-11-25; App\Support\StorefrontUrl).
     'supported_locales' => explode(',', (string) env('APP_SUPPORTED_LOCALES', 'en,bn')),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),

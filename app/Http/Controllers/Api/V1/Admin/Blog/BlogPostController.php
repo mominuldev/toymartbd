@@ -15,6 +15,7 @@ use App\Http\Requests\Admin\Blog\BlogPostRequest;
 use App\Http\Resources\Admin\Blog\BlogPostListResource;
 use App\Http\Resources\Admin\Blog\BlogPostResource;
 use App\Support\PreviewToken;
+use App\Support\StorefrontUrl;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Dedoc\Scramble\Attributes\Response as OpenApiResponse;
 use Illuminate\Database\Eloquent\Builder;
@@ -121,6 +122,8 @@ final class BlogPostController extends ApiController
     /**
      * `POST /blog/posts/{post}/preview-link` — a signed, 24-hour token for the storefront's
      * private preview route (`/blog/preview/{token}`, noindex, uncached). Needs content.manage.
+     * `path`/`url` open the English preview (`/en/blog/preview/{token}`), `path_bn`/`url_bn` the
+     * Bangla one at the root (`/blog/preview/{token}`) — StorefrontUrl, owner decision 2026-11-25.
      *
      * @response array{token: string, path: string, path_bn: string, url: string, url_bn: string, expires_in: int}
      */
@@ -131,8 +134,8 @@ final class BlogPostController extends ApiController
 
         return response()->json([
             'token' => $token,
-            'path' => '/blog/preview/'.$token,
-            'path_bn' => '/bn/blog/preview/'.$token,
+            'path' => StorefrontUrl::path('en', '/blog/preview/'.$token),
+            'path_bn' => StorefrontUrl::path('bn', '/blog/preview/'.$token),
             'url' => SiteUrl::localized('/blog/preview/'.$token, 'en'),
             'url_bn' => SiteUrl::localized('/blog/preview/'.$token, 'bn'),
             'expires_in' => PreviewToken::DEFAULT_TTL_SECONDS,

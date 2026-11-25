@@ -72,3 +72,16 @@ it('replaces the migrated placeholder layout but never an edited one', function 
         ->and(CmsLayoutVersion::query()->where('placement', LayoutKey::page($about->id)->value)->count())->toBe(2)
         ->and(CmsBlock::query()->where('placement', LayoutKey::page($terms->id)->value)->value('content')['html'])->toBe('<p>Our own terms.</p>');
 });
+
+it('links the terms page to the policies in each locale’s own URL scheme (Bangla at /, English at /en)', function (): void {
+    $this->seed(StaticPageSectionsSeeder::class);
+
+    $page = CmsPage::query()->where('slug', 'terms')->firstOrFail();
+    $html = CmsBlock::query()->where('type', BlockType::RichText)->get()
+        ->first(fn (CmsBlock $b): bool => $b->placement->equals(LayoutKey::page($page->id)))?->content;
+
+    expect($html)->not->toBeNull()
+        ->and($html['html'])->toContain('href="/en/delivery-policy"')->toContain('href="/en/returns-policy"')
+        ->and($html['html_bn'])->toContain('href="/delivery-policy"')->toContain('href="/returns-policy"')
+        ->and($html['html_bn'])->not->toContain('/bn/');
+});

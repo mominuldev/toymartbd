@@ -172,7 +172,7 @@ final class SerpMeasure
         ];
     }
 
-    /** `https://toymartbd.com/bn/products/x` → `toymartbd.com › bn › products › x` (Google's display). */
+    /** `https://toymartbd.com/en/products/x` → `toymartbd.com › en › products › x` (Google's display). */
     public static function breadcrumbUrl(string $url): string
     {
         $host = (string) parse_url($url, PHP_URL_HOST);

@@ -28613,7 +28613,7 @@
         "/admin/blog/posts/{post}/preview-link": {
             "post": {
                 "operationId": "v1.admin.blog.posts.preview-link",
-                "summary": "`POST /blog/posts/{post}/preview-link` \u2014 a signed, 24-hour token for the storefront's\nprivate preview route (`/blog/preview/{token}`, noindex, uncached). Needs content.manage",
+                "summary": "`POST /blog/posts/{post}/preview-link` \u2014 a signed, 24-hour token for the storefront's\nprivate preview route (`/blog/preview/{token}`, noindex, uncached). Needs content.manage.\n`path`/`url` open the English preview (`/en/blog/preview/{token}`), `path_bn`/`url_bn` the\nBangla one at the root (`/blog/preview/{token}`) \u2014 StorefrontUrl, owner decision 2026-11-25",
                 "tags": [
                     "Admin"
                 ],

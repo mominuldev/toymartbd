@@ -37,7 +37,7 @@ Template `cart.recovery` (SMS only, EN + BN, measured into segment counts on syn
 (`notifiable_type = cart_recovery`) records provider, segments, encoding and **cost**; recipient masked
 and hashed; the payload holds no phone, address or token (rule 20).
 
-**Link:** `{storefront}/cart/restore/{token}` (`/bn/…` for Bangla). The 24-character token is minted by
+**Link:** `{storefront}/cart/restore/{token}` (Bangla at the root; `/en/…` for English — owner decision 2026-11-25). The 24-character token is minted by
 the job, stored only as a SHA-256 hash on the recovery row, valid `restore_ttl_days` (7). It is not the
 cart token and carries no PII.
 

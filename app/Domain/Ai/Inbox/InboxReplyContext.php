@@ -13,6 +13,7 @@ use App\Domain\Inbox\Models\ConversationMessage;
 use App\Domain\Ordering\Models\Order;
 use App\Support\DhakaDate;
 use App\Support\Money;
+use App\Support\StorefrontUrl;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
 
@@ -103,13 +104,13 @@ final class InboxReplyContext
         return preg_match('/\p{Bengali}/u', $text) === 1 ? 'bn' : 'en';
     }
 
-    /** The public tracking page, as text (the customer still enters their phone digits, rule 22). */
+    /** The public tracking page, as text (the customer still enters their phone digits, rule 22). Bangla at the root, English under `/en`. */
     public static function trackUrl(string $language): string
     {
         $base = config('inbox.storefront_url', 'https://smartjunior.com.bd');
         $host = preg_replace('#^https?://#i', '', rtrim(is_string($base) ? $base : 'https://smartjunior.com.bd', '/'));
 
-        return $host.($language === 'bn' ? '/bn' : '').'/track';
+        return StorefrontUrl::url($host, $language, '/track');
     }
 
     private static function firstName(Conversation $conversation): ?string

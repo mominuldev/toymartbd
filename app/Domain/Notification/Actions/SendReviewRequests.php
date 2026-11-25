@@ -18,6 +18,7 @@ use App\Domain\Notification\Support\QuietHours;
 use App\Domain\Ordering\Enums\OrderStatus;
 use App\Domain\Ordering\Models\Order;
 use App\Support\PhoneNumber;
+use App\Support\StorefrontUrl;
 use DateTimeInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
@@ -153,18 +154,18 @@ final readonly class SendReviewRequests
 
     /**
      * The storefront review form: the first item's product page, `#reviews` (the PDP's
-     * "Write a review" form, P4-CAT-12), Bangla under `/bn` (rule 35); the slug is shared by
-     * both locales (rule 37). Falls back to the customer's order page when the product is gone.
+     * "Write a review" form, P4-CAT-12), Bangla at the root and English under `/en` (rule 35,
+     * StorefrontUrl); the slug is shared by both locales (rule 37). Falls back to the customer's
+     * order page when the product is gone.
      */
     public static function reviewUrl(Order $order, string $locale): string
     {
-        $base = rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://smartjunior.com.bd')), '/')
-            .($locale === 'bn' ? '/bn' : '');
+        $base = (string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'));
         $productId = $order->items->first(static fn ($item): bool => $item->product_id !== null)?->product_id;
         $slug = $productId === null ? null : Product::query()->whereKey($productId)->value('slug');
 
         return is_string($slug) && $slug !== ''
-            ? $base.'/products/'.$slug.'#reviews'
-            : $base.'/account/orders/'.rawurlencode($order->number);
+            ? StorefrontUrl::url($base, $locale, '/products/'.$slug.'#reviews')
+            : StorefrontUrl::url($base, $locale, '/account/orders/'.rawurlencode($order->number));
     }
 }

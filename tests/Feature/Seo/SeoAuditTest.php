@@ -51,16 +51,22 @@ it('lists the storefront\'s own indexable routes in the static sitemap, in both 
     $en = seoAuditLocs('sitemap-static-en-1.xml');
     $bn = seoAuditLocs('sitemap-static-bn-1.xml');
     foreach (['/delivery-charge', '/flash-sale', '/track', '/about'] as $path) {
-        expect($en)->toContain('https://toymartbd.com'.$path)
-            ->and($bn)->toContain('https://toymartbd.com/bn'.$path);
+        expect($en)->toContain('https://toymartbd.com/en'.$path)
+            ->and($bn)->toContain('https://toymartbd.com'.$path);
     }
-    expect($en)->toContain('https://toymartbd.com', 'https://toymartbd.com/toys', 'https://toymartbd.com/categories', 'https://toymartbd.com/brands')
+    expect($bn)->toContain('https://toymartbd.com', 'https://toymartbd.com/toys', 'https://toymartbd.com/categories', 'https://toymartbd.com/brands')
+        ->and($en)->toContain('https://toymartbd.com/en', 'https://toymartbd.com/en/toys', 'https://toymartbd.com/en/categories', 'https://toymartbd.com/en/brands')
         ->and(count($en))->toBe(count(array_unique($en)))
         // Never a private or noindex route.
         ->and(implode(' ', $en))->not->toContain('/cart')->not->toContain('/checkout')->not->toContain('/search')->not->toContain('/account');
 
+    // Bangla first (owner decision 2026-11-25): Bangla at the root is the x-default, English under /en.
     $raw = (string) SitemapBuilder::read('sitemap-static-bn-1.xml');
-    expect($raw)->toContain('<loc>https://toymartbd.com/bn/track</loc><xhtml:link rel="alternate" hreflang="en" href="https://toymartbd.com/track"/><xhtml:link rel="alternate" hreflang="bn" href="https://toymartbd.com/bn/track"/><xhtml:link rel="alternate" hreflang="x-default" href="https://toymartbd.com/track"/>');
+    expect($raw)->toContain('<loc>https://toymartbd.com/track</loc><xhtml:link rel="alternate" hreflang="bn" href="https://toymartbd.com/track"/><xhtml:link rel="alternate" hreflang="en" href="https://toymartbd.com/en/track"/><xhtml:link rel="alternate" hreflang="x-default" href="https://toymartbd.com/track"/>')
+        ->and($raw)->not->toContain('/bn/');
+    $rawEn = (string) SitemapBuilder::read('sitemap-static-en-1.xml');
+    expect($rawEn)->toContain('<loc>https://toymartbd.com/en/track</loc><xhtml:link rel="alternate" hreflang="bn" href="https://toymartbd.com/track"/><xhtml:link rel="alternate" hreflang="en" href="https://toymartbd.com/en/track"/><xhtml:link rel="alternate" hreflang="x-default" href="https://toymartbd.com/track"/>')
+        ->and($rawEn)->not->toContain('/bn/');
 });
 
 it('lists /about once — in the pages partition — when a live CMS About page exists', function (): void {
@@ -68,9 +74,11 @@ it('lists /about once — in the pages partition — when a live CMS About page 
 
     app(SitemapBuilder::class)->build();
 
-    expect(seoAuditLocs('sitemap-pages-en-1.xml'))->toContain('https://toymartbd.com/about')
-        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->not->toContain('https://toymartbd.com/about')
-        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->toContain('https://toymartbd.com/delivery-charge');
+    expect(seoAuditLocs('sitemap-pages-bn-1.xml'))->toContain('https://toymartbd.com/about')
+        ->and(seoAuditLocs('sitemap-pages-en-1.xml'))->toContain('https://toymartbd.com/en/about')
+        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->not->toContain('https://toymartbd.com/en/about')
+        ->and(seoAuditLocs('sitemap-static-bn-1.xml'))->not->toContain('https://toymartbd.com/about')
+        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->toContain('https://toymartbd.com/en/delivery-charge');
 });
 
 it('treats /flash-sale as a reserved storefront route that no redirect may shadow', function (): void {
@@ -93,20 +101,35 @@ it('matches robots.txt the way Google does: longest rule wins, Allow wins a tie,
 });
 
 it('never submits a URL in the sitemap that the served robots.txt blocks', function (): void {
-    Setting::put(RobotsTxt::SETTING, "User-agent: *\nAllow: /\nDisallow: /track\nDisallow: /bn/flash-sale\n", SettingGroup::Seo);
+    Setting::put(RobotsTxt::SETTING, "User-agent: *\nAllow: /\nDisallow: /track\nDisallow: /en/flash-sale\n", SettingGroup::Seo);
 
     app(SitemapBuilder::class)->build();
 
     $en = seoAuditLocs('sitemap-static-en-1.xml');
     $bn = seoAuditLocs('sitemap-static-bn-1.xml');
-    expect($en)->not->toContain('https://toymartbd.com/track')
-        ->and($bn)->toContain('https://toymartbd.com/bn/track') // robots paths are per locale: /track does not block /bn/track
-        ->and($en)->toContain('https://toymartbd.com/flash-sale') // only the Bangla URL is blocked
-        ->and($bn)->not->toContain('https://toymartbd.com/bn/flash-sale')
-        ->and($en)->toContain('https://toymartbd.com/delivery-charge');
+    expect($bn)->not->toContain('https://toymartbd.com/track')
+        ->and($en)->toContain('https://toymartbd.com/en/track') // robots paths are per locale: /track does not block /en/track
+        ->and($bn)->toContain('https://toymartbd.com/flash-sale') // only the English URL is blocked
+        ->and($en)->not->toContain('https://toymartbd.com/en/flash-sale')
+        ->and($bn)->toContain('https://toymartbd.com/delivery-charge');
 
     // The shipped default blocks only private routes, none of which is ever listed.
     Setting::query()->where('key', RobotsTxt::SETTING)->delete();
     app(SitemapBuilder::class)->build();
-    expect(seoAuditLocs('sitemap-static-en-1.xml'))->toContain('https://toymartbd.com/track');
+    expect(seoAuditLocs('sitemap-static-bn-1.xml'))->toContain('https://toymartbd.com/track')
+        ->and(seoAuditLocs('sitemap-static-en-1.xml'))->toContain('https://toymartbd.com/en/track');
+});
+
+it('ships a default robots.txt that keeps both locales\' private routes out: the root (Bangla) and /en (English)', function (): void {
+    $default = RobotsTxt::defaultContent();
+
+    foreach (['/cart', '/checkout', '/account', '/orders', '/search'] as $path) {
+        expect(RobotsTxt::allows($path, $default))->toBeFalse()
+            ->and(RobotsTxt::allows('/en'.$path, $default))->toBeFalse();
+    }
+    expect($default)->not->toContain('/bn/')
+        ->and(RobotsTxt::allows('/', $default))->toBeTrue()
+        ->and(RobotsTxt::allows('/en', $default))->toBeTrue()
+        ->and(RobotsTxt::allows('/products/lego', $default))->toBeTrue()
+        ->and(RobotsTxt::allows('/en/products/lego', $default))->toBeTrue();
 });

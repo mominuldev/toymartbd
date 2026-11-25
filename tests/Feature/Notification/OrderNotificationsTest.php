@@ -229,7 +229,9 @@ it('emails the customer in Bangla with the Bangla name, alongside the message', 
             && str_contains($html, 'নুসরাত জাহান')
             && str_contains($html, 'কাঠের পাজল সেট')
             && str_contains($html, 'lang="bn"')
-            && str_contains($html, 'Anek Bangla');
+            && str_contains($html, 'Anek Bangla')
+            // Bangla is the storefront root (owner decision 2026-11-25): no /bn prefix on the track link.
+            && $mail->trackUrl === 'https://'.config('notifications.store_url').'/track?order='.rawurlencode($order->number);
     });
 });
 
@@ -246,6 +248,7 @@ it('emails confirmed, delivered and cancelled in English for an English customer
     Mail::assertSent(OrderNotificationMail::class, fn (OrderNotificationMail $m): bool => $m->subjectLine === "Order {$order->number} confirmed" && str_contains($m->render(), 'Hello Rafi Ahmed'));
     Mail::assertSent(OrderNotificationMail::class, fn (OrderNotificationMail $m): bool => $m->subjectLine === "Delivered - order {$order->number}");
     Mail::assertSent(OrderNotificationMail::class, fn (OrderNotificationMail $m): bool => $m->subjectLine === "Order {$order->number} cancelled");
+    Mail::assertSent(OrderNotificationMail::class, fn (OrderNotificationMail $m): bool => $m->trackUrl === 'https://'.config('notifications.store_url').'/en/track?order='.rawurlencode($order->number));
 });
 
 it('skips email when the customer opted out of it, without touching messaging', function (): void {

@@ -6267,7 +6267,9 @@ export interface paths {
         put?: never;
         /**
          * `POST /blog/posts/{post}/preview-link` — a signed, 24-hour token for the storefront's
-         *     private preview route (`/blog/preview/{token}`, noindex, uncached). Needs content.manage
+         *     private preview route (`/blog/preview/{token}`, noindex, uncached). Needs content.manage.
+         *     `path`/`url` open the English preview (`/en/blog/preview/{token}`), `path_bn`/`url_bn` the
+         *     Bangla one at the root (`/blog/preview/{token}`) — StorefrontUrl, owner decision 2026-11-25
          */
         post: operations["v1.admin.blog.posts.preview-link"];
         delete?: never;

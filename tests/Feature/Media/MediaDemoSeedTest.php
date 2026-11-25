@@ -23,9 +23,12 @@ beforeEach(function (): void {
 
 it('names every demo photo generically, with no brand in any filename', function (): void {
     $files = glob(base_path(DemoCatalogSeeder::IMAGE_DIR).'/[0-9][0-9]-*.png') ?: [];
-    $skus = array_map(static fn (string $f): string => (string) preg_replace('/^\d\d-|\.png$/', '', basename($f)), $files);
+    // Primary photos are `NN-{SKU}.png`; gallery shots `NN-{SKU}.{n}.png` share their SKU's name.
+    $primary = array_filter($files, static fn (string $f): bool => preg_match('/\.\d+\.png$/', $f) !== 1);
+    $skus = array_map(static fn (string $f): string => (string) preg_replace('/^\d\d-|\.png$/', '', basename($f)), $primary);
 
-    expect(array_keys(DemoCatalogSeeder::MEDIA_FILENAMES))->toEqualCanonicalizing($skus);
+    expect(array_keys(DemoCatalogSeeder::MEDIA_FILENAMES))->toEqualCanonicalizing(array_values($skus))
+        ->and(array_diff(array_keys(DemoCatalogSeeder::GALLERY), $skus))->toBe([]);
 
     $this->seed(BrandDemoSeeder::class);
     $brands = Brand::query()->pluck('slug')->merge(['rubik', 'play-doh', 'barbie', 'crayola', 'melissa', 'doug'])->all();

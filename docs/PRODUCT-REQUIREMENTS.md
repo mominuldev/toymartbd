@@ -237,7 +237,7 @@ Four mechanics that admins routinely conflate, kept deliberately distinct becaus
 | P-04 | Store, courier, payment, notification and tracking settings in the admin | M |
 | P-05 | Bangla and English **content fields** throughout (schema level) | M |
 | P-06 | **Full Bangla UI at launch**, English and Bangla both complete | **M** |
-| P-06a | Locale-prefixed routing: English at the root, Bangla at `/bn/`, with `hreflang` pairs and `x-default` | M |
+| P-06a | Locale-prefixed routing: Bangla at the root, English at `/en/` (owner decision 2026-11-25; was English at the root, Bangla at `/bn/`), with `hreflang` pairs and `x-default` (Bangla) | M |
 | P-06b | Language toggle in the header, persisted per visitor; Bangla **suggested** on a first visit from Bangladesh, never force-redirected | M |
 | P-06c | Per-locale SEO: separate title, description, OG tags and sitemap entries for each locale | M |
 | P-06d | Bangla notification templates for SMS, email and WhatsApp | M |
@@ -275,7 +275,7 @@ Four mechanics that admins routinely conflate, kept deliberately distinct becaus
 | Courier fraud data | **Officially published APIs only** | See §6 |
 | Addresses | Division → district → upazila → area + line + **landmark** | Landmark reduces failed deliveries materially |
 | Phone | 11-digit `01XXXXXXXXX` normalised on write, validated against live operator prefixes, `+880`/`880`/`0` all accepted | A COD store that cannot reach the buyer cannot deliver |
-| Language | **Full Bangla and English UI at launch.** English at the root, Bangla at `/bn/`, `hreflang` pairs both ways plus `x-default` | Owner decision. No audited competitor has `hreflang` or a real Bangla locale; both marketplaces' Bangla is machine-translated |
+| Language | **Full Bangla and English UI at launch.** Bangla at the root, English at `/en/` (owner decision 2026-11-25), `hreflang` pairs both ways plus `x-default` (Bangla) | Owner decision. No audited competitor has `hreflang` or a real Bangla locale; both marketplaces' Bangla is machine-translated |
 | Numerals | **Western digits (0–9) everywhere**, both locales | Prices must never cost the reader a hesitation; mixed scripts break tabular alignment |
 | Bangla notification cost | **WhatsApp utility ≈৳0.45 preferred over Bangla SMS** for order updates | Bangla consumes 70 characters per SMS segment versus 160 for Latin, so a Bangla order update is 2–3× the cost of an English one. Bangla UI makes this a live budget line, not a footnote. OTP stays on SMS (§6a) |
 | Timezone | Asia/Dhaka for display and **all report bucketing**; UTC in storage | — |

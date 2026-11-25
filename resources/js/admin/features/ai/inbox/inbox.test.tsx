@@ -58,7 +58,7 @@ const message: InboxMessage = {
 };
 
 const banglaDraft: AiInboxDraft = {
-    text: 'ওয়ালাইকুম আসসালাম রাফি ভাই! আপনার অর্ডার TMB-26-00126 Steadfast-এ পথে আছে। ট্র্যাক করতে: toymartbd.com/bn/track',
+    text: 'ওয়ালাইকুম আসসালাম রাফি ভাই! আপনার অর্ডার TMB-26-00126 Steadfast-এ পথে আছে। ট্র্যাক করতে: toymartbd.com/track',
     language: 'bn',
     based_on: ['Order TMB-26-00126', 'Steadfast · In transit · 2 h ago'],
     model: 'claude-opus-5-5',

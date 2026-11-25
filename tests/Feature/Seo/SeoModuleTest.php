@@ -76,14 +76,14 @@ it('serves a category SEO document with server defaults and both-locale SERP pre
 
     expect($doc['title'])->toBeNull()
         ->and($doc['path'])->toBe('/categories/building-blocks')
-        ->and($doc['urls'])->toBe(['en' => 'https://toymartbd.com/categories/building-blocks', 'bn' => 'https://toymartbd.com/bn/categories/building-blocks'])
+        ->and($doc['urls'])->toBe(['en' => 'https://toymartbd.com/en/categories/building-blocks', 'bn' => 'https://toymartbd.com/categories/building-blocks'])
         ->and($doc['defaults']['title'])->toBe('Building Blocks | Smart Junior')
         ->and($doc['defaults']['title_bn'])->toBe('বিল্ডিং ব্লক | Smart Junior')
         ->and($doc['defaults']['description'])->toContain('Building Blocks')
         ->and($doc['defaults']['description_bn'])->toContain('বিল্ডিং ব্লক')
         ->and($doc['serp']['en']['title_truncated'])->toBeFalse()
-        ->and($doc['serp']['en']['url_display'])->toBe('toymartbd.com › categories › building-blocks')
-        ->and($doc['serp']['bn']['url_display'])->toBe('toymartbd.com › bn › categories › building-blocks')
+        ->and($doc['serp']['en']['url_display'])->toBe('toymartbd.com › en › categories › building-blocks')
+        ->and($doc['serp']['bn']['url_display'])->toBe('toymartbd.com › categories › building-blocks')
         ->and($doc['in_sitemap'])->toBeTrue();
 });
 
@@ -126,12 +126,12 @@ it('saves a brand SEO document with separate Bangla OG and purges the page', fun
 it('measures unsaved text for the SERP preview on the server', function (): void {
     seoAdmin(Role::Viewer);
 
-    $preview = $this->postJson('/api/v1/admin/seo/serp-preview', ['title' => str_repeat('W', 80), 'description' => 'Short.', 'url' => '/bn/products/x'])->assertOk()->json();
+    $preview = $this->postJson('/api/v1/admin/seo/serp-preview', ['title' => str_repeat('W', 80), 'description' => 'Short.', 'url' => '/en/products/x'])->assertOk()->json();
 
     expect($preview['title_truncated'])->toBeTrue()
         ->and($preview['title_px'])->toBeGreaterThan($preview['title_max'])
         ->and($preview['description_truncated'])->toBeFalse()
-        ->and($preview['url_display'])->toBe('toymartbd.com › bn › products › x');
+        ->and($preview['url_display'])->toBe('toymartbd.com › en › products › x');
 });
 
 it('404s an unknown type or id, and a storefront SEO read for a page that is not live', function (): void {
@@ -242,6 +242,10 @@ it('stores a redirect locale-independently and serves it', function (): void {
 
     expect($r['from_path'])->toBe('/old-offer')->and($r['to_path'])->toBe('/toys?age=24-48')->and($r['status_code'])->toBe(302)->and($r['source'])->toBe('manual');
     expect(collect(redirectMap())->firstWhere('from', '/old-offer'))->toMatchArray(['to' => '/toys?age=24-48', 'status' => 302, 'id' => $r['id']]);
+
+    // English is the prefixed locale since 2026-11-25; `/bn/…` above is the legacy prefix.
+    $en = $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/en/older-offer/', 'to_path' => '/en/toys'])->assertCreated()->json();
+    expect($en['from_path'])->toBe('/older-offer')->and($en['to_path'])->toBe('/toys');
 });
 
 it('refuses a source that is a live page or a built-in route', function (): void {
@@ -254,6 +258,7 @@ it('refuses a source that is a live page or a built-in route', function (): void
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => 'no-slash', 'to_path' => '/toys'])->assertUnprocessable();
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/x', 'to_path' => 'http://evil.example'])->assertUnprocessable()->assertJsonPath('errors.0.field', 'to_path');
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/x', 'to_path' => '/bn/x'])->assertUnprocessable();
+    $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/x', 'to_path' => '/en/x'])->assertUnprocessable();
 });
 
 it('refuses a duplicate source and a loop', function (): void {
@@ -366,13 +371,14 @@ it('builds locale-partitioned sitemaps of live, indexable pages only', function 
 
     $en = (string) SitemapBuilder::read('sitemap-products-en-1.xml');
     $bn = (string) SitemapBuilder::read('sitemap-products-bn-1.xml');
-    expect($en)->toContain('<loc>https://toymartbd.com/products/live-toy</loc>')
-        ->and($en)->toContain('hreflang="bn" href="https://toymartbd.com/bn/products/live-toy"')
+    expect($en)->toContain('<loc>https://toymartbd.com/en/products/live-toy</loc>')
+        ->and($en)->toContain('hreflang="bn" href="https://toymartbd.com/products/live-toy"')
         ->and($en)->toContain('hreflang="x-default" href="https://toymartbd.com/products/live-toy"')
         ->and($en)->toContain('<lastmod>')
         ->and($en)->not->toContain('draft-toy')->not->toContain('archived-toy')->not->toContain('pos-only')->not->toContain('hidden-toy')->not->toContain('excluded-toy')
-        ->and($bn)->toContain('<loc>https://toymartbd.com/bn/products/live-toy</loc>')
-        ->and($bn)->not->toContain('<loc>https://toymartbd.com/products/');
+        ->and($bn)->toContain('<loc>https://toymartbd.com/products/live-toy</loc>')
+        ->and($bn)->not->toContain('<loc>https://toymartbd.com/en/')
+        ->and($bn)->not->toContain('/bn/');
 
     // Well-formed XML, and the index lists every file at its public URL.
     expect(simplexml_load_string($en))->not->toBeFalse();
@@ -407,7 +413,7 @@ it('serves sitemaps to the storefront and reports the build to the admin', funct
 
     $res = seoStorefront('GET', '/api/v1/storefront/sitemaps/sitemap-products-bn-1.xml')->assertOk();
     expect($res->headers->get('Content-Type'))->toContain('application/xml')
-        ->and($res->getContent())->toContain('/bn/products/served-toy');
+        ->and($res->getContent())->toContain('<loc>https://toymartbd.com/products/served-toy</loc>');
     seoStorefront('GET', '/api/v1/storefront/sitemaps/sitemap.xml')->assertOk();
     seoStorefront('GET', '/api/v1/storefront/sitemaps/sitemap-products-de-1.xml')->assertNotFound();
 
@@ -479,13 +485,13 @@ it('covers CMS pages, articles and guides in the SEO document, sitemaps and conf
 
     $files = collect(app(SitemapBuilder::class)->build()['files'])->pluck('file')->all();
     expect($files)->toContain('sitemap-pages-en-1.xml', 'sitemap-blog-bn-1.xml', 'sitemap-guides-en-1.xml');
-    expect((string) SitemapBuilder::read('sitemap-guides-bn-1.xml'))->toContain('<loc>https://toymartbd.com/bn/guides/best-toys-for-3</loc>');
+    expect((string) SitemapBuilder::read('sitemap-guides-bn-1.xml'))->toContain('<loc>https://toymartbd.com/guides/best-toys-for-3</loc>');
     expect((string) SitemapBuilder::read('sitemap-pages-en-1.xml'))->not->toContain('draft-page');
-    expect((string) SitemapBuilder::read('sitemap-static-en-1.xml'))->toContain('<loc>https://toymartbd.com/guides</loc>');
+    expect((string) SitemapBuilder::read('sitemap-static-en-1.xml'))->toContain('<loc>https://toymartbd.com/en/guides</loc>');
 
     seoAdmin();
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/guides/best-toys-for-3', 'to_path' => '/toys'])->assertUnprocessable();
     $this->postJson('/api/v1/admin/seo/redirects', ['from_path' => '/blog/best-toys-for-3', 'to_path' => '/toys'])->assertCreated();
-    $this->getJson("/api/v1/admin/seo/meta/page/{$page->id}")->assertOk()->assertJsonPath('urls.bn', 'https://toymartbd.com/bn/returns');
+    $this->getJson("/api/v1/admin/seo/meta/page/{$page->id}")->assertOk()->assertJsonPath('urls.bn', 'https://toymartbd.com/returns')->assertJsonPath('urls.en', 'https://toymartbd.com/en/returns');
     $this->getJson("/api/v1/admin/seo/meta/blog_post/{$article->id}")->assertOk()->assertJsonPath('path', '/blog/why-blocks');
 });

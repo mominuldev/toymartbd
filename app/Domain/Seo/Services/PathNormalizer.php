@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Seo\Services;
 
 /**
- * Redirect paths are locale-independent (docs/api/seo.md §2): `/bn/x/` and `/x` are the
- * same row. Query strings and fragments are not part of a redirect source.
+ * Redirect paths are locale-independent (docs/api/seo.md §2): `/en/x/` and `/x` are the
+ * same row. A legacy `/bn/x` (Bangla's prefix before the 2026-11-25 switch to Bangla at the
+ * root; the storefront 308s it) normalises to `/x` too. Query strings and fragments are not part of a redirect source.
  */
 final class PathNormalizer
 {

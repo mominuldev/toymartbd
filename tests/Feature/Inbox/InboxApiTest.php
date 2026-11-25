@@ -406,7 +406,7 @@ describe('quick replies', function (): void {
         $body = $this->postJson(INBOX.'/conversations/'.$c->id.'/quick-replies', ['kind' => 'product_card', 'target_id' => $product->id])
             ->assertStatus(202)->json('body');
 
-        expect($body)->toBe("বেবি অ্যাক্টিভিটি জিম ম্যাট\nhttps://toymartbd.com/bn/products/baby-activity-gym-mat")->not->toContain('৳');
+        expect($body)->toBe("বেবি অ্যাক্টিভিটি জিম ম্যাট\nhttps://toymartbd.com/products/baby-activity-gym-mat")->not->toContain('৳');
         Queue::assertPushed(SendInboxMessage::class);
     });
 

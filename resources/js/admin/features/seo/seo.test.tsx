@@ -45,7 +45,7 @@ const doc: SeoDocument = {
     slug: 'lego',
     path: '/brands/lego',
     is_live: true,
-    urls: { en: 'https://toymartbd.com/brands/lego', bn: 'https://toymartbd.com/bn/brands/lego' },
+    urls: { en: 'https://toymartbd.com/en/brands/lego', bn: 'https://toymartbd.com/brands/lego' },
     title: 'A very long LEGO brand title that Google will certainly cut',
     title_bn: null,
     description: null,
@@ -62,8 +62,8 @@ const doc: SeoDocument = {
     focus_keyword: null,
     defaults: { title: 'LEGO | Smart Junior', title_bn: 'লেগো | Smart Junior', description: 'Genuine LEGO sets.', description_bn: 'আসল লেগো সেট।', og_image: null },
     serp: {
-        en: serp('A very long LEGO brand title that Google will certainly cut', 'A very long LEGO brand title that Google …', true, 'toymartbd.com › brands › lego'),
-        bn: serp('লেগো | Smart Junior', 'লেগো | Smart Junior', false, 'toymartbd.com › bn › brands › lego'),
+        en: serp('A very long LEGO brand title that Google will certainly cut', 'A very long LEGO brand title that Google …', true, 'toymartbd.com › en › brands › lego'),
+        bn: serp('লেগো | Smart Junior', 'লেগো | Smart Junior', false, 'toymartbd.com › brands › lego'),
     },
     in_sitemap: true,
     checklist: {
@@ -100,12 +100,12 @@ describe('SeoPanel', () => {
 
         const preview = await screen.findByTestId('serp-preview', {}, { timeout: 5000 });
         expect(within(preview).getByText('A very long LEGO brand title that Google …')).toBeTruthy();
-        expect(within(preview).getByText('toymartbd.com › brands › lego')).toBeTruthy();
+        expect(within(preview).getByText('toymartbd.com › en › brands › lego')).toBeTruthy();
         expect(screen.getByText('Title 720 / 580 px · Google will cut it')).toBeTruthy();
 
         fireEvent.click(screen.getByRole('tab', { name: 'বাংলা' }));
         const bnPreview = await screen.findByTestId('serp-preview');
-        expect(within(bnPreview).getByText('toymartbd.com › bn › brands › lego')).toBeTruthy();
+        expect(within(bnPreview).getByText('toymartbd.com › brands › lego')).toBeTruthy();
         expect((screen.getByLabelText(/Meta title \(বাংলা\)/) as HTMLInputElement).placeholder).toBe('লেগো | Smart Junior');
     });
 

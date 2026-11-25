@@ -122,7 +122,7 @@ return [
 
     /*
     | "Popular searches" chips on the zero-results state and in the empty search dropdown
-    | (storefront spec §A6.2). Seed values until search logs exist; `bn` is shown on /bn/.
+    | (storefront spec §A6.2). Seed values until search logs exist; `bn` is shown at the root (Bangla), `en` on /en/.
     | ⚠ Review with the owner.
     */
     'popular' => [

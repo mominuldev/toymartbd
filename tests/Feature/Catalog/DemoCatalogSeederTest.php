@@ -72,7 +72,7 @@ it('seeds the PART C catalogue through DatabaseSeeder', function (): void {
             'lego-classic-creative-bricks-484', 'little-tikes-first-slide',
         ])
         ->and(ProductImage::query()->count())->toBe(0) // images are off outside `local` unless DEMO_SEED_IMAGES says so
-        ->and(ProductRelation::query()->count())->toBe(4)
+        ->and(ProductRelation::query()->count())->toBe(24)
         ->and(Queue::pushedJobs())->toBe([]);
 
     // Every default variant carries the spec SKU, price and compare-at (C1).
@@ -101,8 +101,14 @@ it('seeds the PART C catalogue through DatabaseSeeder', function (): void {
         'hape-pound-tap-bench-xylophone', 'rubiks-cube-3x3-original',
     ]);
 
-    $upsell = ProductRelation::query()->where('type', RelationType::Upsell->value)->sole();
-    expect($upsell->relatedProduct->defaultVariant?->price->greaterThan($upsell->product->defaultVariant->price))->toBeTrue();
+    // Every upsell costs more than its source (rule 25c), on the default and the cheapest variant.
+    $upsells = ProductRelation::query()->where('type', RelationType::Upsell->value)->with(['product.variants', 'product.defaultVariant', 'relatedProduct.variants', 'relatedProduct.defaultVariant'])->get();
+    expect($upsells)->toHaveCount(8);
+    foreach ($upsells as $upsell) {
+        $cheapest = static fn (Product $p) => $p->variants->sortBy(fn ($v) => (float) $v->price->toDecimal())->first()->price;
+        expect($upsell->relatedProduct->defaultVariant?->price->greaterThan($upsell->product->defaultVariant->price))->toBeTrue()
+            ->and($cheapest($upsell->relatedProduct)->greaterThan($cheapest($upsell->product)))->toBeTrue();
+    }
 });
 
 it('is idempotent', function (): void {
@@ -112,7 +118,7 @@ it('is idempotent', function (): void {
     expect(Product::query()->count())->toBe(16)
         ->and(ProductVariant::query()->count())->toBe(11 + 6 + 3 + 3 + 2 + 3)
         ->and(ProductImage::query()->count())->toBe(0)
-        ->and(ProductRelation::query()->count())->toBe(4);
+        ->and(ProductRelation::query()->count())->toBe(24);
 });
 
 it('attaches images only when enabled: on in local by default, off elsewhere, DEMO_SEED_IMAGES overrides', function (): void {
@@ -161,6 +167,37 @@ it('attaches a product\'s Figma photo through the upload pipeline, with ready re
     expect(DB::table('jobs')->count())->toBe(0);
     Event::assertDispatched(ProductChanged::class, fn (ProductChanged $e): bool => $e->productId === $product->id);
 })->group('slow');
+
+it('adds gallery shots after the primary photo, once, for the gallery SKUs only', function (): void {
+    Storage::fake('public');
+    Storage::fake('local');
+    config(['media.demo_seed_images' => true]);
+    $this->seed(DemoCatalogSeeder::class);
+    $this->seed(DemoCatalogSeeder::class); // idempotent
+
+    $lego = Product::query()->where('slug', 'lego-classic-creative-bricks-484')->sole()->images()->orderBy('position')->get();
+    expect($lego)->toHaveCount(3)
+        ->and($lego->pluck('is_primary')->all())->toBe([true, false, false])
+        ->and($lego[1]->alt_text)->toBe('LEGO Classic Creative Bricks 484 pcs — close-up')
+        ->and($lego[1]->hasCompleteAlt())->toBeTrue()
+        ->and(ProductImage::query()->count())->toBe(16 + 2 * count(DemoCatalogSeeder::GALLERY));
+})->group('slow');
+
+it('adds the seeded relations a product lacks and keeps the ones curated in admin', function (): void {
+    $this->seed(DemoCatalogSeeder::class);
+    $lego = Product::query()->where('slug', 'lego-classic-creative-bricks-484')->sole();
+    $curated = ProductRelation::query()->create([
+        'product_id' => $lego->id, 'related_product_id' => Product::query()->where('slug', 'little-tikes-first-slide')->value('id'),
+        'type' => RelationType::CrossSell->value, 'position' => 9, 'is_auto' => false,
+    ]);
+    ProductRelation::query()->where('product_id', $lego->id)->where('id', '!=', $curated->id)->delete();
+
+    $this->seed(DemoCatalogSeeder::class);
+
+    expect(ProductRelation::query()->whereKey($curated->id)->exists())->toBeTrue()
+        ->and(ProductRelation::query()->where('product_id', $lego->id)->count())->toBe(3)
+        ->and(ProductRelation::query()->count())->toBe(25);
+});
 
 it('seeds opening stock through the ledger, with sold-out and low-stock demo states', function (): void {
     $this->seed(DemoCatalogSeeder::class);

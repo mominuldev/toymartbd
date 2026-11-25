@@ -30,7 +30,7 @@ through `SeoContracts` and Seo events (deptrac), so there is no Content ↔ Seo 
 **Title separator.** `config/seo.php` `title_separator` (default `" | "`, owner decision open) ends
 every server default title (`SiteTitle::of()`); the storefront reads the same value from
 `GET /storefront/seo/settings` for its layout template, so a title never carries two suffixes.
-Bangla is always the same path under `/bn` (rule 37). The path a provider returns is the truth;
+Bangla serves the path at the root and English the same path under `/en` (rules 35, 37; owner decision 2026-11-25 — `App\Support\StorefrontUrl`). The path a provider returns is the truth;
 the table is the default.
 
 ### Plugging a new entity in (pages, posts, guides)
@@ -90,7 +90,7 @@ Truncation is computed on the server at Google's desktop pixel metric (`SerpMeas
 
 ### Redirect rules (enforced in `App\Domain\Seo\Actions\SaveRedirect`)
 
-- Paths are locale-independent: `/bn/x` is stored as `/x` and the redirect applies in both locales.
+- Paths are locale-independent: `/en/x` (and a legacy `/bn/x`) is stored as `/x` and the redirect applies in both locales.
 - `from_path` must start with `/`, no query or fragment, ≤ 512 chars, and must not be a **live** URL
   (a live product/category/brand/page/article/guide, or a reserved route such as `/`, `/cart`, `/checkout`).
 - `to_path` is a path starting with `/` or an absolute `https://` URL; `from_path ≠ to_path`.
@@ -130,7 +130,7 @@ complete `<title>` (it already carries the site name) — use it as `title.absol
   `listingPageMetadata` (category / brand / toys, pagination + facets), `productMetadata`,
   `contentMetadata` (page / article / guide — all `blog_post` posts share one type), `searchMetadata` (noindex), `privateMetadata`
   (cart / checkout / account / order pages — noindex), `trackMetadata`. Every result carries
-  canonical, `hreflang` en + bn + `x-default`, robots, Open Graph (per-locale title/description,
+  canonical, `hreflang` bn + en + `x-default` (the Bangla URL), robots, Open Graph (per-locale title/description,
   `og:locale` `en_US` / `bn_BD` + alternate) and Twitter.
 - `jsonld.ts` — `productJsonLd`, `breadcrumbJsonLd`, `organizationJsonLd`, `websiteJsonLd`
   (with `SearchAction`), `articleJsonLd`, `faqPageJsonLd`, and `JsonLd` (`components/seo/JsonLd.tsx`)
@@ -147,7 +147,9 @@ Pages that are not wired yet carry a `// SEO: agent 4` marker.
   the admin). It writes `storage/app/private/sitemaps/` atomically: an index `sitemap.xml` and
   `sitemap-{partition}-{locale}-{n}.xml` — the partition is the path's first segment (`static,
   products, categories, brands, blog, guides`), and `pages` for a one-segment CMS page path (`/about`) × `en, bn`, chunked at 50,000 URLs. Every `<url>` has `<lastmod>` and `xhtml:link`
-  alternates for `en`, `bn` and `x-default`. Excluded: not live, `robots` noindex,
+  alternates for `bn`, `en` and `x-default` (the Bangla, unprefixed URL). In the `bn` files `<loc>` is the
+  root path (`/products/x`), in the `en` files `/en/products/x`; the file names keep their `-bn-`/`-en-`
+  partition. Excluded: not live, `robots` noindex,
   `sitemap_exclude`, a `canonical_url` override (the page canonicalises elsewhere), products not in
   the online store channel.
   The `static` partition lists `/`, the listing roots (`/toys`, `/categories`, `/brands`, plus

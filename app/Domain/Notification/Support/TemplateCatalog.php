@@ -6,6 +6,7 @@ namespace App\Domain\Notification\Support;
 
 use App\Domain\Notification\Enums\NotificationCategory;
 use App\Domain\Notification\Enums\NotificationChannel;
+use App\Support\StorefrontUrl;
 
 /**
  * Every notification template the system knows (P4-I18N-03), with its variable
@@ -345,8 +346,8 @@ final class TemplateCatalog
             ], $locale),
             // A real restore link is 24 random characters under the storefront origin.
             // A review link: the storefront PDP of a typical product slug, `#reviews`.
-            'review_url' => rtrim((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://smartjunior.com.bd')), '/').($bn ? '/bn' : '').'/products/remote-control-racing-car-red#reviews',
-            'restore_url' => rtrim((string) config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'), '/').($bn ? '/bn' : '').'/cart/restore/'.str_repeat('x', 24),
+            'review_url' => StorefrontUrl::url((string) (config('services.storefront.url') ?: config('cart_recovery.storefront_url', 'https://smartjunior.com.bd')), $bn ? 'bn' : 'en', '/products/remote-control-racing-car-red#reviews'),
+            'restore_url' => StorefrontUrl::url((string) config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'), $bn ? 'bn' : 'en', '/cart/restore/'.str_repeat('x', 24)),
         ];
     }
 }

@@ -88,7 +88,7 @@ it('waits N minutes, then sends one Bangla SMS with a restore link, recording se
     expect(app(DetectAbandonedCarts::class)->handle())->toBe(['messaged' => 1, 'skipped' => 0])
         ->and($sms->sent)->toHaveCount(1)
         ->and($sms->sent[0]['to'])->toBe('+8801712345678')
-        ->and($sms->sent[0]['body'])->toContain('Smart Junior')->toContain('/bn/cart/restore/');
+        ->and($sms->sent[0]['body'])->toContain('Smart Junior')->toMatch('#https?://[^/\s]+/cart/restore/#')->not->toContain('/bn/')->not->toContain('/en/');
 
     $log = NotificationLog::query()->sole();
     expect($log->status)->toBe(NotificationStatus::Sent)
@@ -141,7 +141,7 @@ it('uses a signed-in customer’s explicit marketing opt-in', function (): void 
 
     app(DetectAbandonedCarts::class)->handle();
 
-    expect($sms->sent)->toHaveCount(1)->and($sms->sent[0]['body'])->toStartWith('Smart Junior:')->not->toContain('/bn/');
+    expect($sms->sent)->toHaveCount(1)->and($sms->sent[0]['body'])->toStartWith('Smart Junior:')->toContain('/en/cart/restore/')->not->toContain('/bn/');
 });
 
 it('stops when the order is placed before the reminder goes out', function (): void {
@@ -291,7 +291,7 @@ it('retries a dead-lettered reminder through the cart-recovery job and sends it'
     retryReminder($log);
 
     expect($sms->sent)->toHaveCount(1)
-        ->and($sms->sent[0]['body'])->toContain('/bn/cart/restore/')
+        ->and($sms->sent[0]['body'])->toMatch('#https?://[^/\s]+/cart/restore/#')
         ->and($log->refresh()->status)->toBe(NotificationStatus::Sent)
         ->and($log->error)->toBeNull();
 });

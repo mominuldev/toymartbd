@@ -164,10 +164,10 @@ it('lists live blog archives in the locale-partitioned sitemaps with hreflang', 
     $bn = (string) SitemapBuilder::read('sitemap-blog-bn-1.xml');
 
     foreach (['/blog/category/stem', '/blog/tag/wooden', '/blog/author/rina'] as $path) {
-        expect($en)->toContain('<loc>https://toymartbd.com'.$path.'</loc>')
-            ->and($en)->toContain('hreflang="bn" href="https://toymartbd.com/bn'.$path.'"')
+        expect($en)->toContain('<loc>https://toymartbd.com/en'.$path.'</loc>')
+            ->and($en)->toContain('hreflang="bn" href="https://toymartbd.com'.$path.'"')
             ->and($en)->toContain('hreflang="x-default" href="https://toymartbd.com'.$path.'"')
-            ->and($bn)->toContain('<loc>https://toymartbd.com/bn'.$path.'</loc>');
+            ->and($bn)->toContain('<loc>https://toymartbd.com'.$path.'</loc>');
     }
     expect($en)->not->toContain('/blog/category/empty');
 });

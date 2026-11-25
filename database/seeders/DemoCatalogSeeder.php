@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Domain\Catalog\Actions\CreateProduct;
-use App\Domain\Catalog\Actions\UpdateProduct;
 use App\Domain\Catalog\Actions\UploadProductImage;
 use App\Domain\Catalog\DTOs\ProductData;
 use App\Domain\Catalog\DTOs\RelationData;
@@ -23,7 +22,9 @@ use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductAttribute;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductImage;
+use App\Domain\Catalog\Models\ProductRelation;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Catalog\Services\ProductRelationsWriter;
 use App\Domain\Inventory\Actions\RecordOpeningStock;
 use App\Domain\Inventory\Events\StockLevelChanged;
 use App\Support\Money;
@@ -53,7 +54,7 @@ use RuntimeException;
  *
  * Written through CreateProduct, so the demo data obeys the same rules as admin
  * writes. Idempotent on slug: an existing product is left as it is (it only gains
- * its photo if it has no image yet and images are on). ProductChanged is silenced
+ * its photo and gallery shots it lacks, when images are on, and the seeded relations it lacks). ProductChanged is silenced
  * while seeding — a fresh database has no storefront cache to purge.
  *
  * Opening stock (DEMO_STOCK) goes through the inventory ledger, with a sold-out
@@ -291,6 +292,43 @@ class DemoCatalogSeeder extends Seeder
         ['mideer-wooden-shape-sorting-puzzle', 'lego-classic-creative-bricks-484', RelationType::AgeProgression, 'Shape sorting at 18–48m, LEGO Classic from 4 years.'],
         ['huanger-baby-activity-gym-play-mat', 'fisher-price-smart-stages-puppy', RelationType::AgeProgression, 'Play gym to 12m, Smart Stages from 6m.'],
         ['play-doh-rainbow-starter-10-pack', 'crayola-washable-super-tips-20-markers', RelationType::CrossSell, 'Rainy-day art table.'],
+        // Upsells: a bigger version of the same kind of play.
+        ['mideer-wooden-shape-sorting-puzzle', 'hape-pound-tap-bench-xylophone', RelationType::Upsell, 'From sorting shapes to a pound-and-play bench.'],
+        ['hape-pound-tap-bench-xylophone', 'fisher-price-smart-stages-puppy', RelationType::Upsell, 'More songs and learning modes.'],
+        ['huanger-baby-activity-gym-play-mat', 'winfun-baby-walker-push-car', RelationType::Upsell, 'From tummy time to first steps.'],
+        ['barbie-dreamhouse-pool-party-doll', 'melissa-doug-wooden-doctor-kit', RelationType::Upsell, 'A full pretend-play set.'],
+        ['intex-dinosaur-inflatable-kids-pool', 'little-tikes-first-slide', RelationType::Upsell, 'The backyard, levelled up.'],
+        ['rubiks-cube-3x3-original', 'lego-classic-creative-bricks-484', RelationType::Upsell, 'Puzzle hands, bigger builds.'],
+        ['crayola-washable-super-tips-20-markers', 'play-doh-rainbow-starter-10-pack', RelationType::Upsell, 'Art table, now in 3D.'],
+        // Cross-sells: toys that play well together.
+        ['lego-classic-creative-bricks-484', 'hot-wheels-10-car-gift-pack', RelationType::CrossSell, 'Build a town, then race through it.'],
+        ['lego-classic-creative-bricks-484', 'rubiks-cube-3x3-original', RelationType::CrossSell, 'Another hands-on brain teaser.'],
+        ['hot-wheels-10-car-gift-pack', 'lego-classic-creative-bricks-484', RelationType::CrossSell, 'Build the garage for the cars.'],
+        ['bruder-man-tga-dump-truck', 'hot-wheels-10-car-gift-pack', RelationType::CrossSell, 'A fleet for the truck.'],
+        ['barbie-dreamhouse-pool-party-doll', 'intex-dinosaur-inflatable-kids-pool', RelationType::CrossSell, 'A real pool party.'],
+        ['intex-dinosaur-inflatable-kids-pool', 'barbie-dreamhouse-pool-party-doll', RelationType::CrossSell, 'Pool party, doll included.'],
+        ['little-tikes-first-slide', 'intex-dinosaur-inflatable-kids-pool', RelationType::CrossSell, 'Summer backyard set.'],
+        ['winfun-baby-walker-push-car', 'hape-pound-tap-bench-xylophone', RelationType::CrossSell, 'Same age, more play.'],
+        ['fisher-price-smart-stages-puppy', 'mideer-wooden-shape-sorting-puzzle', RelationType::CrossSell, 'Early learning pair.'],
+        ['mideer-wooden-shape-sorting-puzzle', 'fisher-price-smart-stages-puppy', RelationType::CrossSell, 'Early learning pair.'],
+        ['melissa-doug-wooden-doctor-kit', 'barbie-dreamhouse-pool-party-doll', RelationType::CrossSell, 'A patient for the doctor.'],
+        ['clementoni-galileo-my-first-microscope', 'rubiks-cube-3x3-original', RelationType::CrossSell, 'For curious minds.'],
+        ['rubiks-cube-3x3-original', 'clementoni-galileo-my-first-microscope', RelationType::CrossSell, 'For curious minds.'],
+    ];
+
+    /**
+     * Extra gallery shots per SKU (`NN-{SKU}.{n}.png`, n = 2, 3, …): demo frames derived from the
+     * product's own photo (a close-up crop, the photo on a pastel card) so the gallery and the
+     * card's hover photo have something to show. Appended after the primary, never primary.
+     *
+     * @var array<string, list<array{int, string, string}>> SKU → [shot, alt suffix, Bangla alt suffix]
+     */
+    public const array GALLERY = [
+        'TMB-LEG-CL484' => [[2, 'close-up', 'কাছ থেকে'], [3, 'product shot', 'পণ্যের ছবি']],
+        'TMB-FIS-SSPUP' => [[2, 'close-up', 'কাছ থেকে'], [3, 'product shot', 'পণ্যের ছবি']],
+        'TMB-HOT-10PK' => [[2, 'close-up', 'কাছ থেকে'], [3, 'product shot', 'পণ্যের ছবি']],
+        'TMB-HAP-PTB' => [[2, 'close-up', 'কাছ থেকে'], [3, 'product shot', 'পণ্যের ছবি']],
+        'TMB-BAR-DHPP' => [[2, 'close-up', 'কাছ থেকে'], [3, 'product shot', 'পণ্যের ছবি']],
     ];
 
     private ?CarbonImmutable $now = null;
@@ -311,8 +349,16 @@ class DemoCatalogSeeder extends Seeder
                     $this->finish($product, $slug);
                 }
 
-                if ($withImages && ! $product->trashed() && ! $product->images()->exists()) {
-                    $this->attachImage($product, $p['sku'], $p['name'], $p['name_bn']);
+                if ($withImages && ! $product->trashed()) {
+                    if (! $product->images()->exists()) {
+                        $this->attachImage($product, $p['sku'], $p['name'], $p['name_bn']);
+                    }
+                    // Gallery shots: shot n is added while the product has fewer than n images.
+                    foreach (self::GALLERY[$p['sku']] ?? [] as [$shot, $alt, $altBn]) {
+                        if ($product->images()->count() < $shot) {
+                            $this->attachImage($product, $p['sku'], "{$p['name']} — {$alt}", "{$p['name_bn']} — {$altBn}", $shot);
+                        }
+                    }
                 }
 
                 $this->openingStock($product, $slug);
@@ -347,12 +393,13 @@ class DemoCatalogSeeder extends Seeder
      * pixel, byte-identical; the pipeline's re-encode strips all metadata anyway. The
      * source files are left untouched.
      */
-    public function attachImage(Product $product, string $sku, string $alt, string $altBn): ProductImage
+    public function attachImage(Product $product, string $sku, string $alt, string $altBn, ?int $shot = null): ProductImage
     {
-        $files = glob(base_path(self::IMAGE_DIR)."/*-{$sku}.png") ?: [];
+        $suffix = $shot === null ? '' : ".{$shot}";
+        $files = glob(base_path(self::IMAGE_DIR)."/*-{$sku}{$suffix}.png") ?: [];
 
         if (count($files) !== 1) {
-            throw new RuntimeException("Expected one Figma export for [{$sku}] in ".self::IMAGE_DIR.', found '.count($files).'.');
+            throw new RuntimeException("Expected one Figma export for [{$sku}{$suffix}] in ".self::IMAGE_DIR.', found '.count($files).'.');
         }
 
         $upload = self::withoutContentCredentials($files[0]);
@@ -363,7 +410,7 @@ class DemoCatalogSeeder extends Seeder
             $image = app(UploadProductImage::class)->handle($product, $upload, [
                 'alt_text' => $alt,
                 'alt_text_bn' => $altBn,
-                'filename' => self::MEDIA_FILENAMES[$sku] ?? 'toy-photo-01.webp',
+                'filename' => str_replace('-01.webp', sprintf('-%02d.webp', $shot ?? 1), self::MEDIA_FILENAMES[$sku] ?? 'toy-photo-01.webp'),
             ]);
         } finally {
             config(['queue.default' => $previous]);
@@ -443,7 +490,7 @@ class DemoCatalogSeeder extends Seeder
         }
     }
 
-    private function document(string $slug, bool $withRelations = false): ProductData
+    private function document(string $slug): ProductData
     {
         $p = self::PRODUCTS[$slug];
         $categoryIds = array_map(self::categoryId(...), [$p['category'], ...$p['also']]);
@@ -513,7 +560,7 @@ class DemoCatalogSeeder extends Seeder
             options: $options,
             variants: $variants,
             variantDefaults: $variable ? new VariantDefaultsData(price: $price, costPrice: $price->percentage(70), weightGrams: $p['weight']) : null,
-            relations: $withRelations ? $this->relationsFor($slug) : null,
+            relations: null,
         );
     }
 
@@ -578,17 +625,33 @@ class DemoCatalogSeeder extends Seeder
         app(RecordOpeningStock::class)->handle($product, $quantities);
     }
 
-    /** Relations go in a second pass, once every target exists. */
+    /**
+     * Relations go in a second pass, once every target exists. Additive: a product gains the
+     * seeded pairs it lacks; pairs already there (seeded or curated in admin) are kept as they are.
+     */
     private function relations(): void
     {
+        $writer = app(ProductRelationsWriter::class);
+
         foreach (array_unique(array_column(self::RELATIONS, 0)) as $slug) {
             $product = Product::query()->where('slug', $slug)->first();
 
-            if ($product === null || $product->productRelations()->exists()) {
+            if ($product === null) {
                 continue;
             }
 
-            app(UpdateProduct::class)->handle($product, $this->document($slug, withRelations: true));
+            $existing = $product->productRelations()->where('is_auto', false)->orderBy('position')->get()
+                ->map(static fn (ProductRelation $r): RelationData => new RelationData($r->related_product_id, $r->type, $r->position, $r->reason_note))
+                ->all();
+            $have = array_map(static fn (RelationData $r): string => $r->relatedProductId.':'.$r->type->value, $existing);
+            $missing = array_values(array_filter(
+                $this->relationsFor($slug),
+                static fn (RelationData $r): bool => ! in_array($r->relatedProductId.':'.$r->type->value, $have, true),
+            ));
+
+            if ($missing !== []) {
+                $writer->sync($product, [...$existing, ...$missing], null);
+            }
         }
     }
 

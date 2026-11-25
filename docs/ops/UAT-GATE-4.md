@@ -47,10 +47,10 @@ If a message does not arrive, find its row in the Message log: **Sent** with a p
 
 | # | Step | Expected | Pass / Fail |
 |---|---|---|---|
-| 2.1 | Open the storefront. Switch to Bangla: in the **footer**, tap **বাংলা** (the header language pill is hidden on phones). | Address is `/bn/…`. All text is Bangla. Prices, phone and order numbers use **Western digits 0–9** (rule 36). | ☐ |
-| 2.2 | Search for your product, then open it (`/bn/products/{slug}`). | Your photos, Bangla name and description, the price you set. No English left on the page. No clipped or overflowing Bangla label. | ☐ |
-| 2.3 | Choose **Red** → "Add to cart" (কার্টে যোগ করুন) → cart (`/bn/cart`) → "Proceed to checkout". | Cart total = price × qty + delivery charge (placeholder ৳70 Dhaka / ৳100 suburb / ৳130 elsewhere, free from ৳3,000). | ☐ |
-| 2.4 | Checkout (`/bn/checkout`): your name in Bangla, **your real mobile number**, District, Upazila / Thana, Area, Full address, **Landmark**. Payment: **ক্যাশ অন ডেলিভারি** → **অর্ডার করুন**. | Confirmation page (`/bn/orders/{number}`), "Thank you — your order is placed!" in Bangla. Order number like `TMB-26-00001`. Phone shown masked. | ☐ |
+| 2.1 | Open the storefront. It opens in Bangla (Bangla is the root since 2026-11-25); if it shows English, tap **বাংলা** in the **footer** (the header language pill is hidden on phones). | Address has no `/en` prefix (`/…`). All text is Bangla. Prices, phone and order numbers use **Western digits 0–9** (rule 36). | ☐ |
+| 2.2 | Search for your product, then open it (`/products/{slug}`). | Your photos, Bangla name and description, the price you set. No English left on the page. No clipped or overflowing Bangla label. | ☐ |
+| 2.3 | Choose **Red** → "Add to cart" (কার্টে যোগ করুন) → cart (`/cart`) → "Proceed to checkout". | Cart total = price × qty + delivery charge (placeholder ৳70 Dhaka / ৳100 suburb / ৳130 elsewhere, free from ৳3,000). | ☐ |
+| 2.4 | Checkout (`/checkout`): your name in Bangla, **your real mobile number**, District, Upazila / Thana, Area, Full address, **Landmark**. Payment: **ক্যাশ অন ডেলিভারি** → **অর্ডার করুন**. | Confirmation page (`/orders/{number}`), "Thank you — your order is placed!" in Bangla. Order number like `TMB-26-00001`. Phone shown masked. | ☐ |
 | 2.5 | Write down the order number: **A = ____________** | | |
 
 Fail step 2 if any of these happen:

@@ -235,3 +235,13 @@ describe('messages', () => {
         expect(Object.values(bn).join(' ')).not.toMatch(/[০-৯]/);
     });
 });
+
+describe('storefrontHref', () => {
+    it('links Bangla at the storefront root and English under /en (owner decision 2026-11-25)', async () => {
+        const { storefrontHref } = await import('./Topbar');
+        expect(storefrontHref('https://shop.test/', 'bn')).toBe('https://shop.test/');
+        expect(storefrontHref('https://shop.test/', 'en')).toBe('https://shop.test/en');
+        expect(storefrontHref('https://shop.test/', 'bn', 'products/lego-city')).toBe('https://shop.test/products/lego-city');
+        expect(storefrontHref('https://shop.test/', 'en', 'products/lego-city')).toBe('https://shop.test/en/products/lego-city');
+    });
+});

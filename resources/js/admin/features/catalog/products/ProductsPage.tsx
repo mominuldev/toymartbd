@@ -8,7 +8,7 @@ import { ActionMenu, type ActionMenuItem } from '@/components/ui/ActionMenu';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ContentHeader } from '@/components/shell/ContentHeader';
-import { readStorefrontUrl } from '@/components/shell/Topbar';
+import { readStorefrontUrl, storefrontHref } from '@/components/shell/Topbar';
 import { DataTableFooter, dataTable } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/QueryError';
@@ -153,7 +153,7 @@ export function ProductsPage() {
     const rowMenu = (item: ProductListItem): ActionMenuItem[] => [
         { key: 'edit', label: t('products.row.edit'), icon: <PencilSimpleIcon size={16} aria-hidden />, to: `/products/${item.id}` },
         ...(storefrontUrl && item.status === 'active'
-            ? [{ key: 'store', label: t('products.row.viewStore'), icon: <ArrowSquareOutIcon size={16} aria-hidden />, onSelect: () => window.open(new URL(`${bn ? 'bn/' : ''}products/${item.slug}`, storefrontUrl).href, '_blank', 'noopener') }]
+            ? [{ key: 'store', label: t('products.row.viewStore'), icon: <ArrowSquareOutIcon size={16} aria-hidden />, onSelect: () => window.open(storefrontHref(storefrontUrl, bn ? 'bn' : 'en', `products/${item.slug}`), '_blank', 'noopener') }]
             : []),
         ...(can(me, 'catalog.create')
             ? [

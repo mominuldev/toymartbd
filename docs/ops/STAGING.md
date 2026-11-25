@@ -235,7 +235,7 @@ STOREFRONT_API_TOKEN=tmbd_… scripts/staging/smoke.sh
 4. Every scheduled `toymart:*` task is registered, and yesterday's finance rollup row exists. This is a WARN on day one; on later days it means the cron is not firing.
 5. Search index lag
 6. The storefront token on an **authenticated** endpoint (`/api/v1/storefront/districts`). `/ping` is public, so it proves nothing.
-7. Storefront `/` and `/bn/` return 200
+7. Storefront `/` (Bangla) and `/en/` (English) return 200, and `/bn/` 308-redirects to `/`
 8. `toymart:inventory:reconcile`
 9. `toymart:finance:verify`
 

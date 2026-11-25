@@ -20,7 +20,7 @@ use LogicException;
  * builds a URL from an id). A target that is archived, unpublished or gone resolves as not
  * live, and the storefront menu hides the item.
  *
- * Paths are locale-free; the storefront adds `/bn` for Bangla.
+ * Paths are locale-free; the storefront adds `/en` for English (Bangla is the root, rule 35).
  *
  * @phpstan-type Target array{id: int, label: string, label_bn: string|null, path: string, live: bool}
  */

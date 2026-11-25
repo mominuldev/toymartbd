@@ -106,7 +106,7 @@ function aiDraftPrompt(): string
 it('drafts a Bangla reply from the thread and the order facts, and sends nothing', function (): void {
     aiDraftStaff();
     [$c] = aiDraftThread();
-    $this->fake->respond(['reply' => 'রাফি ভাই, আপনার অর্ডার TMB-26-00126 Steadfast-এ পথে আছে। ট্র্যাক করতে: toymartbd.com/bn/track']);
+    $this->fake->respond(['reply' => 'রাফি ভাই, আপনার অর্ডার TMB-26-00126 Steadfast-এ পথে আছে। ট্র্যাক করতে: toymartbd.com/track']);
     $messages = ConversationMessage::query()->count();
 
     $json = $this->postJson(aiDraftUrl($c))->assertOk()->json();
@@ -124,7 +124,7 @@ it('drafts a Bangla reply from the thread and the order facts, and sends nothing
 
     $prompt = aiDraftPrompt();
     expect($prompt)->toContain('TMB-26-00126')->toContain('Steadfast')->toContain('in transit')->toContain('৳6,260')
-        ->toContain('Dhaka')->toContain('"customer_first_name": "Rafi"')->toContain('toymartbd.com/bn/track')
+        ->toContain('Dhaka')->toContain('"customer_first_name": "Rafi"')->toContain('toymartbd.com/track')->not->toContain('toymartbd.com/bn/')->not->toContain('toymartbd.com/en/')
         ->toContain('Bangla');
 });
 
@@ -148,7 +148,7 @@ it('detects English from the last customer message, and a style forces the langu
     $this->fake->respond(['reply' => 'Hi Rafi, it is on the way.'], ['reply' => 'রাফি ভাই, পথে আছে।'], ['reply' => 'On the way.']);
 
     expect($this->postJson(aiDraftUrl($c))->assertOk()->json('language'))->toBe('en');
-    expect(aiDraftPrompt())->toContain('friendly English')->toContain('toymartbd.com/track');
+    expect(aiDraftPrompt())->toContain('friendly English')->toContain('toymartbd.com/en/track');
 
     expect($this->postJson(aiDraftUrl($c), ['style' => 'bangla'])->assertOk()->json('language'))->toBe('bn');
     expect(aiDraftPrompt())->toContain('Bengali script');

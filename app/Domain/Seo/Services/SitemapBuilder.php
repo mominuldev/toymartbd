@@ -7,6 +7,7 @@ namespace App\Domain\Seo\Services;
 use App\Domain\Seo\Models\SeoMeta;
 use App\Models\Enums\SettingGroup;
 use App\Models\Setting;
+use App\Support\StorefrontUrl;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
@@ -20,7 +21,9 @@ use RuntimeException;
  *   sitemaps/sitemap-{partition}-{en|bn}-{n}.xml
  *
  * Locale-partitioned (one file set per locale, each `<url>` carrying `xhtml:link`
- * alternates for en, bn and x-default) and chunked at 50,000 URLs. Only live, indexable,
+ * alternates for bn, en and x-default) and chunked at 50,000 URLs. Bangla is the root
+ * locale and the x-default; English sits under `/en` (rule 35, owner decision 2026-11-25).
+ * File names keep their `-en-`/`-bn-` partition and say nothing about the URL prefix. Only live, indexable,
  * non-excluded pages without a canonical override are listed. Files are built in a
  * scratch directory and moved into place, so a crawler never reads a half-written set.
  *
@@ -226,7 +229,8 @@ final class SitemapBuilder
             $files[] = $this->info($partition, $locale, $state['part'], $state['urls']);
         }
 
-        usort($files, static fn (array $a, array $b): int => [$a['locale'] === 'en' ? 0 : 1, $a['part']] <=> [$b['locale'] === 'en' ? 0 : 1, $b['part']]);
+        // Bangla, the root locale, first (owner decision 2026-11-25).
+        usort($files, static fn (array $a, array $b): int => [$a['locale'] === 'bn' ? 0 : 1, $a['part']] <=> [$b['locale'] === 'bn' ? 0 : 1, $b['part']]);
 
         return $files;
     }
@@ -237,14 +241,10 @@ final class SitemapBuilder
         return ['file' => "sitemap-{$partition}-{$locale}-{$part}.xml", 'partition' => $partition, 'locale' => $locale, 'part' => $part, 'urls' => $urls];
     }
 
-    /** `/track` → `/track` (en) or `/bn/track` (bn); `/` → `/` or `/bn`. */
+    /** `/track` → `/track` (bn) or `/en/track` (en); `/` → `/` or `/en`. */
     private static function localPath(string $path, string $locale): string
     {
-        if ($locale !== 'bn') {
-            return $path;
-        }
-
-        return $path === '/' ? '/bn' : '/bn'.$path;
+        return StorefrontUrl::path($locale, $path);
     }
 
     private static function url(string $path, string $locale, ?CarbonImmutable $lastmod): string
@@ -254,9 +254,9 @@ final class SitemapBuilder
 
         return '<url><loc>'.self::xml($locale === 'bn' ? $bn : $en).'</loc>'
             .($lastmod !== null ? '<lastmod>'.$lastmod->toAtomString().'</lastmod>' : '')
-            .'<xhtml:link rel="alternate" hreflang="en" href="'.self::xml($en).'"/>'
             .'<xhtml:link rel="alternate" hreflang="bn" href="'.self::xml($bn).'"/>'
-            .'<xhtml:link rel="alternate" hreflang="x-default" href="'.self::xml($en).'"/>'
+            .'<xhtml:link rel="alternate" hreflang="en" href="'.self::xml($en).'"/>'
+            .'<xhtml:link rel="alternate" hreflang="x-default" href="'.self::xml($bn).'"/>'
             ."</url>\n";
     }
 

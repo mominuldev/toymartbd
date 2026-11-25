@@ -11,6 +11,7 @@ use App\Domain\Inbox\Models\Conversation;
 use App\Domain\Inbox\Models\ConversationMessage;
 use App\Domain\Ordering\Models\Order;
 use App\Models\User;
+use App\Support\StorefrontUrl;
 
 /**
  * The quick actions panel (Figma B · 22): the server composes the text, in the customer's
@@ -55,7 +56,7 @@ final readonly class SendQuickReply
 
         return __('inbox.quick.product_card', [
             'name' => $name,
-            'url' => $base.($locale === 'bn' ? '/bn' : '').'/products/'.$product->slug,
+            'url' => StorefrontUrl::url($base, $locale, '/products/'.$product->slug),
         ], $locale);
     }
 

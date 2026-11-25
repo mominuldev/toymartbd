@@ -59,6 +59,16 @@ export function readStorefrontUrl(): string | null {
     }
 }
 
+/**
+ * A storefront page in the admin's language: Bangla at the root, English under `/en` (CLAUDE.md
+ * rule 35, owner decision 2026-11-25 — the same scheme as App\Support\StorefrontUrl).
+ * `path` is locale-free and relative (`''` for the homepage, `products/lego-city`).
+ */
+export function storefrontHref(base: string, locale: string, path = ''): string {
+    const local = locale === 'en' ? (path === '' ? 'en' : `en/${path}`) : path;
+    return local === '' ? base : new URL(local, base).href;
+}
+
 const storefrontUrl = typeof document === 'undefined' ? null : readStorefrontUrl();
 
 /** User block (avatar · name · role · caret) opening a small menu with Sign out. */
@@ -198,7 +208,7 @@ export const Topbar = forwardRef<HTMLButtonElement, TopbarProps>(function Topbar
             </span>
             {storefrontUrl && (
                 <a
-                    href={locale === 'bn' ? new URL('bn/', storefrontUrl).href : storefrontUrl}
+                    href={storefrontHref(storefrontUrl, locale)}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={t('shell.viewSiteHint')}

@@ -152,7 +152,7 @@ class DemoSeoSeeder extends Seeder
         if (RobotsTxt::stored() !== null) {
             return;
         }
-        $content = str_replace('Disallow: /api/', "Disallow: /api/\nDisallow: /track\nDisallow: /bn/track", RobotsTxt::defaultContent());
+        $content = str_replace('Disallow: /api/', "Disallow: /api/\nDisallow: /track\nDisallow: /en/track", RobotsTxt::defaultContent());
         app(SaveRobotsTxt::class)->handle("# Smart Junior — edited in Admin › SEO › robots.txt\n".$content, self::actorId());
     }
 

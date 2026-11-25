@@ -9,6 +9,7 @@ use App\Domain\Notification\Support\StoreHotline;
 use App\Domain\Ordering\Models\Order;
 use App\Domain\Ordering\Models\OrderItem;
 use App\Support\Locale\Formatter;
+use App\Support\StorefrontUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -79,7 +80,7 @@ final class OrderNotificationMail extends Mailable
             orderNumber: $order->number,
             items: $items,
             totals: $totals,
-            trackUrl: 'https://'.config('notifications.store_url').($bn ? '/bn' : '').'/track?order='.rawurlencode($order->number),
+            trackUrl: StorefrontUrl::url('https://'.config('notifications.store_url'), $bn ? 'bn' : 'en', '/track?order='.rawurlencode($order->number)),
             hotline: StoreHotline::current(),
             mailLocale: $locale,
         );

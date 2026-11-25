@@ -81,7 +81,7 @@ const homeSeo = {
     slug: 'home',
     path: '/',
     is_live: true,
-    urls: { en: 'https://toymartbd.com/', bn: 'https://toymartbd.com/bn' },
+    urls: { en: 'https://toymartbd.com/en', bn: 'https://toymartbd.com' },
     title: null,
     title_bn: null,
     description: null,
@@ -97,7 +97,7 @@ const homeSeo = {
     twitter_card: 'summary_large_image',
     focus_keyword: null,
     defaults: { title: 'Smart Junior | Toys for every age, delivered across Bangladesh.', title_bn: 'Smart Junior | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', description: 'Toys.', description_bn: 'খেলনা।', og_image: null },
-    serp: { en: homeSerp('Smart Junior | Toys for every age, delivered across Bangladesh.', 'toymartbd.com'), bn: homeSerp('Smart Junior | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', 'toymartbd.com › bn') },
+    serp: { en: homeSerp('Smart Junior | Toys for every age, delivered across Bangladesh.', 'toymartbd.com › en'), bn: homeSerp('Smart Junior | সব বয়সের খেলনা, সারা বাংলাদেশে ডেলিভারি।', 'toymartbd.com') },
     in_sitemap: true,
     checklist: { passed: 1, total: 2, items: [{ key: 'title_fits', status: 'pass', params: { px: 400, max: 580 } }, { key: 'social_image', status: 'warn', params: {} }] },
 };

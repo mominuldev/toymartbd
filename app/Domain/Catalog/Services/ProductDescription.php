@@ -15,7 +15,7 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
  *
  * - p, h2, h3, strong, em, ul, ol, li, blockquote, br — no attributes;
  * - a[href] with http, https or mailto, or a site-relative link — root-relative (`/about`,
- *   `/bn/blog/y`) or an in-page `#anchor`; javascript:, data:, vbscript: and every other scheme,
+ *   `/en/blog/y`) or an in-page `#anchor`; javascript:, data:, vbscript: and every other scheme,
  *   protocol-relative `//host` tricks and bare relative paths (`foo/bar`) lose their href.
  *   An external web link gets rel="noopener nofollow";
  * - img[src, alt, width, height] only from our own media: the stable `/m/…` URL (relative or on
@@ -226,7 +226,7 @@ final class ProductDescription
     /**
      * http(s)/mailto (the sanitiser already refused every other scheme), or a site-relative link:
      * root-relative `/x` (not `//host`, not `/\host`) or a fragment `#x`. A bare relative path
-     * would resolve differently under /bn, so it is dropped.
+     * would resolve differently under /en, so it is dropped.
      */
     public static function isAllowedHref(string $url): bool
     {

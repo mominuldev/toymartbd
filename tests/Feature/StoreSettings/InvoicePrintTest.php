@@ -54,7 +54,8 @@ it('prints every optional part by default, in brand colour, with the order barco
 
     expect($html)->toContain('<barcode code="'.SampleInvoice::ORDER.'" type="C128B"')
         ->toContain('class="track-qr" src="'.OrderInvoicePdf::qrDataUri(OrderInvoicePdf::trackUrl(SampleInvoice::ORDER, false)).'"')
-        ->and(OrderInvoicePdf::trackUrl(SampleInvoice::ORDER, false))->toBe('https://'.config('notifications.store_url').'/track?order='.SampleInvoice::ORDER)
+        ->and(OrderInvoicePdf::trackUrl(SampleInvoice::ORDER, false))->toBe('https://'.config('notifications.store_url').'/en/track?order='.SampleInvoice::ORDER)
+        ->and(OrderInvoicePdf::trackUrl(SampleInvoice::ORDER, true))->toBe('https://'.config('notifications.store_url').'/track?order='.SampleInvoice::ORDER)
         ->and($html)
         ->toContain('TMB-RC-01')->toContain('Red · 1:16')
         ->toContain('#4F46E5')

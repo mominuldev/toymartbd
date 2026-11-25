@@ -15,6 +15,7 @@ use App\Domain\Notification\Models\NotificationLog;
 use App\Domain\Notification\Models\NotificationTemplate;
 use App\Domain\Notification\Services\SmsDrivers;
 use App\Domain\Notification\Support\SmsSegments;
+use App\Support\StorefrontUrl;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -128,12 +129,10 @@ final class SendCartRecoveryMessage implements ShouldQueue
         }
     }
 
-    /** `{storefront}/cart/restore/{token}` — Bangla under `/bn` (rule 35). No PII, not the cart token. */
+    /** `{storefront}/cart/restore/{token}` — Bangla at the root, English under `/en` (rule 35, StorefrontUrl). No PII, not the cart token. */
     public static function restoreUrl(string $locale, string $token): string
     {
-        $base = rtrim((string) config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'), '/');
-
-        return $base.($locale === 'bn' ? '/bn' : '').'/cart/restore/'.$token;
+        return StorefrontUrl::url((string) config('cart_recovery.storefront_url', 'https://smartjunior.com.bd'), $locale, '/cart/restore/'.$token);
     }
 
     private function skip(NotificationLog $log, CartRecovery $recovery, CartRecoverySkip $reason): void

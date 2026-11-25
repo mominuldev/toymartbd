@@ -11,7 +11,7 @@ use InvalidArgumentException;
 /**
  * URL slugs: ASCII, transliterated, shared across locales (CLAUDE.md rule 37).
  *
- * One product has one slug, served under both / and /bn/. Bangla-script slugs
+ * One product has one slug, served under both / (Bangla) and /en/ (English). Bangla-script slugs
  * percent-encode into unreadable links on Messenger and WhatsApp, so a Bangla-only
  * name is transliterated ("খেলনা গাড়ি" → "khelna-gadi"). When an English name
  * exists it wins, because it is what most searches and shares use.

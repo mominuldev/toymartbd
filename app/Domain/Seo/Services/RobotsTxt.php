@@ -23,7 +23,10 @@ final class RobotsTxt
         return SiteUrl::base().'/sitemap.xml';
     }
 
-    /** The shipped default: crawl the shop, never the private or parameter-only routes. */
+    /**
+     * The shipped default: crawl the shop, never the private or parameter-only routes — once at
+     * the root (Bangla) and once under `/en` (English; rule 35, owner decision 2026-11-25).
+     */
     public static function defaultContent(): string
     {
         return implode("\n", [
@@ -34,11 +37,11 @@ final class RobotsTxt
             'Disallow: /account',
             'Disallow: /orders',
             'Disallow: /search',
-            'Disallow: /bn/cart',
-            'Disallow: /bn/checkout',
-            'Disallow: /bn/account',
-            'Disallow: /bn/orders',
-            'Disallow: /bn/search',
+            'Disallow: /en/cart',
+            'Disallow: /en/checkout',
+            'Disallow: /en/account',
+            'Disallow: /en/orders',
+            'Disallow: /en/search',
             'Disallow: /api/',
             '',
             'Sitemap: '.self::sitemapUrl(),

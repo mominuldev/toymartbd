@@ -195,8 +195,11 @@ it('issues a preview link the storefront API accepts for a draft', function (): 
     $draft = BlogKit::post(['slug' => 'secret-draft', 'status' => PostStatus::Draft, 'published_at' => null]);
 
     $link = $this->postJson("/api/v1/admin/blog/posts/{$draft->id}/preview-link")->assertOk();
-    expect($link->json('path'))->toStartWith('/blog/preview/blog_post.'.$draft->id.'.')
-        ->and($link->json('path_bn'))->toStartWith('/bn/blog/preview/');
+    // Bangla at the root, English under /en (owner decision 2026-11-25).
+    expect($link->json('path'))->toStartWith('/en/blog/preview/blog_post.'.$draft->id.'.')
+        ->and($link->json('path_bn'))->toStartWith('/blog/preview/blog_post.'.$draft->id.'.')
+        ->and($link->json('url'))->toEndWith('/en/blog/preview/'.$link->json('token'))
+        ->and($link->json('url_bn'))->toEndWith('/blog/preview/'.$link->json('token'))->not->toContain('/en/')->not->toContain('/bn/');
 
     $this->withToken(BlogKit::token())->getJson('/api/v1/storefront/blog/preview/'.$link->json('token'))
         ->assertOk()->assertJsonPath('slug', 'secret-draft');

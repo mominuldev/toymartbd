@@ -11,7 +11,8 @@ use Carbon\CarbonImmutable;
  * and whether it is live. Built by a {@see SeoSubjectProvider}; plain values only, so a
  * domain that may not depend on Seo internals can build one (deptrac layer SeoContracts).
  *
- * `path` is locale-independent (`/products/lego-city`); Bangla is the same path under /bn.
+ * `path` is locale-independent (`/products/lego-city`): Bangla serves it at the root, English
+ * under /en (rule 35, owner decision 2026-11-25; App\Support\StorefrontUrl).
  * `description*` are plain text. `image` is an absolute URL or null.
  */
 final readonly class SeoSubject

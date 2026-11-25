@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\Seo\Services;
 
+use App\Support\StorefrontUrl;
+
 /**
  * The public storefront origin (STOREFRONT_URL), falling back to the production domain
- * so a preview never shows an empty host. Locale paths: English at the root, Bangla
- * under /bn (rule 35).
+ * so a preview never shows an empty host. Locale paths: Bangla at the root, English
+ * under /en (rule 35, owner decision 2026-11-25) — see App\Support\StorefrontUrl.
  */
 final class SiteUrl
 {
@@ -20,12 +22,6 @@ final class SiteUrl
 
     public static function localized(string $path, string $locale): string
     {
-        $path = $path === '' ? '/' : $path;
-
-        if ($locale === 'bn') {
-            return self::base().($path === '/' ? '/bn' : '/bn'.$path);
-        }
-
-        return self::base().($path === '/' ? '' : $path);
+        return StorefrontUrl::url(self::base(), $locale, $path);
     }
 }

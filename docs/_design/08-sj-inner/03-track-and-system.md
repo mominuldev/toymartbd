@@ -42,7 +42,7 @@ whole. Run the bounding-box audit after each row (rule 3).
 
 ---
 
-## 30 · Track (`/track`, `/bn/track`)
+## 30 · Track (`/track` Bangla, `/en/track` English)
 
 **Purpose:** public order status from the order number **plus** the last 4 phone digits (rule 22). No login is needed.
 **Code:** `app/[locale]/track/page.tsx`, `app/api/track/route.ts` (the POST carries the digits, and a one-shot httpOnly cookie

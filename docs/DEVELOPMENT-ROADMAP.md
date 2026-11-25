@@ -95,7 +95,7 @@ P5, P6 and P7 are largely independent of each other and can run in parallel acro
 |---|---|
 | Monorepo layout, Laravel 13 install, MySQL/Redis/Meilisearch local via Docker, Horizon | 2 |
 | Domain directory structure, `deptrac` boundary rules, `Money`/`PhoneNumber`/`Slug` support classes | 2 |
-| **i18n foundation**: Laravel locale resolution and lang files, `Accept-Language` plus explicit-locale API contract, Next.js locale routing with English at the root and Bangla at `/bn/`, locale-aware formatters, and a lint rule failing any hardcoded user-facing string | 3 |
+| **i18n foundation**: Laravel locale resolution and lang files, `Accept-Language` plus explicit-locale API contract, Next.js locale routing with Bangla at the root and English at `/en/` (owner decision 2026-11-25; originally English at the root, Bangla at `/bn/`), locale-aware formatters, and a lint rule failing any hardcoded user-facing string | 3 |
 | Reference migrations: users, roles, permissions, divisions/districts/upazilas seeded with Bangla names, settings, activity log | 2 |
 | Sanctum auth: admin cookie session, storefront server token, customer token; policies scaffold; the 403 role test matrix | 2 |
 | API v1 skeleton, Resource/FormRequest base classes, RFC 9457 error handler, idempotency middleware, rate limiters, OpenAPI generation | 2 |

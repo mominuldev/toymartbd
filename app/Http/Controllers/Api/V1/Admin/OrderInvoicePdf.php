@@ -9,6 +9,7 @@ use App\Domain\Invoicing\Models\CreditNote;
 use App\Domain\Invoicing\Models\Invoice;
 use App\Domain\Invoicing\Services\PrintSettings;
 use App\Support\MpdfCache;
+use App\Support\StorefrontUrl;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -97,13 +98,14 @@ final class OrderInvoicePdf
 
     /**
      * The storefront's track-order page with the order number filled in (the same URL the order
-     * e-mails carry). Never the phone: tracking still asks for it (rule 22).
+     * e-mails carry). Never the phone: tracking still asks for it (rule 22). Bangla at the root,
+     * English under `/en` (StorefrontUrl).
      */
     public static function trackUrl(string $orderNumber, bool $bn): string
     {
         $store = config('notifications.store_url');
 
-        return 'https://'.(is_string($store) ? $store : 'smartjunior.com.bd').($bn ? '/bn' : '').'/track?order='.rawurlencode($orderNumber);
+        return StorefrontUrl::url('https://'.(is_string($store) ? $store : 'smartjunior.com.bd'), $bn ? 'bn' : 'en', '/track?order='.rawurlencode($orderNumber));
     }
 
     /**

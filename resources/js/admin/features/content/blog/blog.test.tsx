@@ -191,14 +191,14 @@ describe('blog post editor', () => {
         mockApi((url, init) => {
             if (url.endsWith('/auth/me')) return { status: 200, body: editor };
             if (url.endsWith('/blog/posts/12/preview-link') && init?.method === 'POST')
-                return { status: 200, body: { token: 'tok', path: '/blog/preview/tok', path_bn: '/bn/blog/preview/tok', url: 'https://shop.test/blog/preview/tok', url_bn: 'https://shop.test/bn/blog/preview/tok', expires_in: 86400 } };
+                return { status: 200, body: { token: 'tok', path: '/en/blog/preview/tok', path_bn: '/blog/preview/tok', url: 'https://shop.test/en/blog/preview/tok', url_bn: 'https://shop.test/blog/preview/tok', expires_in: 86400 } };
             if (url.endsWith('/blog/posts/12')) return { status: 200, body: post };
             return terms(url) ?? { status: 404 };
         });
 
         renderApp('/store/blog/12');
         fireEvent.click(await screen.findByRole('button', { name: 'Preview' }, { timeout: 5000 }));
-        await waitFor(() => expect(opened).toEqual(['https://shop.test/blog/preview/tok']));
+        await waitFor(() => expect(opened).toEqual(['https://shop.test/en/blog/preview/tok']));
         window.open = original;
     });
 });

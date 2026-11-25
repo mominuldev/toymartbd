@@ -127,7 +127,7 @@ final class LaunchChecks
             'business.hotline' => $this->hotline(...),
             'storefront.site_config' => $this->storefrontSiteConfig(...),
             'business.placeholder_values' => $this->placeholderValues(...),
-            'content.error_pages' => fn (): CheckResult => CheckResult::manual('content.error_pages', '404 and 500 pages look right in both languages', 'F6', 'Open https://<shop>/no-such-page and /bn/no-such-page (styled 404, HTTP 404), /maintenance and /bn/maintenance, and https://<api>/no-such-page (branded Laravel 404). Automated tests cover the markup; this is the visual check.'),
+            'content.error_pages' => fn (): CheckResult => CheckResult::manual('content.error_pages', '404 and 500 pages look right in both languages', 'F6', 'Open https://<shop>/no-such-page and /en/no-such-page (styled 404, HTTP 404), /maintenance and /en/maintenance, and https://<api>/no-such-page (branded Laravel 404). Automated tests cover the markup; this is the visual check.'),
             'content.legal_display' => fn (): CheckResult => CheckResult::manual('content.legal_display', 'Trade licence and contact details displayed as required', 'F7', 'Check the storefront footer legal bar and the contact page show the trade licence, BIN, address and hotline. Confirm with the owner\'s accountant/lawyer what must be displayed.'),
             'staff.super_admin' => $this->superAdmin(...),
             'staff.roles' => $this->staffRoles(...),
@@ -579,7 +579,7 @@ final class LaunchChecks
 
     private function robots(): CheckResult
     {
-        $blocked = array_values(array_filter(['/', '/toys', '/bn', '/products/x', '/categories/x'], static fn (string $p): bool => ! RobotsTxt::allows($p)));
+        $blocked = array_values(array_filter(['/', '/toys', '/en', '/products/x', '/en/products/x', '/categories/x'], static fn (string $p): bool => ! RobotsTxt::allows($p)));
         $sitemap = RobotsTxt::sitemapUrl();
         $problems = [];
         if ($blocked !== []) {
