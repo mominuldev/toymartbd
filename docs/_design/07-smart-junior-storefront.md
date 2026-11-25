@@ -953,3 +953,39 @@ The `SJ/Elevation/*` styles are raw `#1e2140` and were not changed.
 **Not done.**
 - The storefront `Wordmark`/`LogoMark` still draws the old squircle mark. The new logo exists only as a raster, so it needs an SVG source before it can replace them (open question §6, "Real assets").
 - The Figma header and footer Logo component (`5:51`) is also still the old mark.
+
+### 17.1 Buttons, hero and cart (owner, 2026-11-25)
+
+The first logo pass changed only the dark, readable shades, so the site barely changed. The owner then chose the logo colours themselves, with these readable combinations:
+
+**Buttons are pink** (owner: "change the button color with pink").
+- The fill is `pink/600` `#E40F47` with white text, 4.7:1.
+- The exact logo pink `#FD375A` fails with both white (3.6:1) and navy (4.2:1).
+- Hover is `pink/700`.
+- Code: `bg/brand`, `bg/brand-shelf`, `bg/brand-subtle(-shelf)` and `border/brand(-subtle)` → `sj-pink/*`.
+- Figma Vivid: `action/primary`, `-hover` and `-soft` → `pink/600`, `/700` and `/50`; `effect/glow-primary` → `#E40F47` at 28%.
+- "Buy now" and the "অফার ও ডিল" button are now the same pink.
+
+**The hero, the footer bottom bar and blue cards use the logo-sky blue `blue/500` `#399DFE`, with navy text (5.3:1).**
+- The exact logo blue `#008CF5` reaches only 4.3:1 with navy and 3.5:1 with white.
+- The headline's accent word is the logo purple (`deco/grape`), because sun yellow on that blue is 1.75:1.
+- Code: `bg/teal` → `sj-blue/500` and `text/on-teal` → navy. `HeroBlock`, `HomeHero` and the `SiteFooter` bar now use `text-fg-on-teal`, and the footer's locale switch uses the new `segment-on-teal` variant.
+- Figma Vivid: `bg/brand-strong` and `action/cart` → `blue/500`, `text/on-cart` and `icon/on-cart` → navy.
+
+**Cart buttons are an orange tint with an orange border** (owner).
+- The background is the logo orange `#FE611C` at 12%, with a 1.5 px `#FE611C` border (3.0:1 on white, which meets the 1.4.11 minimum) and a navy icon and label.
+- The hover tint is 20%.
+- This covers the product card square, the PDP cart button and "add all" in Frequently bought together.
+- Code: `deco-coral` utilities in `CardCartButton`, `product/buttons.ts` and `FrequentlyBoughtTogether`.
+
+**Button corners are smaller** (owner).
+- Regular buttons go from `radius/md-minus` (14) to `radius/sm` (10).
+- The card cart square goes from 10, and 14 at `lg`, to 8, and 10 at `lg`.
+- Fields, cards and images keep 14.
+
+**Figma is behind code on these points:**
+- the hero and footer-bar text is still bound to `text/inverse` (white on the lighter blue)
+- `action/cart` is a solid blue, not the orange tint
+- the Button radius is still `md`
+
+These need a pass on page `34:5658`.
