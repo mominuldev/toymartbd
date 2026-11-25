@@ -1098,14 +1098,14 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
 **B1 is built on the site** (owner: "Implement the overlay age card"). It is `AgePhotoCard` in the storefront's `AgeTilesBlock.tsx`.
 - **The card:** 236 / 320 / 380 px tall (mobile / md / lg). The title is split into a number and a unit with `leading-none`, so the age and the line sit 2–4 px apart (owner: "reduce the age and subtitle between space"). The arrow is pinned bottom-right.
 - **Each card's gradient is its own tone** (owner: "multiple gradient color for each card"):
-  - **Colours:** the tone's deepest ink at 95% → 80% at mid-height → clear, over the lower 75%. The inks are `text/ink-butter`, `-pink`, `-sky`, `-mint` and `-coral`; purple uses `deco/grape`.
-  - **Contrast**, over a pure-white photo: the line is at least 4.5:1, and the large age at least 3.9:1.
+  - **Colours:** the tone's deepest ink at 95% → 85% at 55% → clear, over the **lower half** of the card (owner: "reduce it"; it was the lower 75%). The inks are `text/ink-butter`, `-pink`, `-sky`, `-mint` and `-coral`; purple uses `deco/grape`.
+  - **Contrast**, over a pure-white photo: the line and the age are both at least 5.1:1 for every tone.
 - **Hover and focus:** `shadow-e3` and the photo at 1.07 over 0.45 s `ease`. Reduced motion keeps the card still.
 - **Tests:** `tests/age-overlay-card.test.ts`.
 
 **Figma follows the site.**
 - **Home screens:** the 12 Age Card instances on the Vivid home screens (desktop, tablet and mobile) now use `Age Card · Overlay`. Their overrides were reset, then the content and tone were re-applied.
-- **The scrim** is a gradient: `bg/scrim-clear` → `pastel/*-ink` at 50% and 100%, with the layer at 92%.
+- **The scrim** covers the lower half. It is a gradient, `bg/scrim-clear` → `pastel/*-ink` at 45% and 100%, with the layer at 90%.
 - **New variables:**
   - primitives `slate/800-alpha-0` and `-alpha-88`
   - `SJ · Color` `bg/scrim-clear` and `bg/scrim`
