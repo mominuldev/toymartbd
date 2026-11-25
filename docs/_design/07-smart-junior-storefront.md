@@ -1062,3 +1062,8 @@ All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `
   There is also one new primitive, `orange/alpha-12`.
 - **New component:** `Sparkle` (`263:3136`), filled with `brand/sun`.
 - **Layout:** the Components page was re-laid-out so nothing overlaps. Everything below Button moved down 144 px, and everything below Icon Button a further 136 px. The overlap audit is clean.
+
+**Product card image zoom (owner, 2026-11-25).**
+- On hover and keyboard focus, the photo scales to **1.07** (was 1.04). The zoom and the alternate-photo fade both run **0.45 s on CSS `ease`** (was 320 ms on the standard curve). Reduced motion still drops the zoom.
+- Code: `.product-card-media` and `-alt` in the storefront's `app/tailwind.css`. 0.45 s is a one-off value from the owner and is not a motion token.
+- Figma: the Hover variants' `Photo` is 1.07× about its centre, inside the clipping `Media` frame. Default → Hover smart-animates over 0.45 s on `cubic-bezier(.25,.1,.25,1)`, which is CSS `ease`.
