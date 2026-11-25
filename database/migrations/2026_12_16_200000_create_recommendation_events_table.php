@@ -33,7 +33,7 @@ return new class extends Migration
             $table->dateTime('occurred_at')->comment('UTC');
 
             $table->index(['placement', 'occurred_at']);
-            $table->index(['source_product_id', 'recommended_product_id']);
+            $table->index(['source_product_id', 'recommended_product_id'], 'reco_events_source_target_index');
             $table->index('order_id');
         });
     }
