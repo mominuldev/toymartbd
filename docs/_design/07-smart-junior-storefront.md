@@ -1131,3 +1131,20 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
 - Placeholders are still marked by the `placeholder:*` layer name and the bracketed `[…]` text. They are still never real-looking values and never tel:/mailto:/wa.me links.
 - Not changed: the order-detail `Details` frames (dash 6/4) and the delivery-lane lines, which are design dashes, not placeholder marks.
 - **Code:** the footer's `placeholderFrame` (SiteFooter.tsx) drops `border border-dashed … px-1`. `data-placeholder` stays.
+
+### 17.6 Footer menu links: hover without an underline (owner, 2026-11-26)
+
+- **No underline.** The menu links and the contact links (WhatsApp, Messenger) no longer underline on hover.
+- **Hover and keyboard focus:**
+  - The link turns from `text/secondary` to `text/primary`.
+  - It slides 6 px right on the spring curve.
+  - A 6 px dot in its column's accent pops in at its left. The colours are the heading bars': Shop `brand/sun`, Help `brand/learn`, Company `brand/play`; contact uses `brand/lagoon`.
+  - The dot is absolutely positioned and the slide is a transform, so nothing reflows.
+  - Reduced motion keeps the colour change and the dot, with no slide and no pop.
+- **Figma:**
+  - New component set `Footer Link` (`286:3195`) on Components, with `State=Default` (`286:3189`) and `State=Hover` (`286:3192`) and a `Label` text property.
+  - Default smart-animates into Hover `ON_HOVER`: 200 ms on the spring curve, the same as the Button.
+  - In Default, the `Dot` is 2 px at 0 opacity; in Hover it is 6 px at full opacity and sits at x −4. The label is padded 6 px in Hover.
+  - The 17 desktop links in the footer main component (`200:2724`) are now instances, with each column's `Dot` fill bound to its accent. All 39 screen footers on the Vivid page follow, at an unchanged 619 px height.
+  - The mobile footer has no visible links, because its sections are closed accordions.
+- **Code:** `.sj-foot-link` in `components/layout/footer/footer.css`. `SiteFooter.tsx` sets `--sj-foot-dot` per column.
