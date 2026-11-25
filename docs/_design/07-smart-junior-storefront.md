@@ -1196,3 +1196,51 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
 - mobile sheet Apply (the sheet closes)
 
 No console errors.
+
+### 17.10 The real logo and its exact palette (owner, 2026-11-26)
+
+The owner added the real logo as vectors, with its colour swatches, on Foundations: `Logo And Branding color` (`291:3396`), with `Main Logo` (`291:3395`) and eight swatches (`291:3399`). It replaces the raster board from §17. The §17 hexes were sampled from that raster. These swatches are exact, so the ramps are re-pinned to them.
+
+| Swatch | Hex | Pinned at | Was |
+|---|---|---|---|
+| Purple ("Smart") | `#581C9C` | `purple/800` | `#591C9D` |
+| Yellow (bulb) | `#FDC403` | `sunshine/400` | `#FEC303` |
+| Blue ("n") | `#00A1D8` | `blue/500` | `#008CF5` at `blue/600` |
+| Green ("r") | `#48B123` | `green/500` | `#55BB2B` |
+| Red (rocket) | `#F6312B` | `red/500` | Tailwind `#EF4444` |
+| Orange ("J") | `#FD5E03` | `orange/500` | `#FE611C` |
+| Amber ("u") | `#FDB801` | `sunshine/500` | `#F2A00A` |
+| Deep purple | `#521D93` | not pinned: it sits between `purple/800` and an unused 900 | — |
+
+The pink ramp keeps its hue. Its 500 is pinned to the gear's `#FC3C59` (was `#FD375A`), because the gear is in the logo and the swatches have no pink.
+
+**How the ramps were rebuilt.** The §17 method was reused. Every step keeps its OKLCH lightness, so contrast with white and navy barely moves. Each step takes the swatch's hue, and its chroma is scaled by the swatch's chroma. The swatch replaces the step nearest to it in lightness. This moved blue's pin from 600 to 500, because the real blue is lighter than the sampled one. The blue ramp is now a slightly more cyan sky.
+
+**Where the values were written:**
+- Figma `SJ · Primitives`: 60 values.
+- The raw effect colours in `SJ · Color`: focus ring `#036C92`, glow-primary `#E21945` at 28%, glow-accent `#FC3C59`, glow-secondary `#FDC403`, glow-cart `#BF4502`, and `orange/alpha-12` (now `#FD5E03` at 12%).
+- The `sj-*` primitives in the Toy Mart library: 60 values.
+- `packages/tokens/src/figma-variables.json`.
+
+**Key ratios.** The AA gate passes all 155 pairs.
+
+| Pair | Ratio |
+|---|---|
+| Navy on `blue/500` `#00A1D8` (hero, footer bar) | 5.0:1 |
+| White on `pink/600` `#E21945` (buttons) | 4.7:1 |
+| White on `orange/700` `#BF4502` (cart border) | 5.2:1 |
+| White on `blue/700` `#036C92` (links) | 5.9:1 |
+
+**The dummy logo is gone** (owner: "remove the dummy logo").
+- **Figma.** The Logo component (`5:51`) now holds the real vector logo, with `constraints: SCALE`, so instances scale cleanly:
+  - `Full, Light`: 118.5 × 56
+  - `Full, Dark`: the logo on a `bg/surface` plate, 159 × 76. It was a navy plate, but the purple "Smart" disappears on navy.
+  - `Mark`: the logo's rocket alone, 18 × 44. The footer mascots use it.
+  - `Stacked`: 203 × 96. The logo is already stacked, so this is the same art.
+  - 21 instances on Components, 1 on the Vivid page and the Cover logo were resized to the new aspect ratio. The other 270 inherit the new size.
+- **Code** (storefront):
+  - `public/images/brand/smart-junior-logo.svg` is the Figma export, and `smart-junior-rocket.svg` is the rocket cut out of it.
+  - `Wordmark` now renders the logo as a static `<img>` in its own colours: `h-11`, and `h-14` from `lg`. It is brand artwork, so its own hexes are allowed, the same as an uploaded logo.
+  - `LogoMark` is the rocket, used as the footer mascot (`PlayStrip`).
+  - An uploaded logo in Admin › Settings › Site & branding still wins over this fallback.
+  - The `PLAY • LEARN • GROW` tagline is not part of the real logo, so it no longer shows.
