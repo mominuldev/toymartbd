@@ -1161,3 +1161,38 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
 - Figma already drew 3 columns (rows of 3 × 280 inside the 888-px results column) on Category `34:6106`, Search `209:24225` and Brand `214:27508`, so only the code changed.
 - Measured with Playwright: 3 columns at 1440 and at 1920 on `/toys` and `/categories/building-blocks`.
 - Not changed: the flash-sale page grid and the home rails (`railRowClass`), which are not listing pages.
+
+### 17.9 Filtering without a page reload, with skeleton cards (owner, 2026-11-26)
+
+**Behaviour.**
+- On `/toys`, category, brand and search pages, changing a filter no longer reloads the page.
+- What updates in place:
+  - the desktop sidebar's auto-apply (400 ms debounce, unchanged) and the mobile sheet's Apply
+  - removing a chip, Clear all, Reset, sort, load more, numbered pages
+  - the category facet links
+- The URL, history and the back button work as before, and the filter ticks follow the back button.
+- Filter changes keep the scroll position. A new page of results (`cursor` or `page`) scrolls to the top.
+- The mobile sheet and the sort menu close after applying, as before.
+- Without JavaScript, every control is still a plain GET form or link (progressive enhancement), and the page is still server-rendered from the URL.
+
+**Loading state: skeleton product cards.**
+- If the answer takes more than 150 ms, the grid, the empty state and the paging are replaced by 6 skeleton cards: two rows on desktop, three on mobile. The result count dims.
+- The filters stay usable during loading.
+- The skeleton has the card's exact shell, so nothing jumps when the results arrive: image, rating, two title lines, price, then the cart square and the Buy now bar.
+- It pulses only when motion is allowed. It is `aria-hidden`; the count line is the `aria-live` region.
+
+**Figma.**
+- New component set `Product Card Skeleton` (`289:3280`) on Components, beside Product Card, in `Size=Desktop` (272 × 448) and `Size=Mobile` (171 × 319). It uses the same padding, gap, radius and `SJ/Elevation/e1` as Product Card.
+- New `SJ · Color` variable `bg/skeleton` (`289:3257`): Vivid → `slate/200`, the same `#E2E8F0` as the code's `bg-skeleton`; Light → `ink/100`.
+
+**Code** (storefront):
+- `components/listing/ListingSoftNav.tsx`: intercepts GET form submits and same-page link clicks inside `#listing-root` and calls `router.push`. A MutationObserver keeps uncontrolled inputs in step with `defaultChecked`, and `aria-busy` is set after 150 ms.
+- `ProductCardSkeleton.tsx`, and `.listing-skeleton` in `listing.css`.
+
+**Verified** with Playwright against the dev server, using a marker on `window` that a full reload would wipe. With no page reload, all of these work:
+- ticking a filter (focus stays on the checkbox), a second filter, Clear all (no ticks left) and back (ticks restored)
+- sort (the menu closes)
+- the skeleton (shown while a delayed request is in flight, hidden after)
+- mobile sheet Apply (the sheet closes)
+
+No console errors.
