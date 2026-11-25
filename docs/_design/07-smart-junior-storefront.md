@@ -1111,3 +1111,15 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
   - `SJ · Color` `bg/scrim-clear` and `bg/scrim`
 - **Gotcha:** when a paint or gradient stop is bound to the same variable as the main component's default, Figma renders the fallback colour you pass. Always pass the resolved colour as the fallback.
 - **Overlap audit:** clean on both pages.
+
+### 17.4 Button icons go after the label, except Buy now (owner, 2026-11-26)
+
+**Rule.** A button with a label and an icon shows the icon **after** the label. **Buy now** is the one exception: its lightning icon stays **before** the label. Icon-only buttons, chips, nav pills, list rows and plain text links are not affected.
+
+**Figma** (Button `5:124`, all 24 variants):
+- Each variant has a trailing `Icon end` layer after `Label`. It is bound to the `Icon` swap and to `Show icon`, so `Show icon` now means the trailing icon.
+- The leading `Icon` layer is behind a new boolean, `Leading icon` (default off). It uses the same `Icon` swap.
+- Buy now instances (`এখনই কিনুন`, `Buy now`, and the PDP's `এখনই কিনুন — ডেলিভারিতে পেমেন্ট`) that had an icon now have `Leading icon` on and `Show icon` off. That covers 78 on the Vivid page, 2 on the Light page and 2 on Components (including the Product Card main component).
+- Vivid page after the change: 101 other buttons show a trailing icon and 90 show none. Smart-animate to Hover is unaffected because Default and Hover have the same layer names.
+
+**Code** (storefront): in 42 buttons across 27 files, the `<Icon>` moves after the label. Buy now in `ProductCard`, `PurchasePanel` and `AddToCartBar` keeps the icon first. The button helpers use symmetric padding, and `button-fx.css` selects `> svg` without regard to position, so no styles changed.
