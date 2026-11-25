@@ -95,6 +95,7 @@
   --color-line-focus: var(--tm-color-border-focus);
   --color-line-brand: var(--tm-color-border-brand);
   --color-line-brand-subtle: var(--tm-color-border-brand-subtle);
+  --color-line-cart: var(--tm-color-border-cart);
   --color-line-danger: var(--tm-color-border-danger);
   --color-status-in-stock: var(--tm-color-status-in-stock);
   --color-status-low-stock: var(--tm-color-status-low-stock);

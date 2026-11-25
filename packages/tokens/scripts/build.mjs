@@ -81,6 +81,7 @@ const PAIRS = [
   ...['in-stock', 'low-stock', 'out-of-stock'].map((s) => [`color/status/${s}`, 'color/bg/surface', TEXT]),
   ['color/border/strong', 'color/bg/surface', UI],
   ['color/border/focus', 'color/bg/surface', UI],
+  ['color/border/cart', 'color/bg/surface', UI],
 ];
 
 // ---------- outputs ----------

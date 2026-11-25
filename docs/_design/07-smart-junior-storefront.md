@@ -975,6 +975,7 @@ The first logo pass changed only the dark, readable shades, so the site barely c
 **Cart buttons are an orange tint with an orange border** (owner).
 - The background is the logo orange `#FE611C` at 12%, with a 1.5 px `#FE611C` border (3.0:1 on white, which meets the 1.4.11 minimum) and a navy icon and label.
 - The hover tint is 20%.
+- The border was darkened on request (owner: "border bit light") to the new `border/cart` token: Vivid `orange/700` `#C0440A`, 5.2:1 on white. The other modes alias `border/brand`. The token is in Figma `SJ · Color` and in the code export, and the AA gate checks it.
 - This covers the product card square, the PDP cart button and "add all" in Frequently bought together.
 - Code: `deco-coral` utilities in `CardCartButton`, `product/buttons.ts` and `FrequentlyBoughtTogether`.
 

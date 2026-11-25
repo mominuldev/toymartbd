@@ -309,6 +309,7 @@
   --tm-color-border-focus: #38869E;
   --tm-color-border-brand: #DC3442;
   --tm-color-border-brand-subtle: #FFD5E3;
+  --tm-color-border-cart: #DC3442;
   --tm-color-border-danger: #DA3285;
   --tm-color-status-in-stock: #017D54;
   --tm-color-status-low-stock: #994A01;
@@ -396,6 +397,7 @@
   --tm-color-border-focus: #6EC8DF;
   --tm-color-border-brand: #FB6265;
   --tm-color-border-brand-subtle: #961022;
+  --tm-color-border-cart: #FB6265;
   --tm-color-border-danger: #EE67A0;
   --tm-color-status-in-stock: #9DE3C1;
   --tm-color-status-low-stock: #FEC392;
@@ -483,6 +485,7 @@
   --tm-color-border-focus: #4F46E5;
   --tm-color-border-brand: #4F46E5;
   --tm-color-border-brand-subtle: #E0E3FF;
+  --tm-color-border-cart: #4F46E5;
   --tm-color-border-danger: #E11D48;
   --tm-color-status-in-stock: #047857;
   --tm-color-status-low-stock: #B45309;
@@ -570,6 +573,7 @@
   --tm-color-border-focus: #818CF8;
   --tm-color-border-brand: #818CF8;
   --tm-color-border-brand-subtle: #312E81;
+  --tm-color-border-cart: #818CF8;
   --tm-color-border-danger: #FB7185;
   --tm-color-status-in-stock: #6EE7B7;
   --tm-color-status-low-stock: #FCD34D;
@@ -657,6 +661,7 @@
   --tm-color-border-focus: #0264B2;
   --tm-color-border-brand: #E40F47;
   --tm-color-border-brand-subtle: #FFCDCE;
+  --tm-color-border-cart: #C0440A;
   --tm-color-border-danger: #DC2626;
   --tm-color-status-in-stock: #3A7D21;
   --tm-color-status-low-stock: #B35502;

@@ -234,6 +234,7 @@
         "color/border/focus": ["{teal/600}", "{teal/400}", "#4F46E5", "#818CF8", "{sj-blue/700}"],
         "color/border/brand": ["{brand/500}", "{brand/400}", "#4F46E5", "#818CF8", "{sj-pink/600}"],
         "color/border/brand-subtle": ["{brand/200}", "{brand/700}", "#E0E3FF", "#312E81", "{sj-pink/200}"],
+        "color/border/cart": ["{brand/500}", "{brand/400}", "#4F46E5", "#818CF8", "{sj-orange/700}"],
         "color/border/danger": ["{danger/500}", "{danger/400}", "#E11D48", "#FB7185", "{sj-red/600}"],
         "color/status/in-stock": ["{success/700}", "{success/300}", "#047857", "#6EE7B7", "{sj-green/700}"],
         "color/status/low-stock": ["{warning/700}", "{warning/300}", "#B45309", "#FCD34D", "{sj-sunshine/700}"],
