@@ -1067,3 +1067,12 @@ All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `
 - On hover and keyboard focus, the photo scales to **1.07** (was 1.04). The zoom and the alternate-photo fade both run **0.45 s on CSS `ease`** (was 320 ms on the standard curve). Reduced motion still drops the zoom.
 - Code: `.product-card-media` and `-alt` in the storefront's `app/tailwind.css`. 0.45 s is a one-off value from the owner and is not a motion token.
 - Figma: the Hover variants' `Photo` is 1.07× about its centre, inside the clipping `Media` frame. Default → Hover smart-animates over 0.45 s on `cubic-bezier(.25,.1,.25,1)`, which is CSS `ease`.
+
+**Shop-by-age cards hover like the product card (owner, 2026-11-25).**
+- **Code:** `AgePhotoCard` in the storefront's `AgeTilesBlock.tsx`.
+  - At rest the card has a transparent 1.5 px border. On hover and keyboard focus it turns `border-line-brand` with `shadow-e2`, eased over `--tm-duration-slow` on `ease-standard`.
+  - The photo zooms to 1.07 over 0.45 s on `ease`, inside its rounded crop.
+  - Reduced motion drops the motion. The card size does not change.
+- **Figma:** Age Card (`9:176`) has a new `State` property, with Hover variants `265:3138` (desktop) and `265:3146` (mobile).
+  - Hover adds a 1.5 px `border/card-hover` stroke and `SJ/Elevation/e2`, and its photo is cropped at 1.07.
+  - The Default photos moved from FILL to an exact cover CROP, which looks identical, so the two can smart-animate. Default → Hover runs 0.45 s on CSS `ease`.
