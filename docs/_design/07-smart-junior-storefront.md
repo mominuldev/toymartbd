@@ -1004,9 +1004,7 @@ The first logo pass changed only the dark, readable shades, so the site barely c
 
 All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `size-9 lg:size-11 rounded-sm`, measured at 36 / 44 px and 10 px, the same as Buy now.
 
-**Figma is still behind code on these points:**
-- the hero and footer-bar text is still bound to `text/inverse` (white on the lighter blue)
-- the Button radius outside the product card is still `md`
+**Figma is still behind code on one point:** the Button radius outside the product card is still `md`. The hero and footer-bar text was fixed in §17.2.
 
 **Product card hover border (owner, 2026-11-25).**
 - Product Card (`9:146`) has a new `State` property:
@@ -1016,3 +1014,51 @@ All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `
 - Code: the card has a transparent 1.5 px border at rest, so nothing shifts on hover.
   - On hover and keyboard focus: `border-line-brand` and `shadow-e2`.
   - The transition covers `box-shadow` and `border-color` on `--tm-duration-slow` with `ease-standard`. It is off under reduced motion.
+
+### 17.2 Button "toy pop" hover, and the Figma components in the new colours (2026-11-25)
+
+**The Components page (`2:4`) renders in Vivid.**
+- The page sets `SJ · Color` to Vivid explicitly. The 44 component sets that were inheriting Light now show the logo palette.
+- The mode lives on the page, not on the components, so instances on the Light page (`0:1`) are unchanged.
+
+**The hero and footer bar are navy on blue in Figma too**, matching code.
+- **What changed.** On `bg/brand-strong`:
+  - `text/inverse` → `text/primary`, and `icon/inverse` → `icon/default` (fills and strokes)
+  - the headline accent `brand/sun` → `brand/grow` (purple)
+- **Where.**
+  - Vivid page: 607 fill paints, 425 strokes and 6 mixed-text ranges, mostly in the per-screen footer and hero instances.
+  - Components page: 28 fills and 20 strokes, so the footer main components carry it too.
+- **Contrast** on `blue/500`: navy 5.3:1, and the purple accent 3.7:1 (display size only, so the 3:1 large-text minimum applies).
+
+**Icon Button `Variant=Cart`** (L, M and S, each Default and Hover):
+- binds `action/cart` (the orange tint), a 1.5 px `border/cart` stroke and an `icon/on-cart` icon, with `Icon/ShoppingCartSimple` by default
+- the Product Card uses it, so all 126 card cart squares on the Vivid page are `Variant=Cart`, with no colour overrides needed
+
+**The hover interaction, "toy pop".**
+- **What happens:**
+  - The button springs up 3 px with a squash-and-stretch wobble onto a toy-brick ledge. The ledge is a deeper shade of the button's colour, with a soft glow.
+  - A glint sweeps across once, and two sun-yellow sparkles twinkle at the top-right. They are white on the yellow button.
+  - The icon wiggles. The cart icon rolls forward and back instead.
+  - Pressing squashes the button onto its ledge. Keyboard focus gets the lift and the ledge.
+  - Reduced motion keeps only the colour change.
+- **Code:** `components/ui/button-fx.css`, loaded with the footer. It selects `bg-brand`, `bg-accent` and `border-line-cart` buttons and uses token colours only (`color-mix` over `--tm-*`).
+- **Figma:**
+  - Button and Icon Button have a `State` property. Hover exists for `Primary`, `Secondary`, `Soft` and `Cart`.
+  - Each Hover variant has two drop shadows, both bound to variables: the ledge (y 4, blur 0) and the glow (y 14, blur 22, spread −8).
+  - Each Hover variant also has a `Sparkle` instance at the top-right and its icon scaled 1.15 and rotated.
+  - Every Default variant smart-animates into its Hover on `ON_HOVER`: 200 ms on the spring curve.
+  - Not representable in a variant: the 3 px lift, the moving glint and the wobble keyframes. These are code only.
+- **New `SJ · Color` variables**, Figma only. Code derives the same colours with `color-mix`, so none of them is exported:
+
+  | Variable | Vivid value |
+  |---|---|
+  | `effect/shelf-primary` | `pink/800` |
+  | `effect/shelf-secondary` | `sunshine/700` |
+  | `effect/shelf-cart` | `orange/800` |
+  | `effect/glow-secondary` | `#FEC303` at 45% |
+  | `effect/glow-cart` | `#C0440A` at 35% |
+  | `border/card-hover` | `pink/600` |
+
+  There is also one new primitive, `orange/alpha-12`.
+- **New component:** `Sparkle` (`263:3136`), filled with `brand/sun`.
+- **Layout:** the Components page was re-laid-out so nothing overlaps. Everything below Button moved down 144 px, and everything below Icon Button a further 136 px. The overlap audit is clean.
