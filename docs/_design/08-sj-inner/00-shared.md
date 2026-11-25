@@ -630,3 +630,141 @@ The phase B and C screens used `[হটলাইন · placeholder]` for the hot
   - the English-fallback body caption (described in the row label)
   - a separate empty desktop frame
 - The header/footer placeholder pass was left out of phase C. It was done after the owner approved it; see §7.0.
+
+## 8. Built in phase D (frames 25–31, 2026-11-25)
+
+Built on `34:5658` (Vivid · বাংলা), below row 24 (bottom edge y 84801; the first row starts at y 85101). The conventions are the
+same as phases B and C (§6, §7):
+- Every page frame is a clone of a finished frame with its body removed: desktop from the blog index `184:35951`, mobile from
+  `186:37565`. So each keeps the Vivid `SJ · Color` / `SJ · Type` modes, the Concept E footer, the header with the §7.0
+  placeholders and a **12 s timeline** (checked on all 26 frames with a footer). The four crop and specimen frames set the modes
+  explicitly and have no footer.
+- Mobile frames keep the site header (spec 05 §0: no `MobileTopBar`) and the Bottom Tab Bar in flow after the footer. Search,
+  brands and categories set **শপ** active. The info pages (28–31) keep **হোম** active, as phase C did.
+- Text uses the `SJ Vivid/*` styles, with a per-range Fredoka override on Latin text and digits.
+- Placeholders follow §7.0: a `placeholder:<what>` auto-layout frame with a dashed `border/default` outline. Where the value sits
+  inside an instance (FAQ Item, Button, the status pill), the frame wraps the instance.
+
+**Audits (after the last row and the tidy-ups).**
+- Top-level bounding-box audit on `34:5658` (133 nodes): **no intersections**.
+- Raw (unbound) solid fills and strokes outside instances in rows 25–31: **0**.
+- Clipping frames inside rows 25–31: **0**. The exceptions are the decorative confetti `Section pattern` layers, which keep
+  their clipping. Instance internals were left as cloned.
+
+### 8.1 Frames
+
+| Frame | Node id | Size | Position (x, y) |
+|---|---|---|---|
+| Label — 25 · Search | `211:26823` | 3967 × 88 | 0, 84951 |
+| 25 · Search results — Desktop | `209:24225` | 1440 × 2210 | 0, 85101 |
+| 25 · Search results — Mobile | `210:24851` | 390 × 1895 | 1840, 85101 |
+| 25 · Search — Zero with filters (Results column variant) | `210:25327` | 888 × 583 | 2340, 85101 |
+| 25 · Search no results — Mobile | `211:25778` | 390 × 2420 | 3340, 85101 |
+| 25 · Search empty query — Mobile | `211:26232` | 390 × 1619 | 3840, 85101 |
+| 25 · Search no results — Desktop | `211:25167` | 1440 × 2003 | 4340, 85101 |
+| 25 · Search suggestions — in header | `211:26579` | 1440 × 760 | 5880, 85101 |
+| 25 · Search suggestions — states (Results · Recent · No match) | `211:26741` | 1960 × 448 | 7420, 85101 |
+| Label — 26 · Brands | `214:28896` | 4092 × 88 | 0, 87671 |
+| 26 · Brands — Desktop | `213:26547` | 1440 × 1641 | 0, 87821 |
+| 26 · Brands — Mobile | `213:27243` | 390 × 2614 | 1840, 87821 |
+| 26 · Brand page header — Mobile | `214:28067` | 390 × 2157 | 2340, 87821 |
+| 26 · Brand page header — Desktop | `214:27508` | 1440 × 2221 | 2840, 87821 |
+| 26 · Brand empty — Results column variant | `214:28595` | 888 × 359 | 4380, 87821 |
+| Label — 27 · All categories | `215:29826` | 3247 × 88 | 0, 90585 |
+| 27 · All categories — Desktop | `215:28590` | 1440 × 1563 | 0, 90735 |
+| 27 · All categories — Mobile | `215:29291` | 390 × 3092 | 1840, 90735 |
+| Label — 28 · CMS static pages | `221:32906` | 4111 × 88 | 0, 93977 |
+| 28 · Policy page (Article) — Desktop | `216:29509` | 1440 × 2547 | 0, 94127 |
+| 28 · Policy page (Article) — Mobile | `217:29936` | 390 × 3363 | 1840, 94127 |
+| 28 · Policy page — Contents open — Mobile (crop) | `217:30272` | 390 × 350 | 2340, 94127 |
+| 28 · FAQ page — Desktop | `219:30290` | 1440 × 3048 | 2840, 94127 |
+| 28 · FAQ page — Mobile | `220:30968` | 390 × 3971 | 4380, 94127 |
+| 28 · Stacked page (Delivery policy) — Desktop | `221:31575` | 1440 × 2629 | 4880, 94127 |
+| 28 · Stacked page (Delivery policy) — Mobile | `221:31991` | 390 × 3147 | 6420, 94127 |
+| 28 · FAQ search — no match (1440 crop of the FAQ column) | `221:32629` | 1440 × 1122 | 6920, 94127 |
+| Label — 29 · About | `224:34011` | 3061 × 88 | 0, 98248 |
+| 29 · About — Desktop | `224:32561` | 1440 × 2293 | 0, 98398 |
+| 29 · About — Mobile | `224:33018` | 390 × 3554 | 1840, 98398 |
+| Label — 30 · Contact | `227:35988` | 4229 × 88 | 0, 102102 |
+| 30 · Contact — Desktop | `226:33696` | 1440 × 2521 | 0, 102252 |
+| 30 · Contact — Mobile | `227:34183` | 390 × 3931 | 1840, 102252 |
+| 30 · Contact message sent — Mobile | `227:35408` | 390 × 1776 | 2340, 102252 |
+| 30 · Contact form errors — Mobile (/contact-message) | `227:34587` | 390 × 2317 | 2840, 102252 |
+| 30 · Contact message sent — Desktop | `227:35049` | 1440 × 1363 | 3340, 102252 |
+| Label — 31 · Delivery charge | `228:36507` | 3418 × 88 | 0, 106333 |
+| 31 · Delivery charge — Desktop | `228:35612` | 1440 × 1725 | 0, 106483 |
+| 31 · Delivery charge — Mobile | `228:36161` | 390 × 2274 | 1840, 106483 |
+
+**Layout.**
+- Rows sit the tallest frame + 300 apart.
+- Where a row has more states than the 500-px columns allow, the extra frames continue to the right (the x values are in the
+  table and each row label).
+- The next free row starts at about y 109057.
+
+**Screenshot-verified:** every frame in rows 25–31. Zoomed checks covered:
+- the search hero card with its related pills, the mobile results head and the suggestions dropdown under the header
+- a mobile brand-card row, the brand hero card (desktop and mobile) and the empty brand card
+- the CMS mobile menu and a category card
+- the policy contents and more-pages cards, a numbered section, and the open mobile disclosure
+- the FAQ hero, the delivery FAQ group with its placeholder, the returns group and both chat bands
+- the stacked header with the English-only note, and the rich text with its placeholders
+- the About story hero and feature tiles on mobile
+- the contact channel tiles, form card, visit card, the mobile hero pill (after a fix), the error form card and both sent cards
+- the delivery estimator and zone table on both sizes (after a fix)
+
+### 8.2 Deviations from the spec (and why)
+
+**Data and copy**
+1. Sample search query: “কাঠের খেলনা” (24 results), so the result cards (wooden stacker, shape sorter, train) match it. The typo
+   “ব্লোক” is used for zero hits, and its did-you-mean chips are spelling suggestions.
+2. The popular-search chip reads **LEGO**, not “লেগো”, per the owner's English-brand-names decision (spec 05 §11.6).
+3. The brand page uses **Hape** (a wooden-toy brand), so the cloned wooden product cards fit. Brand names are English in Fredoka.
+   The index shows eight sample brands; Fisher-Price shows the `Logo=Image` slot.
+4. Placeholders beyond the spec's list:
+   - the COD advance threshold and amount, and the refund time in FAQ answers (drawn in closed items, so not visible)
+   - the shop area in the About lead and in the third numbered card (“ধানমন্ডিতে” becomes `[এলাকা]`)
+   - the About “24 hours in Dhaka” delivery tile, as `[ডেলিভারির সময়]`
+   - the reply time in the contact-sent body (“কয়েক ঘণ্টার মধ্যে” becomes `[উত্তরের সময়]`)
+   - the courier name in the delivery quote
+5. Delivery figures are bracketed placeholders (owner instruction), not the local API's sample figures that spec 05 §7.3 asked
+   for. The weight step is drawn as `[ওজনের ধাপ]`.
+
+**Components and layout**
+6. The search and brand heroes, the CMS page headers, the contact hero and the sent band are built from tokens with a cloned
+   confetti layer. Only the brands index, the categories page, the delivery page and the empty-query band use the
+   `Page Header Band`. The reason is the same as phase C deviation 17: pills, a logo tile, a search field or bubbles sit inside
+   those bands, and an instance cannot take children. The empty-query band is a clone of the blog mobile hero, with the
+   `Search` Mobile instance inside it.
+7. Search results reuse the Category `Body` (filters plus one results row). The filter sidebar keeps the Category frame's checked
+   options.
+8. The empty brand card is `Empty State` Layout=Card (PuzzlePiece in its 72 disc), not a 48 icon.
+9. The FAQ chat band on desktop is a clone of the Home Help CTA card (`34:5873`): its hotline button is removed and the hours
+   are a placeholder. The mobile chat band is built from tokens.
+10. The FAQ `Search` hides its Submit button. Closed `FAQ Item` variants carry no answer node, so closed answers are not set.
+11. The rich-text measure is 720 on desktop. Mobile numbered sections use 24 vertical padding, because there is no 28 step;
+    Card padding 28 likewise becomes 24.
+12. The contact textarea is the `Input` component at its normal height (as phase B deviation 17). The counter sits below it.
+13. The contact failure banner is `Notice` Tone=Warning (`feedback/warning-subtle`, built in phase A), not the spec's butter
+    stand-in.
+14. On the mobile contact hero, the status pill wraps to two lines, so its corners are `radius/lg`.
+15. The delivery zone table does not clip (rule 17): its header row carries the top radii. Cells are fixed 150 / 96 wide and
+    right-aligned.
+16. The English-only note is drawn on the mobile Stacked frame as a specimen. In a real fallback, the body would be the English
+    text.
+
+### 8.3 Left out (not drawn)
+
+- **Annotated only:** the empty `/brands` page, the empty `/categories` page, the delivery “no rates” error state, search
+  loading (none) and the no-JS states. Each is described in its row label.
+- **The privacy page's last-updated date** (12 নভেম্বর 2026) is sample data.
+- **About and Contact copy:** apart from the placeholders, it is the seeder's sample text.
+- **Facts needing API data:** brand and category product counts and the search-result facts (spec 05 §9).
+
+### 8.4 Footer tidy-ups (instance overrides only; components untouched)
+
+- **(a) 500 page, desktop.** On `182:35056` (in `182:34911`), the Concept E Contact column `I182:35056;200:2789` is hidden, so
+  the footer shows no contact block (owner, 2026-11-15).
+- **(b) Home tablet.** On the footer instance `41:10140` (frame `34:6013`), the bottom-bar bottom padding
+  (`I41:10140;201:2868`) changed from `space/120` to `space/16`, which matches the desktop bottom bar. The bar is now 91 tall,
+  not 195, and the empty blue band is gone. The frame hugs, so it shrank by 104 px.
+- Both were screenshot-verified.

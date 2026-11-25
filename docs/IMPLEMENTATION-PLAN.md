@@ -355,6 +355,26 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10: Smart Junior inner pages, Figma first (2026-11-25) — awaiting owner review
+
+The storefront pages with no Smart Junior frame are designed first, then coded (owner's choice). Spec, numbering and build record: `docs/_design/08-sj-inner/` (00-shared.md §5–§8).
+
+- **Specs:** 5 parallel agents wrote the specs. A single Figma writer then built the frames on page `34:5658`, sequentially, in phases A–D.
+- **Phase A, shared pieces:** danger and warning tokens, 8 icons and 16 components.
+- **Frames 07–31**, all screenshot-checked and overlap-audited:
+  - sign in and account
+  - track, payment and system pages
+  - blog and guides
+  - search, brands, categories, CMS pages, About, Contact and delivery charge
+- **Owner decisions:**
+  - Order prefix `SJB`. The code switch is a separate task.
+  - Payment and courier brand names stay in English in Bangla.
+  - Unconfirmed business values are marked placeholders.
+  - Footer Concept E ("Simple playground", animated, CSS-only) is live on every Vivid screen.
+- **Figma rule 17** added: never clip structural containers.
+- **Code bugs found** (fix when coding): the 500 page shows the sample hotline; order detail never shows "Pay now"; the brands index ignores `logo_url`.
+- **Next:** owner review of frames 07–31 and the open questions (00-shared §4). Then code the pages and the footer, and switch the order prefix to SJB.
+
 ### Progress — Phase 10: storefront recommendations (2026-11-25, 5 parallel agents)
 
 PRD §3.1a X-01…X-11, rules 25b–25d. Brief: `docs/_handoff/briefs/brief-p10-recommendations.md`. Contract: `docs/api/recommendations.md`.
