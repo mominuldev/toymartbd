@@ -247,7 +247,9 @@ Owner: **sections only, not the whole page.** It appears in:
 
 Cart and checkout carry no pattern, following `03-storefront-spec.md` §0 rule 9: nothing playful below a decision.
 
-### 7.5 Footer: component set `Footer — Vivid · বাংলা` (`41:9166`: Desktop `41:8217`, Mobile `41:8832`)
+### 7.5 Footer: Concept E `Footer — Vivid · বাংলা · Concept E (Simple playground)` (`201:2882`) is live
+
+**Live footer since 2026-11-25 (owner): Concept E, below.** The night-sky set described next, `41:9166` (Desktop `41:8217`, Mobile `41:8832`), is now `Footer — Vivid · বাংলা (backup 2026-11-25, night sky)` on the Components page and no screen uses it. Its notes are kept as history.
 
 - scalloped wave top
 - brand-colour blobs and the confetti layer, also inside the club card
@@ -256,7 +258,7 @@ Cart and checkout carry no pattern, following `03-storefront-spec.md` §0 rule 9
 - the logo mark peeking over the wave
 - a five-colour rainbow stripe at the bottom
 
-The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 footer instances on the Vivid page use it. The tablet uses the Mobile variant stretched to 834.
+The Bangla copy is baked into this set, so it is a Vivid-only component. Until 2026-11-25 every footer instance on the Vivid page used it; the tablet used the Mobile variant stretched to 834.
 
 **Redesign, "night-sky playground" (owner request 2026-11-23: more creative and kid-friendly).** The earlier version is kept as `Footer — Vivid · বাংলা (backup 2026-11-23)` (`102:1042`) on the Components page. No instance uses it.
 
@@ -271,7 +273,7 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 
 **Code note:** the band and sky are decorative. Ship them as one inline SVG per breakpoint with `aria-hidden="true"`, not as images, and don't animate them unless `prefers-reduced-motion` allows it.
 
-**Concept B, "Toy blocks" (2026-11-23, alternative for the owner to choose).** It is component set `Footer — Vivid · বাংলা · Concept B (Toy blocks)` (`109:1796`: Desktop `108:1660`, Mobile `109:1689`) on the Components page. **No screen uses it yet**; the night-sky set above is still live.
+**Concept B, "Toy blocks" (2026-11-23, alternative for the owner to choose).** It is component set `Footer — Vivid · বাংলা · Concept B (Toy blocks)` (`109:1796`: Desktop `108:1660`, Mobile `109:1689`) on the Components page. **No screen uses it.**
 
 - **Light footer.** The background is `pastel/lilac`, with a party-bunting edge: flags in the five brand colours on a sagging string.
 - **Blocks.** Each link group is a chunky toy block. Blocks have `text/primary` 2.5 px outlines, Lego studs on top and a hard, zero-blur 6 px shadow, whose colour is bound to `text/primary`:
@@ -308,6 +310,60 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. All 9 f
 - **Extras.** A compass rose (top right) and a little sailing ship (bottom left).
 - **Mobile.** The brand scroll comes first. Below it, the four groups (Contact included) are accordion islands that zigzag left and right, joined by the trail, which ends at the X.
 - **Contrast.** All text sits on the parchment or sand fills, using `text/primary` and `text/secondary` (never muted).
+
+**Concept E, "Simple playground" (2026-11-25, alternative for the owner to choose).** Owner request: "update the footer design with simple and kids friendly animated element". It is component set `Footer — Vivid · বাংলা · Concept E (Simple playground)` (`201:2882`: Desktop `200:2724`, Mobile `201:2753`) on the Components page, at x 10400 beside Concept D. The set and both variants set `SJ · Color` to Vivid. Preview instances, each in a wrapper frame that owns a 12 s timeline: Desktop `201:3401` (instance `201:2883`), Mobile `201:3402` (instance `201:3033`). **Live on every Vivid screen (owner, 2026-11-25); night-sky set kept as backup `41:9166`.** 59 instances swapped on `34:5658` (see below).
+
+- **Simple first.** The background is `pastel/butter-strong`. Its top edge is a soft two-hump wave melting from `bg/canvas`. There are no stickers, tilts or pattern.
+- **Columns (desktop).** Plain columns on a 1200 content width with a `space/40` gap:
+  - brand (320): the Logo `Full, Light`, the blurb (`Body/M`, `text/secondary`) and four 40 px `bg/surface` social circles (Facebook, Instagram, YouTube, WhatsApp) with an `icon/default` glyph
+  - শপ, সহায়তা, প্রতিষ্ঠান (fill): a `Label/L` `text/primary` heading over a 24 × 4 accent bar (`brand/sun`, `brand/learn`, `brand/play`), then `Body/M` `text/secondary` links. The labels are the live footer's.
+  - যোগাযোগ করুন (260, `brand/lagoon` bar): four rows, each with a 36 px `bg/surface` icon tile. The values are the §7.0 placeholders in dashed `border/default` frames: `placeholder:hotline` [হটলাইন নম্বর] with `placeholder:hours` [সময়সূচি], "WhatsApp-এ অর্ডার" (no number), `placeholder:email` [ইমেইল] and `placeholder:address` [ঠিকানা].
+- **Play strip** (desktop 1440 × 150, mobile 390 × 112). A `pastel/mint-strong` back hill and a `brand/learn` grass band run into the bottom bar. On it:
+  - the mascot (Logo `Mark`, 56 px desktop and 44 px mobile) with a `bg/surface` speech bubble "আবার এসো!" (`SJ/Elevation/e1`)
+  - two balloons (`brand/grow`, `brand/lagoon`) tied to the hill
+  - a `brand/play` kite with `bg/surface` spars and two bows (desktop only)
+  - sparkles (four-point stars in `brand/sun`, `brand/lagoon`, `brand/play`, `brand/grow`): five on desktop, three on mobile
+  
+  The strip sits under the columns, so no decoration crosses any text. The hills scale with the frame. The mascot pins left, the kite to the centre and the balloons to the right.
+- **Bottom bar.** `bg/brand-strong` with `text/inverse`, as today: "© 2026 Smart Junior. যত্ন নিয়ে তৈরি, ঢাকায়।", "আমরা গ্রহণ করি" and five outlined chips: ক্যাশ অন ডেলিভারি, bKash, Nagad, Visa, Mastercard. The brand names are in Fredoka.
+- **Mobile.** The brand block comes first, with 44 px social circles. The four groups are accordion rows (56 px or more, `border/strong` divider, a 10 px brand-colour dot, `Icon/Plus`). যোগাযোগ is drawn open (`Icon/Minus`) so the placeholders show. The strip has the mascot and bubble, the balloons and three sparkles. The bottom bar stacks, wraps its chips and keeps `space/120` bottom padding for the fixed tab bar (raised from `space/96` on 2026-11-25: the 110 px tab bar covered the second chip row).
+- **Tokens.** All 150 fills and strokes in the set are bound to `SJ · Color` (0 raw). Padding, gaps and radii bind `SJ · Space` and `SJ · Radius`, and text uses `SJ Vivid/*` styles. The exceptions are the four Latin payment chips: their text is set entirely in Fredoka, so it binds no style (the §5.4 known limit). The top-level overlap audit on `2:4` found no intersections (50 nodes).
+- **Contrast (Vivid).**
+
+  | Pair | Ratio |
+  |---|---|
+  | `text/secondary` #334155 on `pastel/butter-strong` #FEF3C7 | 9.3:1 |
+  | `text/primary` on the same | 13.1:1 |
+  | `text/inverse` on `bg/brand-strong` #0369A1 | 5.9:1 |
+  | `icon/default` and the bubble text on `bg/surface` | 14.6:1 |
+
+  In Light, `text/secondary` on butter-strong is about 8.9:1. The social circles and icon tiles are white on butter (1.1:1). That is fine, because each glyph carries the meaning.
+
+**Motion (Figma).** Real manual keyframes sit on the decorative layers of both variants, and instances inherit them. Every loop divides the 12 s timeline, so the timeline repeats seamlessly. An export at 5 fps confirmed the motion: the mascot tilts, the kite sways, the balloons bob out of phase and the sparkles twinkle. A footer instance placed inside a screen frame plays on that frame's timeline. Set the frame's timeline to 12 s; an instance alone stays at the default 2 s.
+
+**Motion spec (code).**
+
+| Element | Property | Range | Duration | Easing | Delay | Loop |
+|---|---|---|---|---|---|---|
+| Mascot | `rotate` (origin bottom centre) | 0 → 8° → −6° → 6° → −4° → 0 in the first 2.5 s, then still | 6 s | ease-in-out | 0 | infinite |
+| Balloon 1 | `translateY` | 0 → −6 px → 0 | 4 s | ease-in-out | 0 | infinite |
+| Balloon 2 | `translateY` | 0 → −5 px → 0 | 4 s | ease-in-out | −2 s (half a cycle out of phase) | infinite |
+| Kite (desktop) | `rotate` (origin at the string tip) | 4° → −4° → 4° | 6 s | ease-in-out | 0 | infinite |
+| Sparkles | `opacity` and `scale` | opacity 1 → 0.35 → 1, scale 1 → 0.7 → 1 | 3 s | ease-in-out | 0 / 0.6 / 1.2 / 1.8 / 2.4 s desktop; 0 / 1 / 2 s mobile | infinite |
+
+Rules:
+- Only `transform` and `opacity` animate. Nothing flashes: the fastest cycle is one twinkle every 3 s, well under 3 flashes a second.
+- Under `prefers-reduced-motion: reduce`, everything is static (`animation: none`), in the resting pose shown in Figma.
+- Ship the strip as inline SVG with `aria-hidden="true"`. Use CSS `@keyframes` only, with `animation-iteration-count: infinite`, and no JS animation library.
+- The strip has a fixed height per breakpoint, so the animation causes no layout shift. Set `transform-box: fill-box` on each animated group so it pivots on itself.
+
+**Swap onto the Vivid screens (done 2026-11-25).** The owner asked to make Concept E live.
+- **59 instances** of `41:9166` on `34:5658` swapped with `swapComponent`: 29 desktop → Desktop, 29 mobile → Mobile, and the Home tablet → Mobile, filling 834. They render Vivid (the set carries the mode). The English page `0:1` keeps its own `Footer` `11:376`.
+- **500 page stays phone-free** (owner, 2026-11-15). Desktop `182:35056` hides the four `Rows` children of Contact (the "যোগাযোগ করুন" heading stays). Mobile `182:35620` hides the যোগাযোগ `Panel` and swaps its `Icon/Minus` to `Icon/Plus`, so the row reads as closed. The 22 · Maintenance frames have no footer.
+- Every changed frame hugs its content and has a **12 s timeline**, so the footer motion loops seamlessly.
+- The absolute Bottom Tab Bar on Home and Category mobile is re-pinned to the frame bottom (vertical constraint MAX). Other mobile screens keep the tab bar in flow after the footer.
+- Rows from 06 · Order confirmed down moved down (a frame grew or the gap fell under 300) so every row clears the tallest frame above it by at least 300, labels moving with their rows. The `34:5658` overlap audit is clean (94 nodes).
+- `41:9166` is renamed `Footer — Vivid · বাংলা (backup 2026-11-25, night sky)`, kept on `2:4`, unused.
 
 ### 7.6 Not done / open
 
