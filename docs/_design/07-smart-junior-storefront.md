@@ -1268,3 +1268,39 @@ The owner asked for another version of the home hero in vibrant colours. It is a
 **Not done:**
 - **No semantic tokens yet.** The gradient and the promo-card fills bind primitives, which is a rule-26 defect in code. If the owner picks V2, add tokens (for example `bg/hero-gradient-*`, `bg/promo-sale`, `bg/promo-highlight`) before building it in `HeroBlock`/`HomeHero`.
 - **No tablet frame.**
+
+### 17.12 Home hero: V3 "Toy blocks", a second alternative (owner request, 2026-11-26)
+
+The owner asked for "another unique concept". V2 recoloured the live layout. V3 changes the layout itself: the hero is a bento of chunky building blocks in the logo colours. Each block has toy studs along its top edge and a darker 6–8 px bottom edge for depth.
+
+**Where:** page `34:5658`, below V2: `Hero — V3 Toy blocks · Desktop 1440` (`317:45394`, x 9780, y 6200) and `· Mobile 390` (`317:45476`, x 11380). It is built from scratch. The overlap audit is clean.
+
+**Layout:**
+- **Desktop.** The top row has the headline block (`bg/brand-strong` blue, navy text, accent "খেলনা" in `brand/grow`, three blue studs) and the photo block (yellow studs). A round orange rating sticker, "4.9★ / 12,000+ অভিভাবকের পছন্দ", is tilted 10° and overlaps the seam between the two blocks. The bottom row has four promo blocks with 3D category art:
+  - ফ্ল্যাশ সেল: `action/primary` pink, white text
+  - STEM সপ্তাহ: `action/secondary` sunshine, navy text
+  - 0–3 বছর: `brand/learn` green, navy text
+  - গিফট সেট: `brand/grow` purple, white text
+- **Mobile.** The headline block has full-width stacked buttons. Then come the photo block with the sticker at its top-right corner, and the promo blocks in a 2 × 2 grid with the art on top.
+- **Decoration.** A sunshine star sits on the headline block's top-right corner, and a pink dot near its bottom-right corner.
+
+**Built from:**
+- **Components:** Eyebrow (Butter), Button (Primary and Outline, M, with ArrowRight), Icon/ArrowRight.
+- **Styles:** `SJ Vivid/*` text styles, with digits in Fredoka. The sticker uses `SJ/Elevation/e2`.
+- **Variables:**
+  - Fills bind `SJ · Color` semantics.
+  - Padding, gaps and radii bind `SJ · Space` / `SJ · Radius` where a variable with that value exists.
+  - Primitives are bound directly for the sticker (`orange/500`) and the bottom edges (`blue/700`, `pink/800`, `sunshine/600`, `green/700`, `slate/900`).
+
+**Contrast (estimated from the palette, not re-measured):**
+- navy on blue/500: 5.0:1
+- white on pink/600: 4.7:1
+- navy on sunshine: ≥ 9:1
+- navy on green/500: about 5.5:1
+- white on purple/800: about 10:1
+- navy on orange/500: about 5:1
+
+**Not done:**
+- No semantic tokens yet for the sticker or the block edges (rule 26). Add them before building V3 in code.
+- No tablet frame.
+- No hover states. A natural one is a 2 px "press" that shrinks the bottom edge.
