@@ -1154,3 +1154,10 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
 - **Desktop (≥ 1024):** 4 columns, not 5. The header's prev/next arrows page to the rest. Tablet and mobile keep the sideways 156-px scroller.
 - **Figma:** in `Reels` (`55:12811`) on the Vivid desktop home, the fifth card (`55:12892`) is hidden and kept as the "next" slide. The four visible cards fill the row at 282 px, which makes the band about 110 px taller. The home frame is auto-layout, so it grew to 8,976 px with no overlap.
 - **Code:** in `VideoReelBlock.tsx`, the no-JS grid is `lg:grid-cols-4`, which hides from the 5th item, and the slider track is `*:w-1/4`. At 1440, measured: 4 reels of 326 px each.
+
+### 17.8 Listing grid: three columns on every desktop width (owner, 2026-11-26)
+
+- The product grid on `/toys`, category, brand and search pages (`ListingView`) is now 2 columns on mobile and 3 from `md` up. The `2xl:grid-cols-4` step is gone. It used to switch to 4 columns at 1536 px and wider.
+- Figma already drew 3 columns (rows of 3 × 280 inside the 888-px results column) on Category `34:6106`, Search `209:24225` and Brand `214:27508`, so only the code changed.
+- Measured with Playwright: 3 columns at 1440 and at 1920 on `/toys` and `/categories/building-blocks`.
+- Not changed: the flash-sale page grid and the home rails (`railRowClass`), which are not listing pages.
