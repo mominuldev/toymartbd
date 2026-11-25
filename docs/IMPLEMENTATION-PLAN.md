@@ -355,7 +355,7 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
-### Progress — Phase 10: Smart Junior inner pages, Figma first (2026-11-25) — awaiting owner review
+### Progress — Phase 10: Smart Junior inner pages, Figma first (2026-11-25) — coded
 
 The storefront pages with no Smart Junior frame are designed first, then coded (owner's choice). Spec, numbering and build record: `docs/_design/08-sj-inner/` (00-shared.md §5–§8).
 
@@ -373,7 +373,8 @@ The storefront pages with no Smart Junior frame are designed first, then coded (
   - Footer Concept E ("Simple playground", animated, CSS-only) is live on every Vivid screen.
 - **Figma rule 17** added: never clip structural containers.
 - **Code bugs found** (fix when coding): the 500 page shows the sample hotline; order detail never shows "Pay now"; the brands index ignores `logo_url`.
-- **Next:** owner review of frames 07–31 and the open questions (00-shared §4). Then code the pages and the footer, and switch the order prefix to SJB.
+- **Coded (2026-11-25, owner: "implement the code, all pages"):** frames 07–31 and the Concept E footer in the storefront repo, by 1 primitives agent, 1 footer agent and 6 page agents with strict file scopes. Bugs B1–B3 fixed; open questions coded at the spec defaults. Record and deviations: `07-smart-junior-storefront.md` §16.5.
+- **Next:** owner review in the browser; the SJB order-prefix switch; the open questions still marked in 00-shared §4.
 
 ### Progress — Phase 10: storefront recommendations (2026-11-25, 5 parallel agents)
 

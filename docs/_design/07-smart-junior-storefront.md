@@ -822,3 +822,82 @@ The blocks come from the API's resolver (`docs/api/recommendations.md`), which a
 
 **Copy to review.** These Bangla strings are drafts: the Upgrade title "আরেকটু ভালোটি নিন" and the order rail title "ওর আরও যা ভালো লাগতে পারে".
 
+
+### 16.5 Inner pages and the Concept E footer (2026-11-25)
+
+Frames 07–31 (`docs/_design/08-sj-inner/00-shared.md` §6.1, §7.1, §8.1) and the Concept E footer (`201:2882`) are coded. Behaviour is unchanged: the same routes, no-JS forms, API calls, cookies, redirects, JSON-LD and tracking rule (number + phone, a failed lookup never says which field).
+
+**Shared building blocks** are in `components/ui/`: Notice, StatusPill, OrderTimeline (+ TimelineCourier), EmptyState, Breadcrumb, PageHeaderBand, SegmentedLinks / SegmentedRadios, Switch, Select / FieldHelp / FieldError, `field-styles`, Avatar and Card. They are all server components. Token mapping for the pastels without a storefront token:
+
+| Figma | Code |
+|---|---|
+| `bg/muted` | `bg-subtle` |
+| sky | `tile-sky` |
+| mint | `success-subtle` |
+| blush | `tile-pink` |
+| butter | `accent-subtle` |
+| lilac | `tile-lavender` / `grape-subtle` |
+| coral | `tile-peach` / `brand-subtle` |
+
+**Footer (Concept E).**
+- The structure is the wavy butter band, then four link columns with accent bars, then contact tiles, then the play strip, then the deep-blue bottom bar.
+- The play strip is inline SVG, `aria-hidden`. Its motion is CSS keyframes only (wave, bob, sway, twinkle) and computes to `none` under reduced motion. It adds no client JS.
+- Below 1024 the link groups are `<details>` accordions.
+- The night-sky art is removed. `FooterArt` keeps only `Sparkle` and `ConfettiPattern`.
+- Deviations:
+  - "We accept" shows COD only.
+  - The address row is shown only once the owner sets one.
+  - The social circles come from the `social` config.
+  - Lagoon falls back to `deco-sky`.
+  - The 500 page drops the whole contact column (`showContact={false}`).
+
+**Bugs and open questions, as coded.**
+- B1: the 500 page and global error show no phone. The header hotline slot hides; there is no call button.
+- B2: order detail shows "Pay now" when `payment.retry_allowed`.
+- B3: the brands index shows `logo_url`; without one, a monogram tile. The brand page hero carries the same tile (new `logo` slot on ListingView / ListingHero).
+- O3: courier names stay English in Bangla (`courierLabel`).
+- O4: the account inner pages use the cart-style mobile top bar. Verify keeps the full header.
+- O5: confetti appears on list and info headers only.
+- O6: the delivery-charge page puts the estimator and the zone table side by side at 1440.
+- O7: delivery details on mobile tracking stay hidden.
+- O8 / O9: copy and the "forgot" targets are as shipped.
+- O10: an unpaid online order reads "Payment pending".
+- O11: address cards add the division unless it repeats the district.
+- O12: the 404 button goes to `/toys`; the empty-brand button reads "All brands".
+- O14: suggestion prices are `fg-primary`, and sale pink only with a `compare_at_price`.
+
+**No-phone copy while the hotline is the sample.** These keys keep error and help text from naming a placeholder: `track.tooManyNoPhone`, `payment.reasonsNoPhone.*`, `notices.failedNoPhone`, `verify.helpBodyNoPhone`, `maintenance.bodyNoPhone`. `order.helpBody` loses the unconfirmed hours. Maintenance shows variant B (no contact) until a real hotline is set.
+
+**Deviations common to the pages** (as §16.3):
+- Radius 36 renders as 32.
+- Hairlines use `line-default`.
+- Headings run one step larger than Figma.
+- The container is 1280 with 80 px gutters (Figma: 1200 with 120).
+- Fields are 48 tall (Figma 52 on contact).
+
+**Deviations by page.**
+- **Sign-in pages.**
+  - The phone bottom tab bar still shows; spec §0 says none.
+  - The wrong-code boxes render empty, because the code is never echoed.
+- **Account area.**
+  - The tab bar highlights from the path (Wishlist on `/account/wishlist`).
+  - The top-bar title is body-strong.
+  - The empty states are a local `AccountEmpty` with a pastel disc per page.
+  - Not built (no API): invoice, returns, reorder and back-in-stock.
+- **Track and payment.**
+  - The help card stays peach, and the items heading has no count. Both are the shared order-confirmed parts.
+- **Blog.**
+  - No Messenger share: it needs a Facebook app id. Facebook and WhatsApp are plain links; copy-link is a small island.
+  - No guide contents list (not drawn).
+- **Search and brands.**
+  - Recent-search chips keep the ✕ on every chip.
+  - No counts on brand or category cards (no API).
+- **Static pages and delivery charge.**
+  - The estimator still collapses its selects after a quote (shared with the PDP).
+  - "More from" on the FAQ page appears only when the route passes the pages.
+
+**Not covered by the mock API**, so checked on fixtures rather than in e2e:
+- filled blog and guide pages
+- section-built FAQ, Contact and stacked pages
+- saving an address (`POST /account/addresses` has no mock handler)
+- "Pay now" (every mock order is COD)

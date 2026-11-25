@@ -1,6 +1,6 @@
 # Smart Junior inner pages — shared patterns, numbering and build order
 
-**Status:** specs written 2026-11-25 (batch brief `docs/_handoff/briefs/brief-p10-sj-inner-pages.md`); Figma frames not built yet.
+**Status:** specs written, frames built (§5–§8) and coded 2026-11-25 — code record in `07-smart-junior-storefront.md` §16.5.
 **Owner decision (2026-11-25):** Figma first. These pages are designed on the **Vivid · বাংলা** page `34:5658` of the
 Smart Junior file `2b6PVOOapPbcaKYIdHWZup`, the owner approves, then they are coded.
 
