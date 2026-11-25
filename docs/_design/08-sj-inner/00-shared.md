@@ -310,3 +310,124 @@ FAQ Item, Search Suggestions. In Vivid mode: Notice, Status Pill, Timeline, Sele
 - **Bangla labels in existing instances.** Bangla Chip and Eyebrow labels inside instances override the Latin `SJ/*` style of
   those older components to Anek Bangla.
 - **Fix:** add `SJ Vivid/Latin/*` (Fredoka) styles, if the owner wants every node style-bound.
+
+## 6. Built in phase B (frames 07–17, 2026-11-25)
+
+Built on `34:5658` (Vivid · বাংলা), below Order confirmed. Every page frame sets `SJ · Color` = Vivid and `SJ · Type` = Vivid
+explicitly, like the existing screens, and clips its own content (as they do); nothing inside clips except the 56 px
+product thumbnails (image crops) and the focused OTP box. Chrome is cloned from the existing Vivid frames: desktop Header
+`34:7266`, mobile Header `34:7308`, cart top bar `34:6923`, footers `41:13044` / `41:11108`, Bottom Tab Bar `34:6358`
+(re-pointed to **অ্যাকাউন্ট** active on the account frames). Every new fill, stroke, gap, padding and radius is bound to an
+`SJ` variable (audit: 0 raw paints outside instances); text uses the `SJ Vivid/*` styles with a per-range Fredoka override for
+digits, Latin words, order numbers and phone numbers. Top-level bounding-box audit after the last row: **no intersections**.
+
+### 6.1 Frames
+
+| Frame | Node id | Size | Position (x, y) |
+|---|---|---|---|
+| Label — 07 · Sign in | `156:15327` | 605 × 88 | 0, 25605 |
+| 07 · Sign in — Password — Desktop | `156:12533` | 1440 × 1782 | 0, 25755 |
+| 07 · Sign in — Password — Mobile | `156:13227` | 390 × 2232 | 1840, 25755 |
+| 07 · Sign in — Password — Error — Mobile | `156:13697` | 390 × 2366 | 2340, 25755 |
+| 07 · Sign in — SMS code — Desktop | `156:14177` | 1440 × 1834 | 0, 28544 |
+| 07 · Sign in — SMS code — Mobile | `156:14863` | 390 × 2164 | 1840, 28544 |
+| Label — 08 · Create account | `157:16751` | 451 × 88 | 0, 30858 |
+| 08 · Create account — Desktop | `157:15075` | 1440 × 1945 | 0, 31008 |
+| 08 · Create account — Mobile | `157:15775` | 390 × 2395 | 1840, 31008 |
+| 08 · Create account — Already registered — Mobile | `157:16253` | 390 × 2527 | 2340, 31008 |
+| Label — 09 · Enter the code | `159:18630` | 1394 × 88 | 0, 33685 |
+| 09 · Enter the code — Desktop | `159:16588` | 1440 × 1525 | 0, 33835 |
+| 09 · Enter the code — Mobile | `159:17256` | 390 × 1663 | 1840, 33835 |
+| 09 · Enter the code — Wrong code — Mobile | `159:17709` | 390 × 1694 | 2340, 33835 |
+| 09 · Enter the code — Resend ready — Mobile | `159:18168` | 390 × 1747 | 2840, 33835 |
+| Label — 10 · Set your password | `160:19637` | 769 × 88 | 0, 35732 |
+| 10 · Set your password — Desktop | `160:18523` | 1440 × 1753 | 0, 35882 |
+| 10 · Set your password — Mobile | `160:19202` | 390 × 1781 | 1840, 35882 |
+| Label — 11 · Reset your password | `160:20781` | 557 × 88 | 0, 37813 |
+| 11 · Reset your password — Desktop | `160:19640` | 1440 × 1830 | 0, 37963 |
+| 11 · Reset your password — Mobile | `160:20333` | 390 × 1998 | 1840, 37963 |
+| Label — 12 · Account home | `162:21922` | 671 × 88 | 0, 40111 |
+| 12 · Account home — Desktop | `162:20639` | 1440 × 1664 | 0, 40261 |
+| 12 · Account home — Mobile | `162:21409` | 390 × 2245 | 1840, 40261 |
+| Label — 13 · Orders | `164:23574` | 792 × 88 | 0, 42656 |
+| 13 · Orders — Desktop | `164:21801` | 1440 × 1789 | 0, 42806 |
+| 13 · Orders — Mobile | `164:22606` | 390 × 2286 | 1840, 42806 |
+| 13 · Orders — Empty — Mobile | `164:23126` | 390 × 1466 | 2340, 42806 |
+| Label — 14 · Order detail | `167:24718` | 1203 × 88 | 0, 45242 |
+| 14 · Order detail — Desktop | `167:23392` | 1440 × 1877 | 0, 45392 |
+| 14 · Order detail — Mobile | `167:24197` | 390 × 2584 | 1840, 45392 |
+| Label — 15 · Profile and kids | `168:26542` | 779 × 88 | 0, 48126 |
+| 15 · Profile — Desktop | `168:24580` | 1440 × 2547 | 0, 48276 |
+| 15 · Profile — Mobile | `168:25406` | 390 × 3279 | 1840, 48276 |
+| 15 · Profile — Kids form open — Mobile | `168:25952` | 390 × 3619 | 2340, 48276 |
+| Label — 16 · Addresses | `169:28157` | 706 × 88 | 0, 52045 |
+| 16 · Addresses — Desktop | `169:26249` | 1440 × 2413 | 0, 52195 |
+| 16 · Addresses — Mobile | `169:27083` | 390 × 2762 | 1840, 52195 |
+| 16 · Addresses — Empty + errors — Mobile | `169:27636` | 390 × 2607 | 2340, 52195 |
+| Label — 17 · Wishlist | `170:30049` | 826 × 88 | 0, 55235 |
+| 17 · Wishlist — Desktop | `170:27938` | 1440 × 2261 | 0, 55385 |
+| 17 · Wishlist — Mobile | `170:28783` | 390 × 2153 | 1840, 55385 |
+| 17 · Wishlist — Empty — Desktop | `170:29347` | 1440 × 1526 | 2340, 55385 |
+
+Row 07 has two sub-rows (Password, then SMS code 400 below, as spec 01 asks). Rows are the tallest frame + 300 apart, or more
+where a row shrank after a fix.
+
+**Screenshot-verified:** every row 07–17, section by section (desktop body, mobile body, each state frame), plus the
+desktop header actions, the mobile header and the bottom tab bar zoomed in after the clipping fix (§6.4).
+
+### 6.2 Deviations from the specs (and why)
+
+**Sign-in and set-up (07–11)**
+1. `Input` has no Large (52) size, so desktop forms use the component's 48 field. Benefits-panel padding is `space/40`
+   (code value; the spec fell back to 32 only because 40 was not known to exist). Desktop body: padding 48 top / 80 bottom.
+2. No `Cube` icon exists; the orders benefit uses `Package`. The verify back button uses `CaretLeft` (no `ArrowLeft`).
+3. Mobile "forgot" link sits 12 below the password field (the card gap), not −6: no negative step exists.
+4. Password Error frame: the `notices.failed` banner (hotline drawn as `[হটলাইন · placeholder]`) sits at the top of the form
+   card **and** the field error is shown, as the spec asks for one banner example in that frame.
+5. "Already registered": the Notice has no links slot, so that one Notice is **detached** (`Notice · Already registered
+   (detached: links row)`) to add the two 44-tall links. Add a `Links` slot to `Notice` and swap back when convenient.
+6. Required ` *` marks are a `text/danger` range on the Input label (no separate node).
+7. "Enter the code" keeps the full site header with the in-page back row (spec 01 default; O4 still open). Default frame shows
+   boxes 1–3 filled (4 8 2) and box 4 focused (the spec asked for first-box focus *and* three filled, which contradict).
+   Wrong code keeps the component's API-style line "কোডটি মেলেনি। আবার লিখুন।". Resend ready uses an
+   `ArrowCounterClockwise` icon in place of the clock. Small print for register/reset is listed in the row label.
+8. Copy flagged by spec 01 §8 (passwordNote, benefits.trust, register.sub, panelBody "no separate sign-up form") is drawn
+   **as shipped**, not rewritten (O8).
+
+**Account area (12–17)**
+9. Mock name is রাইসা আহমেদ (the Account Menu Card default) and order numbers are `SJB-26-000xx` (owner decision),
+   replacing the spec's "SJ-260123".
+10. Desktop order cards and address cards are 436 wide (2 × 436 + 16 = 888), not 432, so the grid fills the column.
+11. The verified phone on Profile uses **`Select` State=Disabled with its trailing icon swapped to `Lock`** (Input has no
+    trailing-icon slot). The "Help row" of an Input/Select is hidden whenever there is no helper text.
+12. Wishlist grid is 3 × 280 with `space/24` gaps (888); there is no 36 step. Product cards are clones of the Category-page
+    cards (live prices as drawn there), resized to 280 / 171. The share strip is `pastel/butter` (spec gave no fill).
+13. Account-home mobile tiles get a common min-height (165) so the 2 × 3 grid rows line up.
+14. Order tabs are `Chip` instances with Count on; their filter "×" is hidden. They sit at 36 inside a 44 row.
+15. Order detail delivery charge shows ৳70 — this is a per-order value the API returns, not the unconfirmed rate card.
+16. Profile shows `whatsappUnavailable` under `orderHow` (WhatsApp sending is not live yet). Birthday consent is **off**.
+17. Address form: the 2-line textarea is the `Input` component at its normal height (resizing the nested field is not
+    allowed on an instance); it is named `Textarea · … (2 lines)`. The empty + errors frame uses **NEW** copy
+    "এলাকার নাম দিন।" for the Area field error (spec named no string) — confirm or replace.
+18. Breadcrumb row is 20 / 120 padding (58 tall) instead of a clone of the product breadcrumb row.
+
+### 6.3 Left out (not drawn)
+
+- "Pay now" on order detail: conditional on `payment.retry_allowed`; the COD mock does not show it (noted in the row label).
+- The other order stages, invoice, returns, reorder and all other "needs API" items from spec 02 §9.
+- Voice-call OTP fallback, the expired-code banner and the session-ended / signed-out banners (spec 01 states with no frame).
+- Signed-in header state on Set password (the cloned header is the signed-out one used across the Vivid page).
+
+### 6.4 Clipping fix (owner feedback, 2026-11-25)
+
+Badges and shadows were being cut off. Cause: clipping on structural frames inside components and on cloned chrome.
+- **Components changed on `2:4`** (clip turned off on every non-Focus variant's structural frames; Focus variants untouched,
+  image crops, the Page Header Band confetti layer and Category Card `Art` kept): Header `10:289` (39 frames, incl. the
+  Wishlist / Cart wrappers that cut the count badges), Bottom Tab Bar `10:290` (11), Notice (8), Order Timeline / Step (20),
+  Code Boxes (6), Switch (4), Select (6), Input (6), Chip (2), Avatar (3, Initials only), Breadcrumb (6), Page Header Band (8),
+  Empty State (7), Account Menu Card / Item (2), Account Menu Card (4), Brand Card (8), Category Card (6), FAQ Item (6),
+  Search Suggestions (17). Status Pill, Code Boxes / Box, Segmented Control, Button and Icon Button had none.
+  The existing Vivid screens inherit this too (their header badges were cut the same way).
+- **In frames 07–17:** 107 clip overrides turned off — cloned top bars (5), header instance overrides (`Mark`, `Frame`,
+  `Submit`), the detached Notice (`Icon wrap`, `Content`) and product-card internals. Footer instances were left as they are
+  (their clipping holds the decorative sky/confetti).

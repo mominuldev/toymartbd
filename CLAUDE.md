@@ -193,6 +193,7 @@ These are mechanical and non-obvious; each one cost a rework pass.
 14. **An instance child's transform cannot be overridden.** Render a "pressed" state by resizing a child, not moving it.
 15. **Icons are Phosphor (filled paths), not Lucide (strokes).** Colour them with FILLS. Fetch path data from `@phosphor-icons/core`; never hand-write it. Component children need `constraints: SCALE` or instances crop instead of scaling.
 16. **Tokens leave Figma only through the export.** After any variable, effect-style or admin text-style change, re-export into `packages/tokens/src/figma-variables.json`, run `npm run tokens:build`, and commit the diff. Never edit `packages/tokens/dist/` by hand. Add a new colour mode to `THEMES` in `scripts/build.mjs`.
+17. **Never clip a structural container.** `clipsContent = true` on a row, section, card wrapper or header cuts off elevation shadows and overhanging badges (the cart count). Clip only image crops, a pattern layer inside its band, and the screen frame itself; draw focus rings as a stroke or ring layer rather than relying on clipping. Screenshot headers, cards and badges zoomed in to prove nothing is cut.
 
 ## Known gaps
 
