@@ -6,6 +6,11 @@
     {{-- The admin is a private operations tool. It must never be indexed. --}}
     <meta name="robots" content="noindex, nofollow">
     <title>Admin · {{ config('app.name') }}</title>
+    {{-- Smart Junior store icon (docs/_design/brand/favicon, Figma `296:3302`). The admin's are static
+         files in public/; the storefront's come from Site & branding › Store icon instead. --}}
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     {{-- Set the theme before first paint so a dark-mode user never sees a light flash.
          The stored value is a UI preference only, never a credential. The nonce is the
          admin CSP's (App\Http\Middleware\SecurityHeaders): no other inline script runs. --}}
