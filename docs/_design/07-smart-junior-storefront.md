@@ -901,3 +901,55 @@ Frames 07–31 (`docs/_design/08-sj-inner/00-shared.md` §6.1, §7.1, §8.1) and
 - section-built FAQ, Contact and stacked pages
 - saving an address (`POST /account/addresses` has no mock handler)
 - "Pay now" (every mock order is COD)
+
+## 17. Logo palette (2026-11-25)
+
+The owner added the new Smart Junior logo to the Foundations page: an image layer `SmartJunior 1` (`245:36323`) above `Frame 1` (`245:36322`). It is a raster board (2018 × 4096) showing the logo on cream and on dark navy, plus a colour strip. The colour tokens now follow the logo. Hexes were sampled from a full-resolution render of the strip and wordmark.
+
+| Logo colour | Hex | Ramp | Pinned step |
+|---|---|---|---|
+| Sunshine yellow | `#FEC303` | `sunshine` | 400 |
+| Blue | `#008CF5` | `blue` | 600 (was 500) |
+| Navy | `#032360` | `slate` | 800 |
+| Night (dark background) | `#000F26` | `slate` | 900 |
+| Orange | `#FE611C` | `orange` | 500 |
+| Pink | `#FD375A` | `pink` | 500 |
+| Green | `#55BB2B` | `green` | 500 |
+| Purple ("Smart") | `#591C9D` | `purple` | 800 (was 500) |
+| Cream (light background) | `#FFFCF5` | `cream/50` (`#FFFCF7`) | — |
+
+**How the ramps were built.**
+- The six brand ramps in `SJ · Primitives` are rebuilt in OKLCH:
+  - **Lightness** is the Tailwind step's own value, so a step keeps its contrast with white or navy.
+  - **Hue** is the logo's own hue. Only yellow keeps Tailwind's hue drift, so its dark steps don't turn olive.
+  - **Chroma** is scaled by the logo colour's chroma.
+- Each logo colour replaces the step nearest to it in lightness, so blue lands at 600 and purple at 800.
+- `slate/800` and `slate/900` take the logo navy and night. The rest of slate is unchanged. Light mode does not reference these ramps, so it is unchanged.
+
+**Vivid alias changes:**
+- `bg/canvas` → `cream/50`
+- `brand/lagoon` and `border/brand` → `blue/600`
+- `brand/grow` → `purple/800`
+- `effect/focus-ring` → `#0264B2`
+- `effect/glow-primary` → `#C0440A` at 28%
+- `effect/glow-accent` → `#FD375A` at 28%
+
+Every other alias keeps its step and picks up the new hue.
+
+**Key ratios:**
+- white on `action/primary` (`orange/700` #C0440A): 5.2:1
+- white on `blue/700`: 6.0:1
+- navy on cream: 14.5:1
+
+The `SJ/Elevation/*` styles are raw `#1e2140` and were not changed.
+
+**Code.**
+- `sj-*` in `packages/tokens/src/figma-variables.json` is re-exported from Figma, and `sj-cream/50` is added.
+- In the `smart-junior` mode:
+  - `color/bg/canvas` → `sj-cream/50`
+  - the logo inks: `deco/coral` → `sj-orange/500`, `deco/sky` → `sj-blue/600`, `deco/grape` → `sj-purple/800`
+- The AA gate passes all 150 pairs.
+
+**Not done.**
+- The storefront `Wordmark`/`LogoMark` still draws the old squircle mark. The new logo exists only as a raster, so it needs an SVG source before it can replace them (open question §6, "Real assets").
+- The Figma header and footer Logo component (`5:51`) is also still the old mark.
