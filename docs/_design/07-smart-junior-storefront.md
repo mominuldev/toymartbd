@@ -984,9 +984,26 @@ The first logo pass changed only the dark, readable shades, so the site barely c
 - The card cart square goes from 10, and 14 at `lg`, to 8, and 10 at `lg`.
 - Fields, cards and images keep 14.
 
-**Figma is behind code on these points:**
-- the hero and footer-bar text is still bound to `text/inverse` (white on the lighter blue)
-- `action/cart` is a solid blue, not the orange tint
-- the Button radius is still `md`
+**Cart button in Figma (2026-11-25).**
+- `action/cart` (Vivid) aliases a new primitive, `orange/alpha-12` (#FE611C at 12%). The Light value is unchanged.
+- All 129 cart controls on page `34:5658` got a 1.5 px inside stroke bound to `border/cart`: 126 card squares, the PDP cart row button, the mobile sticky-bar button and "add all" in Frequently bought together.
+- Their labels and icons already bind `text/on-cart` and `icon/on-cart`, which are navy.
 
-These need a pass on page `34:5658`.
+**Contrast.** Each check composites the tint over the background the control actually sits on: `bg/surface` (127 controls), `bg/canvas` (1) and `pastel/mint` (1).
+
+| Pair | Ratio | Needed |
+|---|---|---|
+| Navy label and icon on the tint | 12.4–13.0:1 | 4.5:1 |
+| Border against the page | 4.9–5.2:1 | 3:1 |
+| Border against the tint | 4.3–4.5:1 | 3:1 |
+| White on Buy now pink | 4.7:1 | 4.5:1 |
+
+**Side by side.** In Product Card (`9:146`), the cart square now matches Buy now:
+- 44 × 44 on desktop (was 40) and 36 × 36 on mobile (was 32)
+- both bound to `radius/sm`; Buy now on desktop was `radius/md`
+
+All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `size-9 lg:size-11 rounded-sm`, measured at 36 / 44 px and 10 px, the same as Buy now.
+
+**Figma is still behind code on these points:**
+- the hero and footer-bar text is still bound to `text/inverse` (white on the lighter blue)
+- the Button radius outside the product card is still `md`
