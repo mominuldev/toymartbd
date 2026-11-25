@@ -1007,3 +1007,12 @@ All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `
 **Figma is still behind code on these points:**
 - the hero and footer-bar text is still bound to `text/inverse` (white on the lighter blue)
 - the Button radius outside the product card is still `md`
+
+**Product card hover border (owner, 2026-11-25).**
+- Product Card (`9:146`) has a new `State` property:
+  - `State=Hover` (`258:3063` desktop, `258:3079` mobile) adds a 1.5 px inside stroke and `SJ/Elevation/e2`.
+  - The stroke binds the new `border/card-hover` variable: Vivid `pink/600`, Light aliases `border/brand`. A new variable is needed because Figma's Vivid `border/brand` is blue, while code's is pink.
+- The Default variants carry a prototype `ON_HOVER → CHANGE_TO` Hover, smart-animated over 320 ms on the standard curve.
+- Code: the card has a transparent 1.5 px border at rest, so nothing shifts on hover.
+  - On hover and keyboard focus: `border-line-brand` and `shadow-e2`.
+  - The transition covers `box-shadow` and `border-color` on `--tm-duration-slow` with `ease-standard`. It is off under reduced motion.
