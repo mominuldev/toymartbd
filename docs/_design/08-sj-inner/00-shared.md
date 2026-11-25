@@ -431,3 +431,131 @@ Badges and shadows were being cut off. Cause: clipping on structural frames insi
 - **In frames 07–17:** 107 clip overrides turned off — cloned top bars (5), header instance overrides (`Mark`, `Frame`,
   `Submit`), the detached Notice (`Icon wrap`, `Content`) and product-card internals. Footer instances were left as they are
   (their clipping holds the decorative sky/confetti).
+
+## 7. Built in phase C (frames 18–24, 2026-11-25)
+
+Built on `34:5658` (Vivid · বাংলা), below Wishlist. The conventions are the same as phase B (§6):
+- Every page frame sets `SJ · Color` = Vivid and `SJ · Type` = Vivid explicitly, and clips only its own content.
+- The chrome is cloned from the phase B frames (desktop Header `162:20640`, mobile Header `162:21410`, footers `162:20850` / `162:21448`) and from the Home Bottom Tab Bar `34:6012`, with হোম active.
+- Text uses the `SJ Vivid/*` styles, with a per-range Fredoka override on Latin text and digits.
+
+**Audits.**
+- After the last row:
+  - Top-level bounding-box audit: **no intersections**.
+  - Raw (unbound) solid fills and strokes outside instances: **0**.
+  - Clipping frames inside these rows: **0**. The confetti `Section pattern` layers and the 404 illustration are decorative and keep their clipping.
+- The chips, buttons, inputs, steps and pills all keep 44 px targets wherever the component provides them.
+
+### 7.1 Frames
+
+| Frame | Node id | Size | Position (x, y) |
+|---|---|---|---|
+| Label — 18 · Track order | `175:31780` | 1848 × 88 | 0, 57796 |
+| 18 · Track — Desktop | `173:29951` | 1440 × 2046 | 0, 57946 |
+| 18 · Track — Mobile | `174:31200` | 390 × 2967 | 1840, 57946 |
+| 18 · Track — Lookup + error — Mobile | `174:31692` | 390 × 1816 | 2340, 57946 |
+| 18 · Track — Timeline specimens | `175:31596` | 736 × 1545 | 2840, 57946 |
+| 18 · Track — Lookup — Desktop main column (specimen) | `175:31773` | 736 × 260 | 3676, 57946 |
+| Label — 19 · Payment status | `176:33832` | 2041 × 88 | 0, 61064 |
+| 19 · Payment — Desktop · failed | `176:31742` | 1440 × 2275 | 0, 61214 |
+| 19 · Payment — Mobile · failed | `176:33163` | 390 × 2696 | 1840, 61214 |
+| 19 · Payment — Mobile · states board (pending, expired, review, no order) | `176:33685` | 390 × 3274 | 2340, 61214 |
+| 19 · Payment — Desktop · paid | `176:32444` | 1440 × 2520 | 2840, 61214 |
+| Label — 20 · Not found | `178:34911` | 1762 × 88 | 0, 64638 |
+| 20 · Not found — Desktop | `177:33438` | 1440 × 2399 | 0, 64788 |
+| 20 · Not found — Mobile | `177:34148` | 390 × 2606 | 1840, 64788 |
+| Label — 21 · Server error | `182:36018` | 2356 × 88 | 0, 67545 |
+| 21 · Server error — Desktop | `182:34911` | 1440 × 1475 | 0, 67695 |
+| 21 · Server error — Mobile | `182:35554` | 390 × 1807 | 1840, 67695 |
+| Label — 22 · Maintenance | `183:35998` | 2226 × 88 | 0, 69653 |
+| 22 · Maintenance — Desktop (variant B) | `183:35898` | 1440 × 900 | 0, 69803 |
+| 22 · Maintenance — Mobile (variant B) | `183:35932` | 390 × 844 | 1840, 69803 |
+| 22 · Maintenance — Contacts confirmed — Mobile (variant A) | `183:35966` | 390 × 844 | 2340, 69803 |
+| Label — 23 · Blog index & archives | `186:38707` | 2961 × 88 | 0, 70853 |
+| 23 · Blog — Desktop | `184:35951` | 1440 × 2277 | 0, 71003 |
+| 23 · Blog — Mobile | `186:37565` | 390 × 3244 | 1840, 71003 |
+| 23 · Blog — Empty — Mobile | `186:38089` | 390 × 1653 | 2340, 71003 |
+| 23 · Blog author — Desktop | `184:36704` | 1440 × 1727 | 2840, 71003 |
+| Label — 24 · Blog article & guide | `190:43518` | 2902 × 88 | 0, 74398 |
+| 24 · Blog article — Desktop | `187:38639` | 1440 × 4588 | 0, 74548 |
+| 24 · Blog article — Mobile | `190:40459` | 390 × 5072 | 1840, 74548 |
+| 24 · Buying guide — Mobile | `190:41780` | 390 × 5884 | 2340, 74548 |
+| 24 · Buying guide — Desktop | `189:39447` | 1440 × 5581 | 2840, 74548 |
+
+**Layout.**
+- Rows are the tallest frame + 300 apart.
+- Row 19 was moved down once, after the Track mobile frame grew in a fix.
+- The next free row starts at about y 80430.
+
+**Screenshot-verified:** every frame in rows 18–24. Zoomed checks covered:
+- the desktop header actions and badges
+- the order card and fact tiles on mobile
+- the lookup form with the error Notice
+- the timeline specimens
+- the payment receipt card and the "What happens next" card
+- the 404 eyebrow, hero and section headers
+- the server-error card, with a check that no phone appears
+- the maintenance A and B cards
+- the blog hero band, the chips, the card title clamp and the pagination
+- the article breadcrumb, header, meta row, tags, share row and author box
+- the guide sections, with their picks and notes
+
+### 7.2 Deviations from the specs (and why)
+
+**Data and copy**
+1. Order number `SJB-26-00042` (O1) replaces the spec's `TMB-`, and courier and payment brands stay English (O3).
+2. Sample totals are internally consistent but are sample data:
+   - track: ৳6,825 COD
+   - payment: subtotal ৳7,430, coupon −৳675, delivery ৳70
+3. The 500 page and maintenance B show no phone. Maintenance A draws the hotline as `[হটলাইন · placeholder]`.
+4. The track help card drops the hours (D4).
+
+**Track (18)**
+5. Cards use `border/default` + `SJ/Elevation/e1`, radius `xl` / `lg`, padding 32 (24 for the timeline and rail cards) / 20.
+6. The error callout is the `Notice` Danger instance (with WarningCircle), not a hand-built callout. The fields stay in their Default state (rule 22).
+7. The status pill is `Status Pill` Stage=Shipped ("পথে আছে") for the out-for-delivery order.
+8. The Upcoming step has no time line, because the component variant has none.
+9. The desktop lookup state is drawn as a 736-wide specimen at x 3676, not under the desktop frame, to keep the row grid.
+
+**Payment (19)**
+10. The payment status pill is built from tokens, because `Status Pill` has only order stages.
+11. The receipt card does not clip. Instead, the actions bar carries bottom radii (rule 17).
+12. The flash callout after a failed retry is not drawn: the spec gives no copy.
+
+**Not found (20)**
+13. The 404 illustration is 440 × 236 on desktop (spec 560 × 300), so the copy column fits the search field. It is the code's SVG geometry rebound to tokens.
+14. Categories and bestsellers are clones of Home "Shop by category" `34:5706` / `34:5915` and "You may also like" `34:6669` / `34:6762`, with the eyebrow and subheading hidden.
+
+**Server error (21)**
+15. The desktop header instance hides `Hotline` and `Category nav`. The desktop footer instance hides the four contact rows; the heading stays.
+16. The mobile footer's contact accordion is collapsed, so no value shows there.
+
+**Blog (23–24)**
+17. The list hero is built from tokens rather than the `Page Header Band` component, because the chips must sit inside the band:
+    - The band copies the Category hero, with the confetti `Section pattern` layer cloned.
+    - Padding is 24 / 40 (no 28 or 36 step).
+    - The chips are the phase B `Chip` (Count on) clones, 36 tall, not 40 / 44.
+18. Blog cards are clones of the Journal `Post` `34:5854`. The title is fixed at 58 with ending truncation (2 lines).
+19. Desktop pagination is a clone of `34:6292`; its current page is `bg/inverse` (as on Category), not `action/primary`.
+20. Author avatars use `Avatar` Initials at 64 (archive header and author box) and 40 (byline). The spec asked for 72 and 32, sizes the component does not have.
+21. Article "Toys from this article" padding top is 64 (no 72 step).
+22. Guide picks are clones of the Vivid product cards, at 368 desktop and 171 mobile. The guide drops the article's prose specimen and keeps one intro paragraph.
+
+### 7.3 Left out (not drawn)
+
+- Track:
+  - `invalid`, `too-many` and `failed` callouts (copy only)
+  - the desktop result's delivery card on mobile (O7)
+- Payment: the sandbox note.
+- Blog:
+  - the guides index (the label notes its differences)
+  - category and tag archives (covered by the author frame plus the label)
+  - the English-fallback body caption (described in the row label)
+  - a separate empty desktop frame
+- **Not done: the header/footer placeholder pass** (owner request relayed 2026-11-25: hotline, hours, email, address, WhatsApp reply time, free-delivery threshold and return period as `[…]` placeholders with a dashed `placeholder:*` outline):
+  - The edit to `Header` `10:289` and `Footer — Vivid · বাংলা` `41:9166` on page `2:4` was refused by the session's permission check, because changing shared components was outside this agent's brief.
+  - Nothing was changed. Every Vivid screen, including rows 18–24, still shows `09612-345678`, the hours, the email, the Dhanmondi address and the "৳1,500 / 7 দিনের" announcement.
+  - Values found:
+    - Header: `10:137`, `10:145`, `10:180` (desktop) and `10:253` (mobile), overridden in 25 instances on `34:5658`.
+    - Footer Desktop: `41:8183`, `41:8184`, `41:8190`, `41:8195`, `41:8201` and `41:8202`, in 24 instances.
+    - Outside the chrome: the Help CTA "কল করুন 09612-345678 …" and "সাহায্য লাগবে? 09612-345678", plus "7 দিনের সহজ রিটার্ন" in a Trust Item and in the product and cart copy.
