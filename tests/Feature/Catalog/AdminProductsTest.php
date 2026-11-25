@@ -365,3 +365,23 @@ it('duplicates through the API and returns the draft copy', function (): void {
     expect($copy->json('slug'))->toBe('wooden-train-set-copy')
         ->and($copy->json('variants.0.sku'))->toBe(sprintf('TM-%05d', $copy->json('id')));
 });
+
+it('names both prices, in the admin language, when an upsell is not more expensive', function (string $locale, string $message): void {
+    $cheaper = Product::factory()->priced('2450.00')->create(['name' => 'Toy Train', 'name_bn' => 'খেলনা ট্রেন']);
+    $dearer = Product::factory()->priced('3200.00')->create();
+
+    $response = $this->withHeader('Accept-Language', $locale)->postJson('/api/v1/admin/products', adminProductPayload([
+        'relations' => [
+            ['related_product_id' => $dearer->id, 'type' => 'upsell', 'reason_note' => 'Bigger set'],
+            ['related_product_id' => $cheaper->id, 'type' => 'upsell'],
+        ],
+    ]))
+        ->assertUnprocessable()
+        ->assertJsonPath('type', 'https://toymartbd.com/problems/validation-error');
+
+    expect(collect($response->json('errors'))->firstWhere('field', 'relations.1.related_product_id')['message'] ?? null)->toBe($message)
+        ->and(adminProductErrorFields($response))->not->toContain('relations.0.related_product_id');
+})->with([
+    'English' => ['en', 'An upsell must cost more than this product: Toy Train costs ৳2450.00, this product costs ৳2450.00.'],
+    'Bangla' => ['bn', 'আপসেলের দাম এই পণ্যের চেয়ে বেশি হতে হবে: খেলনা ট্রেন-এর দাম ৳2450.00, এই পণ্যের দাম ৳2450.00।'],
+]);

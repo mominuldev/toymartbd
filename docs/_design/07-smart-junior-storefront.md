@@ -712,7 +712,7 @@ Restyled to the Vivid frames on page `34:5658` (category `34:6106` / `34:6313` /
 - Left out:
   - The bestseller badge, gift chip, sold count, video tile and share button.
   - The skills tiles and the "What's in the box" list.
-  - **Frequently bought together**: the API sends only `related`.
+  - ~~Frequently bought together~~: built 2026-11-25, see §16.4.
 - The section eyebrow is uppercase in English (`t-overline`); Figma uses sentence case.
 
 **Cart.**
@@ -722,7 +722,7 @@ Restyled to the Vivid frames on page `34:5658` (category `34:6106` / `34:6313` /
 - The "Delivery to" district picker is kept, although it is not in Figma.
 - The mobile top bar has no "Edit", because the cart has no edit mode. The footer and the tab bar stay on the mobile cart.
 - Left out:
-  - **The cross-sell rail `34:6914`**: there is no recommendation read API for the cart yet.
+  - ~~The cross-sell rail `34:6914`~~: built 2026-11-25, see §16.4.
   - Select-all and save for later, gift wrap, the line age badge, "reserved for 30 minutes" and a separate product-discount row.
 - In Bangla the payment chips read বিকাশ / নগদ / রকেট (`payment.channels`), against §7.3, which keeps brands in English.
 
@@ -740,3 +740,29 @@ Restyled to the Vivid frames on page `34:5658` (category `34:6106` / `34:6313` /
 - The account nudge drops "৳100 off your next order", an unconfirmed value.
 - The items, delivery details and help cards are kept below the confirmation card.
 - The thank-you line keeps "we will call to confirm, then SMS", for the same reason as checkout.
+
+### 16.4 Recommendations on the product page, cart and order confirmed (2026-11-25)
+
+The blocks come from the API's resolver (`docs/api/recommendations.md`), which applies every guardrail server-side (PRD §3.1a, rules 25b–25d). Every price, delta and bundle total is the API's. Each add from a block posts its placement as `recommendation_source`. Views, clicks and add-to-cart submits go to `POST /api/recommendation-events` (a small client island; the rails are server components). Nothing on checkout, and a test asserts it.
+
+**Product page** (`34:6394` / `34:6677`).
+- **Upgrade to** (≤ 2, in the buy-box column): no Figma frame. Compact cards with a "+৳delta" chip.
+- **Frequently bought together** (`34:6643`): each item's API `unit_price`, the API `bundle_total`, and one "Add all N to cart" form that works without JS (the cart route handler adds up to 3 `variant_id`s in turn).
+  - No struck-through total and no "You save" line: the API sends no saving figure. The subtitle drops Figma's "10% off".
+  - The ticks are display only; the set is added whole.
+  - Items are top-aligned. The border is `line-default`, the radius 32, and the total panel `tile-mint` (100 tint).
+  - There is no mobile frame. Below 1024 the items sit three across over the total panel, without ticks.
+- **Goes well with** (≤ 4, pink eyebrow) and **Next stage** (≤ 4, purple eyebrow): the related-rail layout. Next stage has no Figma frame.
+- "You may also like" leaves out anything shown above it.
+
+**Cart** (`34:6914`).
+- The heading is `t-h2`: 27 px from 1024 against Figma's 24.
+- The shared ProductCard keeps its age pill.
+- 4 cards from 1024. The API sends up to 8; the rest show only in the mobile swipe row.
+- The rail sits below the whole cart, so on mobile it comes after the summary, destination and help cards.
+
+**Order confirmed.**
+- No Figma frame. Up to 4 cards in the cart rail's language, last on the page, inside the 760 px column.
+
+**Copy to review.** These Bangla strings are drafts: the Upgrade title "আরেকটু ভালোটি নিন" and the order rail title "ওর আরও যা ভালো লাগতে পারে".
+

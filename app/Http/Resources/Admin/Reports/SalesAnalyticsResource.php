@@ -61,8 +61,24 @@ final class SalesAnalyticsResource extends ReportResource
             'channels' => self::plain($r['channels']),
             /** @var array{orders_with_discount: int, orders_with_discount_percent: string|null, discount_total: string, coupon_discount: string, promotion_discount: string, shipping_discount: string, aov_with_discount: string|null, aov_without_discount: string|null, recognised_discounts: string, coupons: list<array{code: string, orders: int, discount: string, value: string}>, promotions: list<array{promotion_id: int, name: string, name_bn: string|null, orders: int, discount: string}>} */
             'discounts' => self::plain($r['discounts']),
-            /** @var list<array{source: string, placed_lines: int, placed_units: int, placed_orders: int, placed_value: string, placed_value_percent: string|null, delivered_units: int, net_revenue: string, gross_profit: string|null, return_rate: string|null}> */
+            /**
+             * One row per placement (`none` = bought without a recommendation). The funnel
+             * (`impressions`, `clicks`, `add_to_cart`, `ctr` = clicks / impressions,
+             * `add_to_cart_rate` = add-to-carts / impressions) is counted from
+             * recommendation_events and is null when nothing was measured — before tracking
+             * began, and always for `none`. Units and revenue come from
+             * order_items.recommendation_source; `net_revenue` is recognised on delivery.
+             *
+             * @var list<array{source: string, impressions: int|null, clicks: int|null, add_to_cart: int|null, ctr: string|null, add_to_cart_rate: string|null, placed_lines: int, placed_units: int, placed_orders: int, placed_value: string, placed_value_percent: string|null, delivered_units: int, net_revenue: string, gross_profit: string|null, return_rate: string|null}>
+             */
             'recommendations' => self::plain($r['recommendations']),
+            /**
+             * Whether recommendation events were being recorded in this range, and the Dhaka
+             * date of the first one ever (null before any).
+             *
+             * @var array{measured: bool, since: string|null}
+             */
+            'recommendation_funnel' => $r['recommendation_funnel'],
             /**
              * Conversion is not reported: no server-side page views and consent-gated browser
              * events leave no defensible session denominator.

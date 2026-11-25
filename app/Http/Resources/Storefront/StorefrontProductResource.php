@@ -11,6 +11,7 @@ use App\Domain\Catalog\Models\ProductAttribute;
 use App\Domain\Catalog\Models\ProductAttributeValue;
 use App\Domain\Catalog\Models\ProductImage;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Catalog\Recommendations\ProductRecommendations;
 use App\Domain\Catalog\Services\PriceDisplay;
 use App\Domain\Catalog\Services\ProductDescription;
 use App\Http\Resources\ApiResource;
@@ -26,7 +27,9 @@ use Illuminate\Http\Request;
  * Only active variants are listed. `attributes` are the variant-defining axes those
  * variants use (in attribute order, values in value order); each variant names its
  * values in `attribute_value_ids`. `default_variant_id` is the preselected variant.
- * `related` are in-stock product cards (StorefrontProductCard), best first.
+ * `related` are in-stock product cards (StorefrontProductCard), best first, never one already in
+ * `recommendations` (upsell, frequently bought together, cross-sell, next stage — PRD §3.1a,
+ * docs/api/recommendations.md).
  *
  * Needs ProductDetail::RELATIONS loaded.
  *
@@ -44,8 +47,12 @@ final class StorefrontProductResource extends ApiResource
      * @param  array<int, int>  $available  variant id → available units
      * @param  Collection<int, Product>  $related
      */
-    public function __construct(Product $product, private readonly array $available, private readonly Collection $related)
-    {
+    public function __construct(
+        Product $product,
+        private readonly array $available,
+        private readonly Collection $related,
+        private readonly ?ProductRecommendations $recommendations = null,
+    ) {
         parent::__construct($product);
     }
 
@@ -141,8 +148,18 @@ final class StorefrontProductResource extends ApiResource
              * @var array{promotion_id: int, name: string, name_bn: string|null, ends_at: string, variant_id: int, sale_price: string, regular_price: string, discount_percent: int, remaining: int, variants: array<string, array{sale_price: string, discount_percent: int, remaining: int}>}|null
              */
             'flash_sale' => self::flashSale($variants),
-            /** @var list<StorefrontProductCardResource> */
+            /**
+             * "You may also like": never a product already in `recommendations`.
+             *
+             * @var list<StorefrontProductCardResource>
+             */
             'related' => StorefrontProductCardResource::collection($this->related),
+            /**
+             * Upsell (≤ 2, with `price_delta`), cross-sell (≤ 4), next stage (≤ 4) and frequently
+             * bought together (null or one block with `bundle_total`). In stock only; a product
+             * appears in at most one block — docs/api/recommendations.md.
+             */
+            'recommendations' => new ProductRecommendationsResource($this->recommendations ?? ProductRecommendations::none()),
         ];
     }
 

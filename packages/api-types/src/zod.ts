@@ -1538,6 +1538,19 @@ export const storePurchaseRequestSchema = z.object({
 });
 export type StorePurchaseRequestInput = z.input<typeof storePurchaseRequestSchema>;
 
+/** `POST /storefront/recommendation-events` (docs/api/recommendations.md, rule 25d): a batch of */
+export const storeRecommendationEventsRequestSchema = z.object({
+    "session_id": z.string().min(1).regex(new RegExp("^[A-Za-z0-9_-]{16,64}$")),
+    "events": z.array(z.object({
+    "placement": z.enum(["pdp_upsell","pdp_cross_sell","pdp_fbt","pdp_age_progression","cart_cross_sell","confirmation_cross_sell"]),
+    "event": z.enum(["impression","click","add_to_cart"]),
+    "source_product_id": z.number().int().min(1).nullable().optional(),
+    "recommended_product_id": z.number().int().min(1),
+    "variant_id": z.number().int().min(1).nullable().optional(),
+})).min(1).max(50),
+});
+export type StoreRecommendationEventsRequestInput = z.input<typeof storeRecommendationEventsRequestSchema>;
+
 /** `POST /orders/{order}/returns` — needs returns.manage. Quantities are checked against */
 export const storeReturnRequestSchema = z.object({
     "items": z.array(z.object({

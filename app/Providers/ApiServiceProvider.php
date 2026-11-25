@@ -113,6 +113,15 @@ class ApiServiceProvider extends ServiceProvider
     /** GET /storefront/orders/{number} (confirmation page, cart token required). */
     public const int ORDER_LOOKUP_PER_MINUTE = 30;
 
+    /**
+     * POST /storefront/recommendation-events (P10, rule 25d): event batches (≤ 50 events each) per
+     * storefront session per minute. A page view sends one impression batch plus a click or two.
+     */
+    public const int RECOMMENDATION_EVENTS_PER_SESSION_PER_MINUTE = 30;
+
+    /** …and per shopper IP per minute, generous for carrier-grade NAT. */
+    public const int RECOMMENDATION_EVENTS_PER_IP_PER_MINUTE = 120;
+
     /** POST /storefront/account/reviews (P4-CAT-12): per customer per hour. */
     public const int REVIEWS_PER_HOUR = 10;
 
@@ -229,6 +238,14 @@ class ApiServiceProvider extends ServiceProvider
         RateLimiter::for('contact-message', fn (Request $request): array => [
             Limit::perHour(self::CONTACT_MESSAGE_PER_PHONE_PER_HOUR)->by('contact-phone:'.(($phone = self::phoneKey($request)) !== '' ? $phone : 'ip:'.$request->ip())),
             Limit::perHour(self::CONTACT_MESSAGE_PER_IP_PER_HOUR)->by('contact-ip:'.$request->ip()),
+        ]);
+
+        // Recommendation funnel events: per storefront session (the body's `session_id`) and per
+        // shopper IP. A batch without a usable session id fails validation; it counts against its IP.
+        RateLimiter::for('recommendation-events', fn (Request $request): array => [
+            Limit::perMinute(self::RECOMMENDATION_EVENTS_PER_SESSION_PER_MINUTE)
+                ->by('reco-session:'.(is_string($session = $request->input('session_id')) && $session !== '' ? substr($session, 0, 64) : 'ip:'.$request->ip())),
+            Limit::perMinute(self::RECOMMENDATION_EVENTS_PER_IP_PER_MINUTE)->by('reco-ip:'.$request->ip()),
         ]);
 
         RateLimiter::for('reviews', function (Request $request): Limit {

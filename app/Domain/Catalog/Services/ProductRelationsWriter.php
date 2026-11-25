@@ -19,7 +19,8 @@ use Illuminate\Validation\ValidationException;
  *
  * Write-time guardrails (rule 25c): a product never relates to itself, a target must
  * exist, and an `upsell` target must cost more than this product — compared on the
- * default variants' selling prices. The read-time guardrails (stock, archived,
+ * default variants' selling prices. Messages are translated (lang/{en,bn}/product_relations.php,
+ * the request's locale) and name both prices, so staff see why. The read-time guardrails (stock, archived,
  * caps) belong to the recommendation resolver.
  */
 final class ProductRelationsWriter
@@ -88,13 +89,13 @@ final class ProductRelationsWriter
             $pair = $relation->relatedProductId.':'.$relation->type->value;
 
             if ($relation->relatedProductId === $product->id) {
-                $errors[$field][] = 'A product cannot be related to itself.';
+                $errors[$field][] = (string) __('product_relations.self');
 
                 continue;
             }
 
             if (isset($seen[$pair])) {
-                $errors[$field][] = 'This product is already listed with the same relation type.';
+                $errors[$field][] = (string) __('product_relations.duplicate');
 
                 continue;
             }
@@ -102,7 +103,7 @@ final class ProductRelationsWriter
 
             $target = $targets->get($relation->relatedProductId);
             if ($target === null) {
-                $errors[$field][] = 'The related product does not exist.';
+                $errors[$field][] = (string) __('product_relations.missing');
 
                 continue;
             }
@@ -110,8 +111,14 @@ final class ProductRelationsWriter
             if ($relation->type === RelationType::Upsell) {
                 $targetPrice = $target->defaultVariant?->status === VariantStatus::Active ? $target->defaultVariant->price : null;
 
-                if ($sourcePrice === null || $targetPrice === null || ! $targetPrice->greaterThan($sourcePrice)) {
-                    $errors[$field][] = 'An upsell must cost more than this product.';
+                $name = app()->getLocale() === 'bn' && is_string($target->name_bn) && $target->name_bn !== '' ? $target->name_bn : $target->name;
+
+                if ($sourcePrice === null) {
+                    $errors[$field][] = (string) __('product_relations.upsell_no_source_price');
+                } elseif ($targetPrice === null) {
+                    $errors[$field][] = (string) __('product_relations.upsell_no_target_price', ['name' => $name]);
+                } elseif (! $targetPrice->greaterThan($sourcePrice)) {
+                    $errors[$field][] = (string) __('product_relations.upsell_not_dearer', ['name' => $name, 'target' => $targetPrice->toDecimal(), 'source' => $sourcePrice->toDecimal()]);
                 }
             }
         }

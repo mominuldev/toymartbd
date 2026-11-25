@@ -44,6 +44,7 @@ final readonly class SalesAnalytics
         private ProfitAndLoss $pnl,
         private PlacedOrders $placed,
         private DeliveredLines $lines,
+        private RecommendationFunnel $funnel,
     ) {}
 
     /** The bucket size a range gets when the caller does not choose: day ≤ 31 days, week ≤ 186, else month. */
@@ -70,6 +71,8 @@ final readonly class SalesAnalytics
         $lines = $this->lines->collect($range);
         $repeat = $this->placed->repeatPurchase($range, $placed['customers']);
         $previousRepeat = $this->placed->repeatPurchase($previousRange, $previousPlaced['customers']);
+
+        $funnel = $this->funnel->collect($range);
 
         $summary = $this->summary($placed, $series, $delivered, $repeat, $withProfit);
         $previous = $this->summary($previousPlaced, $previousSeries, $previousDelivered, $previousRepeat, $withProfit);
@@ -104,7 +107,8 @@ final readonly class SalesAnalytics
             'payment_methods' => self::mix($placed['payment_methods'], $placed['totals'], 'method'),
             'channels' => self::mix($placed['channels'], $placed['totals'], 'source'),
             'discounts' => $this->discounts($range, $placed, $summary),
-            'recommendations' => self::recommendations($this->placed->recommendationLines($range), $lines['sources'], $withProfit),
+            'recommendations' => self::recommendations($this->placed->recommendationLines($range), $lines['sources'], $funnel, $withProfit),
+            'recommendation_funnel' => ['measured' => $funnel['measured'], 'since' => $funnel['since']],
             'conversion' => ['available' => false, 'reason' => 'no_session_denominator'],
         ];
     }
@@ -280,11 +284,20 @@ final readonly class SalesAnalytics
     }
 
     /**
+     * One row per placement: the browsing funnel from `recommendation_events` (impressions →
+     * clicks → add-to-cart, with CTR = clicks / impressions and add-to-cart rate =
+     * add-to-carts / impressions — per impression, because an FBT "add all" or a cart-rail add
+     * needs no click), then what it sold from `order_items` (units placed, units delivered,
+     * revenue recognised on delivery, rule 10). Event fields are null when nothing was
+     * measured — before tracking began, and always for `none` — never a zero that looks
+     * like a measurement.
+     *
      * @param  array<string, array{lines: int, units: int, orders: int, value: Money}>  $placed
      * @param  array<string, array<string, mixed>>  $delivered
+     * @param  array{measured: bool, since: string|null, placements: array<string, array{impressions: int, clicks: int, add_to_cart: int}>}  $funnel
      * @return list<array<string, mixed>>
      */
-    private static function recommendations(array $placed, array $delivered, bool $withProfit): array
+    private static function recommendations(array $placed, array $delivered, array $funnel, bool $withProfit): array
     {
         $total = Money::zero();
         foreach ($placed as $row) {
@@ -292,11 +305,18 @@ final readonly class SalesAnalytics
         }
 
         $rows = [];
-        foreach (array_unique([...array_keys($placed), ...array_keys($delivered)]) as $source) {
+        foreach (array_unique([...array_keys($placed), ...array_keys($delivered), ...array_keys($funnel['placements'])]) as $source) {
+            $source = (string) $source;
             $p = $placed[$source] ?? ['lines' => 0, 'units' => 0, 'orders' => 0, 'value' => Money::zero()];
             $d = $delivered[$source] ?? null;
+            $e = $funnel['measured'] && $source !== self::NO_SOURCE ? ($funnel['placements'][$source] ?? ['impressions' => 0, 'clicks' => 0, 'add_to_cart' => 0]) : null;
             $rows[] = [
-                'source' => (string) $source,
+                'source' => $source,
+                'impressions' => $e['impressions'] ?? null,
+                'clicks' => $e['clicks'] ?? null,
+                'add_to_cart' => $e['add_to_cart'] ?? null,
+                'ctr' => $e === null ? null : Rates::percent($e['clicks'], $e['impressions']),
+                'add_to_cart_rate' => $e === null ? null : Rates::percent($e['add_to_cart'], $e['impressions']),
                 'placed_lines' => $p['lines'],
                 'placed_units' => $p['units'],
                 'placed_orders' => $p['orders'],

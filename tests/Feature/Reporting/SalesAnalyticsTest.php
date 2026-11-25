@@ -258,3 +258,90 @@ it('rejects an unlisted parameter, an unknown preset, a half range and a future 
     'group' => 'group=year',
     'too many buckets' => 'filter[from]=2015-01-01&filter[to]=2026-12-01&group=day',
 ]);
+
+/** One `recommendation_events` row per call (agent-2 schema, brief §5); `occurred_at` is UTC. */
+function recommendationEvent(string $placement, string $event, string $occurredUtc, int $count = 1): void
+{
+    for ($i = 0; $i < $count; $i++) {
+        DB::table('recommendation_events')->insert([
+            'placement' => $placement, 'event' => $event, 'source_product_id' => 1, 'recommended_product_id' => 2,
+            'session_id' => 'sess-'.$i, 'occurred_at' => $occurredUtc,
+        ]);
+    }
+}
+
+it('says the funnel was not measured before any recommendation event, never zeros', function (): void {
+    $report = novemberReport();
+    $rows = array_column($report['recommendations'], null, 'source');
+
+    expect($report['recommendation_funnel'])->toBe(['measured' => false, 'since' => null])
+        ->and($rows['pdp_cross_sell']['impressions'])->toBeNull()
+        ->and($rows['pdp_cross_sell']['ctr'])->toBeNull()
+        ->and($rows['pdp_cross_sell']['add_to_cart_rate'])->toBeNull()
+        // The buying half is still measured from order_items.
+        ->and($rows['pdp_cross_sell']['placed_units'])->toBe(2);
+});
+
+it('counts impressions, clicks and add-to-carts per placement over Dhaka days, with server-side rates', function (): void {
+    // 18:10 UTC 31 Oct = 00:10 Dhaka 1 Nov: inside. 18:30 UTC 30 Nov = 00:30 Dhaka 1 Dec: outside.
+    recommendationEvent('pdp_cross_sell', 'impression', '2026-10-31 18:10:00');
+    recommendationEvent('pdp_cross_sell', 'impression', '2026-11-02 03:00:00', 7);
+    recommendationEvent('pdp_cross_sell', 'impression', '2026-11-30 18:30:00', 5);
+    recommendationEvent('pdp_cross_sell', 'click', '2026-11-02 03:01:00', 2);
+    recommendationEvent('pdp_cross_sell', 'add_to_cart', '2026-11-02 03:02:00');
+    // The server's own purchase event is not a browser step; units come from order_items.
+    recommendationEvent('pdp_cross_sell', 'purchased', '2026-11-02 04:00:00', 3);
+    // A placement that was seen but sold nothing still gets a row.
+    recommendationEvent('pdp_upsell', 'impression', '2026-11-10 10:00:00', 4);
+
+    $report = novemberReport(profit: false);
+    $rows = array_column($report['recommendations'], null, 'source');
+
+    expect($report['recommendation_funnel'])->toBe(['measured' => true, 'since' => '2026-11-01'])
+        ->and($rows['pdp_cross_sell']['impressions'])->toBe(8)
+        ->and($rows['pdp_cross_sell']['clicks'])->toBe(2)
+        ->and($rows['pdp_cross_sell']['add_to_cart'])->toBe(1)
+        ->and($rows['pdp_cross_sell']['ctr'])->toBe('25.00')
+        ->and($rows['pdp_cross_sell']['add_to_cart_rate'])->toBe('12.50')
+        ->and($rows['pdp_cross_sell']['placed_units'])->toBe(2)
+        ->and($rows['pdp_cross_sell']['net_revenue']->toDecimal())->toBe('2400.00')
+        ->and($rows['pdp_cross_sell']['gross_profit'])->toBeNull()
+        ->and($rows['pdp_upsell']['impressions'])->toBe(4)
+        ->and($rows['pdp_upsell']['clicks'])->toBe(0)
+        ->and($rows['pdp_upsell']['ctr'])->toBe('0.00')
+        ->and($rows['pdp_upsell']['placed_units'])->toBe(0)
+        // Lines bought without a recommendation have no funnel to measure.
+        ->and($rows['none']['impressions'])->toBeNull()
+        ->and(array_key_last($rows))->toBe('none');
+});
+
+it('treats a range that ends before tracking began as not measured', function (): void {
+    recommendationEvent('pdp_cross_sell', 'impression', '2026-12-02 03:00:00');
+
+    $report = novemberReport();
+
+    expect($report['recommendation_funnel'])->toBe(['measured' => false, 'since' => '2026-12-02'])
+        ->and(array_column($report['recommendations'], null, 'source')['pdp_cross_sell']['clicks'])->toBeNull();
+});
+
+it('serves the funnel to a viewer and exports its columns', function (): void {
+    recommendationEvent('pdp_cross_sell', 'impression', '2026-11-02 03:00:00', 4);
+    recommendationEvent('pdp_cross_sell', 'click', '2026-11-02 03:01:00');
+    $viewer = User::factory()->withRole(Role::Viewer)->create()->refresh();
+    $manager = User::factory()->withRole(Role::Manager)->create()->refresh();
+    $query = 'range=custom&filter[from]=2026-11-01&filter[to]=2026-11-30';
+
+    $this->actingAs($viewer)->getJson('/api/v1/admin/analytics/sales?'.$query)->assertOk()
+        ->assertJsonPath('recommendation_funnel', ['measured' => true, 'since' => '2026-11-02'])
+        ->assertJsonPath('recommendations.0.source', 'pdp_cross_sell')
+        ->assertJsonPath('recommendations.0.impressions', 4)
+        ->assertJsonPath('recommendations.0.ctr', '25.00')
+        ->assertJsonPath('recommendations.0.net_revenue', '2400.00')
+        ->assertJsonPath('recommendations.0.gross_profit', null);
+
+    $csv = $this->actingAs($manager)->get('/api/v1/admin/analytics/sales/export?'.$query.'&format=csv')->assertOk()->streamedContent();
+
+    expect($csv)->toContain('source,impressions,clicks,ctr,add_to_cart,add_to_cart_rate,placed_lines')
+        ->toContain('pdp_cross_sell,4,1,25.00,0,0.00,1,2,1,2400.00')
+        ->toContain('recommendations_measured_since');
+});

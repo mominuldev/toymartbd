@@ -33572,7 +33572,7 @@
             "get": {
                 "operationId": "v1.storefront.products.show",
                 "description": "Slugs are ASCII and shared by both locales (rule 37).",
-                "summary": "`GET /products/{slug}` \u2014 one live product (active, published, with an active\nvariant): content in both languages, breadcrumbs, images, variant axes, every\nactive variant with its price, discount, saving and stock, and up to 8 in-stock\nrelated product cards \u2014 curated `related` pairs first, then the same category",
+                "summary": "`GET /products/{slug}` \u2014 one live product (active, published, with an active\nvariant): content in both languages, breadcrumbs, images, variant axes, every\nactive variant with its price, discount, saving and stock, and up to 8 in-stock\nrelated product cards \u2014 curated `related` pairs first, then the same category \u2014\nnone of them already in `recommendations`: upsell (\u2264 2, with `price_delta`),\ncross-sell (\u2264 4), next stage (\u2264 4) and frequently bought together (null or one block\nwith `bundle_total`), every one in stock",
                 "tags": [
                     "Storefront"
                 ],
@@ -35314,6 +35314,64 @@
                 }
             }
         },
+        "/storefront/cart/recommendations": {
+            "get": {
+                "operationId": "v1.storefront.cart.recommendations.index",
+                "summary": "`GET /cart/recommendations` \u2014 up to 8 cards for the cart page, placement `cart_cross_sell`:\nthe cart lines' curated cross-sell pairs first, then products often bought with them.\nAn empty cart gets an empty rail",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The cart token.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontRecommendationRail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontRecommendationRail"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No open cart has this token (`not-found`) \u2014 start a new one",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/storefront/cart/items": {
             "post": {
                 "operationId": "v1.storefront.cart.items.store",
@@ -36035,6 +36093,136 @@
                     },
                     "429": {
                         "description": "Too many lookups",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/orders/{number}/recommendations": {
+            "get": {
+                "operationId": "v1.storefront.orders.recommendations.index",
+                "summary": "`GET /orders/{number}/recommendations` \u2014 up to 4 in-stock cards, placement\n`confirmation_cross_sell`, never a product already in the order",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "name": "number",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Cart-Token",
+                        "in": "header",
+                        "required": true,
+                        "description": "The token of the cart that placed the order.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`StorefrontRecommendationRail`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StorefrontRecommendationRail"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The token lacks the `storefront:read` ability",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown number, wrong token, or older than 30 days (`not-found`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many lookups",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/storefront/recommendation-events": {
+            "post": {
+                "operationId": "v1.storefront.recommendation-events.store",
+                "summary": "`POST /storefront/recommendation-events` \u2014 queue a batch of 1\u201350 impressions, clicks and\nadd-to-carts for recording (queue `index`). `purchased` is server-written only. Always an\nempty `202`: nothing is written inline",
+                "tags": [
+                    "Storefront"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreRecommendationEventsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Accepted for recording; empty body",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Invalid field, an unknown placement, a `purchased` event, or a non-integer id (`validation-error`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many event batches for this session or shopper (`too-many-requests`)",
                         "content": {
                             "application/problem+json": {
                                 "schema": {
@@ -70097,11 +70285,42 @@
                     },
                     "recommendations": {
                         "type": "array",
+                        "description": "One row per placement (`none` = bought without a recommendation). The funnel\n(`impressions`, `clicks`, `add_to_cart`, `ctr` = clicks / impressions,\n`add_to_cart_rate` = add-to-carts / impressions) is counted from\nrecommendation_events and is null when nothing was measured \u2014 before tracking\nbegan, and always for `none`. Units and revenue come from\norder_items.recommendation_source; `net_revenue` is recognised on delivery.",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "source": {
                                     "type": "string"
+                                },
+                                "impressions": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "clicks": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "add_to_cart": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ]
+                                },
+                                "ctr": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "add_to_cart_rate": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
                                 },
                                 "placed_lines": {
                                     "type": "integer"
@@ -70142,6 +70361,11 @@
                             },
                             "required": [
                                 "source",
+                                "impressions",
+                                "clicks",
+                                "add_to_cart",
+                                "ctr",
+                                "add_to_cart_rate",
                                 "placed_lines",
                                 "placed_units",
                                 "placed_orders",
@@ -70153,6 +70377,25 @@
                                 "return_rate"
                             ]
                         }
+                    },
+                    "recommendation_funnel": {
+                        "type": "object",
+                        "description": "Whether recommendation events were being recorded in this range, and the Dhaka\ndate of the first one ever (null before any).",
+                        "properties": {
+                            "measured": {
+                                "type": "boolean"
+                            },
+                            "since": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "measured",
+                            "since"
+                        ]
                     },
                     "conversion": {
                         "type": "object",
@@ -70190,6 +70433,7 @@
                     "channels",
                     "discounts",
                     "recommendations",
+                    "recommendation_funnel",
                     "conversion"
                 ],
                 "title": "SalesAnalytics"
@@ -75481,6 +75725,74 @@
                 ],
                 "title": "StorePurchaseRequest"
             },
+            "StoreRecommendationEventsRequest": {
+                "type": "object",
+                "description": "`POST /storefront/recommendation-events` (docs/api/recommendations.md, rule 25d): a batch of\n1\u201350 recommendation impressions, clicks and add-to-carts from the storefront. `purchased` is\nnever accepted from a client \u2014 the server writes it when an order is placed. Ids are JSON\nintegers (a numeric string is a 422). `source_product_id` is required on the product-page\nplacements and may be null on the cart and confirmation rails.",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Opaque storefront session id (the `tm_rsid` cookie), 16\u201364 of `[A-Za-z0-9_-]`.",
+                        "pattern": "^[A-Za-z0-9_-]{16,64}$"
+                    },
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "placement": {
+                                    "type": "string",
+                                    "enum": [
+                                        "pdp_upsell",
+                                        "pdp_cross_sell",
+                                        "pdp_fbt",
+                                        "pdp_age_progression",
+                                        "cart_cross_sell",
+                                        "confirmation_cross_sell"
+                                    ]
+                                },
+                                "event": {
+                                    "type": "string",
+                                    "enum": [
+                                        "impression",
+                                        "click",
+                                        "add_to_cart"
+                                    ]
+                                },
+                                "source_product_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 1
+                                },
+                                "recommended_product_id": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "variant_id": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 1
+                                }
+                            },
+                            "required": [
+                                "placement",
+                                "event",
+                                "recommended_product_id"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 50
+                    }
+                },
+                "required": [
+                    "session_id",
+                    "events"
+                ],
+                "title": "StoreRecommendationEventsRequest"
+            },
             "StoreReturnRequest": {
                 "type": "object",
                 "description": "`POST /orders/{order}/returns` \u2014 needs returns.manage. Quantities are checked against\nwhat is still returnable on each line by RequestReturn, under the order's row lock.",
@@ -79193,9 +79505,14 @@
                     },
                     "related": {
                         "type": "array",
+                        "description": "\"You may also like\": never a product already in `recommendations`.",
                         "items": {
                             "$ref": "#/components/schemas/StorefrontProductCard"
                         }
+                    },
+                    "recommendations": {
+                        "description": "Upsell (\u2264 2, with `price_delta`), cross-sell (\u2264 4), next stage (\u2264 4) and frequently\nbought together (null or one block with `bundle_total`). In stock only; a product\nappears in at most one block \u2014 docs/api/recommendations.md.",
+                        "$ref": "#/components/schemas/StorefrontProductRecommendations"
                     }
                 },
                 "required": [
@@ -79226,7 +79543,8 @@
                     "attributes",
                     "variants",
                     "flash_sale",
-                    "related"
+                    "related",
+                    "recommendations"
                 ],
                 "title": "StorefrontProduct"
             },
@@ -79551,6 +79869,86 @@
                     "flash_sale"
                 ],
                 "title": "StorefrontProductCard"
+            },
+            "StorefrontProductRecommendations": {
+                "type": "object",
+                "properties": {
+                    "upsell": {
+                        "type": "array",
+                        "description": "\"Upgrade to\" (\u2264 2): a dearer alternative with `price_delta` = its `price` minus this\nproduct's lowest price, always > 0.",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                        }
+                    },
+                    "cross_sell": {
+                        "type": "array",
+                        "description": "\"Goes well with\" (\u2264 4).",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontProductCard"
+                        }
+                    },
+                    "age_progression": {
+                        "type": "array",
+                        "description": "\"When they're ready for the next stage\" (\u2264 4): curated pairs first, then the same\ncategory from this product's upper age up, nearest band first.",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontProductCard"
+                        }
+                    },
+                    "fbt": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Frequently bought together: `items[0]` is this product, then 1\u20132 products bought with\nit. Each item names the `variant_id` \"Add all to cart\" posts and its `unit_price`;\n`bundle_total` is the sum of those unit prices. Null when the block cannot be shown whole.",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "bundle_total": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "items",
+                            "bundle_total"
+                        ]
+                    }
+                },
+                "required": [
+                    "upsell",
+                    "cross_sell",
+                    "age_progression",
+                    "fbt"
+                ],
+                "title": "StorefrontProductRecommendations"
+            },
+            "StorefrontRecommendationRail": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StorefrontProductCard"
+                        }
+                    },
+                    "placement": {
+                        "type": "string",
+                        "enum": [
+                            "cart_cross_sell",
+                            "confirmation_cross_sell"
+                        ]
+                    }
+                },
+                "required": [
+                    "data",
+                    "placement"
+                ],
+                "title": "StorefrontRecommendationRail"
             },
             "StorefrontReview": {
                 "type": "object",

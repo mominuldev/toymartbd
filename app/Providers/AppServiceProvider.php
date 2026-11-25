@@ -119,7 +119,10 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(\App\Domain\Ordering\Events\OrderEdited::class, \App\Domain\Invoicing\Listeners\IssueDocumentsOnOrderEdited::class);
         Event::listen(\App\Domain\Ordering\Events\OrderReturned::class, \App\Domain\Invoicing\Listeners\IssueCreditNoteOnOrderReturned::class);
         Event::listen(\App\Domain\Marketing\Events\PromotionChanged::class, \App\Domain\Content\Listeners\RevalidatePromotionPages::class);
+        Event::listen(\App\Domain\Catalog\Events\ProductCopurchasesRebuilt::class, \App\Domain\Content\Listeners\RevalidateCopurchasePages::class);
         Event::listen(OrderPlaced::class, \App\Domain\Notification\Listeners\MarkCartRecoveredOnOrderPlaced::class);
+        // P10 recommendations (rule 25d): each order line placed from a recommendation is a `purchased` funnel event.
+        Event::listen(OrderPlaced::class, \App\Domain\Catalog\Listeners\RecordRecommendationPurchasesOnOrderPlaced::class);
         // A payment flagged for review (rule 19) holds its order for a human (P4-PAY-03).
         Event::listen(\App\Domain\Payment\Events\PaymentFlaggedForReview::class, \App\Domain\Ordering\Listeners\HoldOrderOnPaymentReview::class);
     }

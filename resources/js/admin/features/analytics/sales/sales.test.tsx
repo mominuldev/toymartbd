@@ -66,9 +66,10 @@ function report(profit = true): SalesAnalytics {
             promotions: [],
         },
         recommendations: [
-            { source: 'pdp_cross_sell', placed_lines: 1, placed_units: 2, placed_orders: 1, placed_value: '2400.00', placed_value_percent: '40.68', delivered_units: 2, net_revenue: '2400.00', gross_profit: null, return_rate: '0.00' },
-            { source: 'none', placed_lines: 4, placed_units: 5, placed_orders: 4, placed_value: '3500.00', placed_value_percent: '59.32', delivered_units: 2, net_revenue: '2100.00', gross_profit: null, return_rate: '0.00' },
+            { source: 'pdp_cross_sell', impressions: null, clicks: null, add_to_cart: null, ctr: null, add_to_cart_rate: null, placed_lines: 1, placed_units: 2, placed_orders: 1, placed_value: '2400.00', placed_value_percent: '40.68', delivered_units: 2, net_revenue: '2400.00', gross_profit: null, return_rate: '0.00' },
+            { source: 'none', impressions: null, clicks: null, add_to_cart: null, ctr: null, add_to_cart_rate: null, placed_lines: 4, placed_units: 5, placed_orders: 4, placed_value: '3500.00', placed_value_percent: '59.32', delivered_units: 2, net_revenue: '2100.00', gross_profit: null, return_rate: '0.00' },
         ],
+        recommendation_funnel: { measured: false, since: null },
         conversion: { available: false, reason: 'no_session_denominator' },
     };
 }
@@ -120,6 +121,43 @@ describe('sales analytics', () => {
         expect(screen.getByText('SAVE10')).toBeTruthy();
         expect(screen.getByText('Product page — cross-sell')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Scheduled reports' })).toBeTruthy();
+    });
+
+    it('says the recommendation funnel has no data yet instead of showing zeros', async () => {
+        api();
+        renderApp('/analytics/sales');
+
+        const card = (await screen.findByRole('heading', { name: 'Recommendation attribution' })).closest('section')!;
+        expect(within(card).getByText(/Views and clicks: no data yet/)).toBeTruthy();
+        const row = within(card).getByRole('row', { name: /Product page — cross-sell/ });
+        expect(within(row).getAllByText('No data yet')).toHaveLength(3);
+        expect(within(row).queryByText('0')).toBeNull();
+        expect(within(row).getAllByText('2,400')).toHaveLength(2);
+    });
+
+    it('shows each placement’s funnel with the server’s CTR and add-to-cart rate', async () => {
+        const body = report();
+        body.recommendation_funnel = { measured: true, since: '2026-11-02' };
+        body.recommendations = [
+            { ...body.recommendations[0]!, impressions: 1200, clicks: 48, add_to_cart: 12, ctr: '4.00', add_to_cart_rate: '1.00' },
+            { ...body.recommendations[0]!, source: 'pdp_upsell', impressions: 300, clicks: 0, add_to_cart: 0, ctr: '0.00', add_to_cart_rate: '0.00', placed_units: 0, placed_value: '0.00', placed_value_percent: '0.00', net_revenue: '0.00' },
+            body.recommendations[1]!,
+        ];
+        api(manager, body);
+        renderApp('/analytics/sales');
+
+        const card = (await screen.findByRole('heading', { name: 'Recommendation attribution' })).closest('section')!;
+        expect(within(card).getByText('Views and clicks measured since 02 Nov 2026.')).toBeTruthy();
+        const cross = within(card).getByRole('row', { name: /Product page — cross-sell/ });
+        expect(within(cross).getByText('1,200')).toBeTruthy();
+        expect(within(cross).getByText('48')).toBeTruthy();
+        expect(within(cross).getByText('4.00%')).toBeTruthy();
+        expect(within(cross).getByText('1.00%')).toBeTruthy();
+        const upsell = within(card).getByRole('row', { name: /Product page — upsell/ });
+        expect(within(upsell).getByText('300')).toBeTruthy();
+        expect(within(upsell).queryByText('No data yet')).toBeNull();
+        // Bought without a recommendation: no funnel to measure.
+        expect(within(within(card).getByRole('row', { name: /Not from a recommendation/ })).getAllByText('No data yet')).toHaveLength(3);
     });
 
     it('names every channel, including counter (POS) sales', async () => {

@@ -238,6 +238,35 @@ describe('product form', () => {
         expect(screen.getByRole('link', { name: /Related.*has errors/ })).toBeTruthy();
     });
 
+    it('shows thumbnails and prices in the relation picker, and saves an editable reason note', async () => {
+        let saved = false;
+        const calls = productApi(owner, (url, init) => {
+            if (url.includes('filter%5Bsearch%5D=puz'))
+                return { status: 200, body: { data: [{ ...listItem, id: 50, name: 'Puzzle 100', sku: 'TM-00050', image_url: '/media/puzzle-160.webp', price_min: '1850.00' }], links: {}, meta: { next_cursor: null } } };
+            if (url.endsWith('/products/42') && init?.method === 'PUT') {
+                saved = true;
+                return { status: 200, body: product };
+            }
+            return undefined;
+        });
+        renderApp('/products/42?tab=related');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Add product' }));
+        fireEvent.change(screen.getByLabelText('Recommendation type'), { target: { value: 'upsell' } });
+        expect(screen.getByText('A better version of this toy — it must cost more')).toBeTruthy();
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Search products to add to Upsell' }), { target: { value: 'puz' } });
+        const match = await screen.findByRole('button', { name: /Puzzle 100/ });
+        expect(match.querySelector('img')?.getAttribute('src')).toBe('/media/puzzle-160.webp');
+        expect(match.textContent).toContain('1,850');
+        fireEvent.click(match);
+
+        fireEvent.change(screen.getByLabelText('Reason for Puzzle 100'), { target: { value: 'Same set, twice the pieces' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+        await waitFor(() => expect(saved).toBe(true));
+        expect(sentBody(calls, 'PUT')?.relations).toEqual([{ related_product_id: 50, type: 'upsell', position: 0, reason_note: 'Same set, twice the pieces' }]);
+    });
+
     it('embeds the image uploader on a saved product, and offers images on a new one', async () => {
         productApi(owner);
         renderApp('/products/42?tab=images');

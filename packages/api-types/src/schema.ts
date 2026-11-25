@@ -7269,7 +7269,10 @@ export interface paths {
          * `GET /products/{slug}` — one live product (active, published, with an active
          *     variant): content in both languages, breadcrumbs, images, variant axes, every
          *     active variant with its price, discount, saving and stock, and up to 8 in-stock
-         *     related product cards — curated `related` pairs first, then the same category
+         *     related product cards — curated `related` pairs first, then the same category —
+         *     none of them already in `recommendations`: upsell (≤ 2, with `price_delta`),
+         *     cross-sell (≤ 4), next stage (≤ 4) and frequently bought together (null or one block
+         *     with `bundle_total`), every one in stock
          * @description Slugs are ASCII and shared by both locales (rule 37).
          */
         get: operations["v1.storefront.products.show"];
@@ -7788,6 +7791,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/cart/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /cart/recommendations` — up to 8 cards for the cart page, placement `cart_cross_sell`:
+         *     the cart lines' curated cross-sell pairs first, then products often bought with them.
+         *     An empty cart gets an empty rail
+         */
+        get: operations["v1.storefront.cart.recommendations.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/cart/items": {
         parameters: {
             query?: never;
@@ -7936,6 +7960,47 @@ export interface paths {
         get: operations["v1.storefront.orders.show"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/orders/{number}/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /orders/{number}/recommendations` — up to 4 in-stock cards, placement
+         *     `confirmation_cross_sell`, never a product already in the order
+         */
+        get: operations["v1.storefront.orders.recommendations.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/storefront/recommendation-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /storefront/recommendation-events` — queue a batch of 1–50 impressions, clicks and
+         *     add-to-carts for recording (queue `index`). `purchased` is server-written only. Always an
+         *     empty `202`: nothing is written inline
+         */
+        post: operations["v1.storefront.recommendation-events.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -16637,8 +16702,21 @@ export interface components {
                     discount: string;
                 }[];
             };
+            /**
+             * @description One row per placement (`none` = bought without a recommendation). The funnel
+             *     (`impressions`, `clicks`, `add_to_cart`, `ctr` = clicks / impressions,
+             *     `add_to_cart_rate` = add-to-carts / impressions) is counted from
+             *     recommendation_events and is null when nothing was measured — before tracking
+             *     began, and always for `none`. Units and revenue come from
+             *     order_items.recommendation_source; `net_revenue` is recognised on delivery.
+             */
             recommendations: {
                 source: string;
+                impressions: number | null;
+                clicks: number | null;
+                add_to_cart: number | null;
+                ctr: string | null;
+                add_to_cart_rate: string | null;
                 placed_lines: number;
                 placed_units: number;
                 placed_orders: number;
@@ -16649,6 +16727,14 @@ export interface components {
                 gross_profit: string | null;
                 return_rate: string | null;
             }[];
+            /**
+             * @description Whether recommendation events were being recorded in this range, and the Dhaka
+             *     date of the first one ever (null before any).
+             */
+            recommendation_funnel: {
+                measured: boolean;
+                since: string | null;
+            };
             /**
              * @description Conversion is not reported: no server-side page views and consent-gated browser
              *     events leave no defensible session denominator.
@@ -18019,6 +18105,27 @@ export interface components {
             }[];
         };
         /**
+         * StoreRecommendationEventsRequest
+         * @description `POST /storefront/recommendation-events` (docs/api/recommendations.md, rule 25d): a batch of
+         *     1–50 recommendation impressions, clicks and add-to-carts from the storefront. `purchased` is
+         *     never accepted from a client — the server writes it when an order is placed. Ids are JSON
+         *     integers (a numeric string is a 422). `source_product_id` is required on the product-page
+         *     placements and may be null on the cart and confirmation rails.
+         */
+        StoreRecommendationEventsRequest: {
+            /** @description Opaque storefront session id (the `tm_rsid` cookie), 16–64 of `[A-Za-z0-9_-]`. */
+            session_id: string;
+            events: {
+                /** @enum {string} */
+                placement: "pdp_upsell" | "pdp_cross_sell" | "pdp_fbt" | "pdp_age_progression" | "cart_cross_sell" | "confirmation_cross_sell";
+                /** @enum {string} */
+                event: "impression" | "click" | "add_to_cart";
+                source_product_id?: number | null;
+                recommended_product_id: number;
+                variant_id?: number | null;
+            }[];
+        };
+        /**
          * StoreReturnRequest
          * @description `POST /orders/{order}/returns` — needs returns.manage. Quantities are checked against
          *     what is still returnable on each line by RequestReturn, under the order's row lock.
@@ -18910,7 +19017,14 @@ export interface components {
                     };
                 };
             } | null;
+            /** @description "You may also like": never a product already in `recommendations`. */
             related: components["schemas"]["StorefrontProductCard"][];
+            /**
+             * @description Upsell (≤ 2, with `price_delta`), cross-sell (≤ 4), next stage (≤ 4) and frequently
+             *     bought together (null or one block with `bundle_total`). In stock only; a product
+             *     appears in at most one block — docs/api/recommendations.md.
+             */
+            recommendations: components["schemas"]["StorefrontProductRecommendations"];
         };
         /** StorefrontProductCard */
         StorefrontProductCard: {
@@ -18993,6 +19107,40 @@ export interface components {
                 discount_percent: number;
                 remaining: number;
             } | null;
+        };
+        /** StorefrontProductRecommendations */
+        StorefrontProductRecommendations: {
+            /**
+             * @description "Upgrade to" (≤ 2): a dearer alternative with `price_delta` = its `price` minus this
+             *     product's lowest price, always > 0.
+             */
+            upsell: {
+                [key: string]: unknown;
+            }[];
+            /** @description "Goes well with" (≤ 4). */
+            cross_sell: components["schemas"]["StorefrontProductCard"][];
+            /**
+             * @description "When they're ready for the next stage" (≤ 4): curated pairs first, then the same
+             *     category from this product's upper age up, nearest band first.
+             */
+            age_progression: components["schemas"]["StorefrontProductCard"][];
+            /**
+             * @description Frequently bought together: `items[0]` is this product, then 1–2 products bought with
+             *     it. Each item names the `variant_id` "Add all to cart" posts and its `unit_price`;
+             *     `bundle_total` is the sum of those unit prices. Null when the block cannot be shown whole.
+             */
+            fbt: {
+                items: {
+                    [key: string]: unknown;
+                }[];
+                bundle_total: string;
+            } | null;
+        };
+        /** StorefrontRecommendationRail */
+        StorefrontRecommendationRail: {
+            data: components["schemas"]["StorefrontProductCard"][];
+            /** @enum {string} */
+            placement: "cart_cross_sell" | "confirmation_cross_sell";
         };
         /** StorefrontReview */
         StorefrontReview: {
@@ -40132,6 +40280,49 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "v1.storefront.cart.recommendations.index": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The cart token. */
+                "X-Cart-Token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontRecommendationRail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontRecommendationRail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description No open cart has this token (`not-found`) — start a new one */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "v1.storefront.cart.items.store": {
         parameters: {
             query?: never;
@@ -40662,6 +40853,103 @@ export interface operations {
             };
             422: components["responses"]["ValidationException"];
             /** @description Too many lookups */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.orders.recommendations.index": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The token of the cart that placed the order. */
+                "X-Cart-Token": string;
+            };
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `StorefrontRecommendationRail` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontRecommendationRail"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The token lacks the `storefront:read` ability */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unknown number, wrong token, or older than 30 days (`not-found`) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+            /** @description Too many lookups */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    "v1.storefront.recommendation-events.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreRecommendationEventsRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted for recording; empty body */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description Invalid field, an unknown placement, a `purchased` event, or a non-integer id (`validation-error`) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too many event batches for this session or shopper (`too-many-requests`) */
             429: {
                 headers: {
                     [name: string]: unknown;

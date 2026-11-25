@@ -355,6 +355,41 @@ Expanded to task level at each phase start. Each feature below carries its own t
 
 **Open:** conversion rate (no consent-free session denominator); XLSX for the older CSV-only reports (one line each via `ReportSheets`); credit notes; invoice logo not drawn; Bangla amount in words; storefront/admin screens to capture birthday consent; Bangla review SMS is 3 segments (short links would help); manual resend of a failed scheduled report; `OrderNumberGenerator` may share the first-of-year counter-row deadlock the invoice race test found; SSLCommerz gateway fee still not booked; no Figma frames for customer analytics, invoice list, schedules, automation schedule panel; dashboard Figma differences listed in the PR (KPI row 2, Export button, inbox items).
 
+### Progress — Phase 10: storefront recommendations (2026-11-25, 5 parallel agents)
+
+PRD §3.1a X-01…X-11, rules 25b–25d. Brief: `docs/_handoff/briefs/brief-p10-recommendations.md`. Contract: `docs/api/recommendations.md`.
+
+- **Resolver** (`app/Domain/Catalog/Recommendations`):
+  - Upsell ≤ 2 with a server `price_delta`, cross-sell ≤ 4, age progression ≤ 4, and one frequently-bought-together block (`items[0]` is this product, each item with `variant_id` and `unit_price`, plus `bundle_total`).
+  - Guardrails on read: live, online channel, in stock, never self, upsell must cost more. A product appears in one block only (upsell > fbt > cross-sell > age progression).
+  - `related` leaves out anything already recommended.
+  - The product page's query count stays the same however many relations a product has.
+- **Read endpoints:** `GET /storefront/cart/recommendations` (≤ 8, cross-sell only) and `GET /storefront/orders/{number}/recommendations` (≤ 4, the order endpoint's own access check).
+- **Data:**
+  - `recommendation_events`: append-only, no FKs. Written by a queued job from `POST /storefront/recommendation-events` (202; `purchased` is refused from clients). The server writes `purchased` per order line with a `recommendation_source`, on OrderPlaced.
+  - `product_copurchases`: a projection over 180 days of non-cancelled orders. `toymart:catalog:copurchases` runs nightly at 03:30 Dhaka, and a rebuild purges the `products` tag (`ProductCopurchasesRebuilt`). Frequently bought together needs `catalog.fbt_min_orders` = 3.
+- **Admin:**
+  - The Sales analytics recommendation table gains seen, clicked, CTR, added to cart and add-to-cart rate. All are null ("no data yet") until tracking has data, never a pretend zero. The rates are per impression. They are also in the export.
+  - Product form relations: a picker with thumbnail, SKU and price; an editable reason note; and a translated upsell price error that names both prices.
+- **Storefront:**
+  - PDP: Upgrade to, Frequently bought together (a no-JS "Add all" form), Goes well with, Next stage.
+  - A cart cross-sell rail and an order-confirmation rail.
+  - Tracking: a beacon batch to a route handler with an httpOnly `tm_rsid` session cookie. The bearer is the customer's own token when signed in.
+  - Design deviations: `docs/_design/07-smart-junior-storefront.md` §16.4.
+- **Checks:**
+  - Pest 5356 passed (15 skipped). Pint, PHPStan and deptrac clean.
+  - Admin Vitest 823/823. Admin and storefront i18n clean.
+  - Storefront unit tests 748 + 15. Storefront e2e: `recommendations`, `pdp-recommendations`, `product`, `performance-budgets`, `accessibility` and `layout` pass.
+  - JS: PDP 216.6/224 KB, cart 175.0/210 KB.
+- **Open:**
+  - "Next stage" uses the category only, because there is no skill taxonomy in code.
+  - `price_delta` ignores flash prices.
+  - `purchased` events carry no source product (cart lines keep only the placement).
+  - `add_to_cart` events count form submits, and none are sent without JS.
+  - "Add all" stops at the first refusal and keeps the lines already added.
+  - The order rail shares the `order-lookup` limit.
+  - The Bangla copy needs review.
+
 ### Progress — Phase 10: online payment gateways, sandbox or live (2026-11-19, owner request) — in progress
 
 The owner asked for two online gateways, **SSLCommerz and PayStation**, each in sandbox or live mode switched from the admin.

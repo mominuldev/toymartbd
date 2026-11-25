@@ -3,6 +3,7 @@ import type { Schema } from '@toymart/api-types';
 import { api } from '@/lib/api';
 
 export type SalesAnalytics = Schema<'SalesAnalytics'>;
+export type RecommendationRow = SalesAnalytics['recommendations'][number];
 export type TrendRow = SalesAnalytics['trend'][number];
 export type PerformanceRow = SalesAnalytics['categories'][number] | SalesAnalytics['brands'][number];
 

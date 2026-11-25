@@ -56,6 +56,9 @@ final class ReportSheets
             $metric('new', $s['customers']['new']),
             $metric('repeat_rate', $s['customers']['repeat_rate']),
             ['conversion', $t('metric.conversion'), $t('metric.conversion_unavailable')],
+            ['recommendations_measured_since', $t('metric.recommendations_measured_since'), $report['recommendation_funnel']['measured']
+                ? (string) $report['recommendation_funnel']['since']
+                : $t('metric.recommendations_not_measured')],
         );
 
         $profit = $report['profit_visible'];
@@ -72,7 +75,7 @@ final class ReportSheets
         $mixHeader = ['orders', 'orders_percent', 'value', 'value_percent', 'aov'];
 
         $discounts = $report['discounts'];
-        $recommendationHeader = ['source', 'placed_lines', 'placed_units', 'placed_orders', 'placed_value', 'placed_value_percent', 'delivered_units', 'net_revenue', ...($profit ? ['gross_profit'] : []), 'return_rate'];
+        $recommendationHeader = ['source', 'impressions', 'clicks', 'ctr', 'add_to_cart', 'add_to_cart_rate', 'placed_lines', 'placed_units', 'placed_orders', 'placed_value', 'placed_value_percent', 'delivered_units', 'net_revenue', ...($profit ? ['gross_profit'] : []), 'return_rate'];
 
         return [
             new Sheet($t('sheet.summary'), ['key', 'metric', 'value'], $summary),

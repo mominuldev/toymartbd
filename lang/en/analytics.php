@@ -59,6 +59,8 @@ return [
         'repeat_rate' => 'Repeat-purchase rate %',
         'conversion' => 'Conversion rate',
         'conversion_unavailable' => 'Not reported: no consent-independent session count exists',
+        'recommendations_measured_since' => 'Recommendation views and clicks measured since (Dhaka date)',
+        'recommendations_not_measured' => 'No data yet: no recommendation views or clicks were recorded in this period',
     ],
     'none' => 'None',
     'no_brand' => 'No brand',

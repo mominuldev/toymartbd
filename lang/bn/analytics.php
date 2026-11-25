@@ -58,6 +58,8 @@ return [
         'repeat_rate' => 'পুনরায় কেনার হার %',
         'conversion' => 'কনভার্শন রেট',
         'conversion_unavailable' => 'দেখানো হয়নি: সম্মতি-নিরপেক্ষ সেশন গণনা নেই',
+        'recommendations_measured_since' => 'রেকমেন্ডেশন দেখা ও ক্লিক মাপা শুরু (ঢাকার তারিখ)',
+        'recommendations_not_measured' => 'এখনো ডেটা নেই: এই সময়ে রেকমেন্ডেশন দেখা বা ক্লিক রেকর্ড হয়নি',
     ],
     'none' => 'কোনোটি নয়',
     'no_brand' => 'ব্র্যান্ড নেই',

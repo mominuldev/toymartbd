@@ -90,6 +90,8 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
 Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->prefix('cart')->name('cart.')->group(function (): void {
     Route::post('/', [CartController::class, 'store'])->name('store');
     Route::get('/', [CartController::class, 'show'])->name('show');
+    // Cart cross-sell rail (P10, docs/api/recommendations.md): never an upsell (rule 25b).
+    Route::get('/recommendations', [App\Http\Controllers\Api\V1\Storefront\CartRecommendationController::class, 'index'])->name('recommendations.index');
     Route::post('/items', [CartController::class, 'addItem'])->name('items.store');
     Route::patch('/items/{item}', [CartController::class, 'updateItem'])->whereNumber('item')->name('items.update');
     Route::delete('/items/{item}', [CartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
@@ -107,6 +109,14 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::post('/checkout', [CheckoutController::class, 'store'])->middleware(['throttle:checkout', 'idempotent'])->name('checkout.store');
     Route::post('/orders/track', [OrderController::class, 'track'])->middleware('throttle:order-track')->name('orders.track');
     Route::get('/orders/{number}', [OrderController::class, 'show'])->middleware('throttle:order-lookup')->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.show');
+    // Order-confirmation cross-sell rail (P10, docs/api/recommendations.md): same proof of ownership as the page.
+    Route::get('/orders/{number}/recommendations', [App\Http\Controllers\Api\V1\Storefront\OrderRecommendationController::class, 'index'])->middleware('throttle:order-lookup')->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.recommendations.index');
+});
+
+// Recommendation funnel events (P10, rule 25d) — docs/api/recommendations.md. The storefront server
+// token, or the signed-in shopper's customer token (then `customer_id` is recorded). Queued, never inline.
+Route::middleware(['auth:sanctum', Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class.':storefront:read,customer'])->group(function (): void {
+    Route::post('/recommendation-events', [App\Http\Controllers\Api\V1\Storefront\RecommendationEventController::class, 'store'])->middleware('throttle:recommendation-events')->name('recommendation-events.store');
 });
 
 // Contact page "Send us a message" (owner decision 2026-11-16) — docs/api/inbox.md. Lands in the

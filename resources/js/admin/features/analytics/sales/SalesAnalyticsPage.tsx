@@ -565,12 +565,41 @@ function DiscountsCard({ data }: { data: SalesAnalytics }) {
 /** RecommendationPlacement values plus `none` (bought without a recommendation). */
 const placements = ['pdp_upsell', 'pdp_cross_sell', 'pdp_fbt', 'pdp_age_progression', 'cart_cross_sell', 'confirmation_cross_sell', 'none'];
 
-/** Recommendation placements (rule 25d: attribution is a measurement — order_items.recommendation_source). */
+/**
+ * Recommendation placements (rule 25d: attribution is a measurement). Per placement, the
+ * browsing funnel from recommendation_events — impressions → clicks → add-to-cart, with the
+ * server's CTR and add-to-cart rate — then what it sold from order_items: units ordered, value
+ * placed, revenue recognised on delivery (rule 10). Before tracking began the event columns
+ * are "no data yet", never zeros.
+ */
 function RecommendationsCard({ data }: { data: SalesAnalytics }) {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const label = (source: string) => (placements.includes(source) ? t(`sales.recs.placement.${source}` as MessageKey) : source);
+    const funnel = data.recommendation_funnel;
+    const noData = (
+        <span className="text-fg-tertiary">
+            <span aria-hidden>—</span>
+            <span className="sr-only">{t('sales.recs.noData')}</span>
+        </span>
+    );
+    const step = (count: number | null, rate?: string | null) =>
+        count === null ? (
+            noData
+        ) : (
+            <>
+                {formatCount(count)}
+                {rate !== undefined && (
+                    <span className="block t-admin-caption text-fg-tertiary">
+                        <Percent value={rate} />
+                    </span>
+                )}
+            </>
+        );
     return (
         <Card title={t('sales.recs.title')} subtitle={t('sales.recs.subtitle')}>
+            <p className="t-admin-caption text-fg-secondary">
+                {funnel.measured && funnel.since ? t('sales.recs.measuredSince', { date: formatDay(funnel.since, locale) }) : t('sales.recs.notMeasured')}
+            </p>
             {data.recommendations.length === 0 ? (
                 <p className="t-admin-caption text-fg-tertiary">{t('sales.none')}</p>
             ) : (
@@ -579,7 +608,10 @@ function RecommendationsCard({ data }: { data: SalesAnalytics }) {
                         <thead>
                             <tr className="border-b border-line-default">
                                 <th scope="col" className={`${dataTable.th} px-0`}>{t('sales.recs.source')}</th>
-                                <th scope="col" className={`${dataTable.th} text-end`}>{t('sales.col.units')}</th>
+                                <th scope="col" className={`${dataTable.th} text-end`}>{t('sales.recs.impressions')}</th>
+                                <th scope="col" className={`${dataTable.th} text-end`}>{t('sales.recs.clicks')}</th>
+                                <th scope="col" className={`${dataTable.th} text-end`}>{t('sales.recs.addToCart')}</th>
+                                <th scope="col" className={`${dataTable.th} text-end`}>{t('sales.recs.unitsOrdered')}</th>
                                 <th scope="col" className={`${dataTable.th} text-end`}>{t('sales.recs.placed')}</th>
                                 <th scope="col" className={`${dataTable.th} pe-0 text-end`}>{t('sales.col.revenue')}</th>
                             </tr>
@@ -590,11 +622,14 @@ function RecommendationsCard({ data }: { data: SalesAnalytics }) {
                                     <th scope="row" className="py-2 text-start t-admin-body text-fg-primary">
                                         {label(r.source)}
                                     </th>
-                                    <td className="px-3 py-2 text-end t-admin-num">{formatCount(r.placed_units)}</td>
-                                    <td className="px-3 py-2 text-end t-admin-num">
+                                    <td className="px-3 py-2 text-end align-top t-admin-num">{step(r.impressions)}</td>
+                                    <td className="px-3 py-2 text-end align-top t-admin-num">{step(r.clicks, r.ctr)}</td>
+                                    <td className="px-3 py-2 text-end align-top t-admin-num">{step(r.add_to_cart, r.add_to_cart_rate)}</td>
+                                    <td className="px-3 py-2 text-end align-top t-admin-num">{formatCount(r.placed_units)}</td>
+                                    <td className="px-3 py-2 text-end align-top t-admin-num">
                                         <Money amount={r.placed_value} /> <span className="t-admin-caption text-fg-tertiary">(<Percent value={r.placed_value_percent} />)</span>
                                     </td>
-                                    <td className="py-2 text-end t-admin-num">
+                                    <td className="py-2 text-end align-top t-admin-num">
                                         <Money amount={r.net_revenue} />
                                     </td>
                                 </tr>
@@ -603,6 +638,7 @@ function RecommendationsCard({ data }: { data: SalesAnalytics }) {
                     </table>
                 </div>
             )}
+            {funnel.measured && <p className="t-admin-caption text-fg-tertiary">{t('sales.recs.rateNote')}</p>}
         </Card>
     );
 }

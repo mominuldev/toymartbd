@@ -27,6 +27,14 @@ Schedule::command('toymart:inventory:reconcile')
     ->withoutOverlapping(60)
     ->onOneServer();
 
+// Co-purchase projection (P10, PRD X-04 "Frequently bought together"): product_copurchases rebuilt
+// from the last 180 days of non-cancelled orders. 03:30 Dhaka, off-peak; one swap transaction.
+Schedule::command('toymart:catalog:copurchases')
+    ->dailyAt('03:30')
+    ->timezone('Asia/Dhaka')
+    ->withoutOverlapping(30)
+    ->onOneServer();
+
 // Daily low-stock digest to managers (SYSTEM-ARCHITECTURE §6: 09:00 Asia/Dhaka), reporting
 // the previous Dhaka day's alerts and everything still open.
 Schedule::command('toymart:inventory:digest')
