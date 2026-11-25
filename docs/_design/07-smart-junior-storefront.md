@@ -317,7 +317,7 @@ The Bangla copy is baked into this set, so it is a Vivid-only component. Until 2
 - **Columns (desktop).** Plain columns on a 1200 content width with a `space/40` gap:
   - brand (320): the Logo `Full, Light`, the blurb (`Body/M`, `text/secondary`) and four 40 px `bg/surface` social circles (Facebook, Instagram, YouTube, WhatsApp) with an `icon/default` glyph
   - শপ, সহায়তা, প্রতিষ্ঠান (fill): a `Label/L` `text/primary` heading over a 24 × 4 accent bar (`brand/sun`, `brand/learn`, `brand/play`), then `Body/M` `text/secondary` links. The labels are the live footer's.
-  - যোগাযোগ করুন (260, `brand/lagoon` bar): four rows, each with a 36 px `bg/surface` icon tile. The values are the §7.0 placeholders in dashed `border/default` frames: `placeholder:hotline` [হটলাইন নম্বর] with `placeholder:hours` [সময়সূচি], "WhatsApp-এ অর্ডার" (no number), `placeholder:email` [ইমেইল] and `placeholder:address` [ঠিকানা].
+  - যোগাযোগ করুন (260, `brand/lagoon` bar): four rows, each with a 36 px `bg/surface` icon tile. The values are the §7.0 placeholders in `placeholder:*` frames, with no outline since §17.5: `placeholder:hotline` [হটলাইন নম্বর] with `placeholder:hours` [সময়সূচি], "WhatsApp-এ অর্ডার" (no number), `placeholder:email` [ইমেইল] and `placeholder:address` [ঠিকানা].
 - **Play strip** (desktop 1440 × 150, mobile 390 × 112). A `pastel/mint-strong` back hill and a `brand/learn` grass band run into the bottom bar. On it:
   - the mascot (Logo `Mark`, 56 px desktop and 44 px mobile) with a `bg/surface` speech bubble "আবার এসো!" (`SJ/Elevation/e1`)
   - two balloons (`brand/grow`, `brand/lagoon`) tied to the hill
@@ -1123,3 +1123,11 @@ Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-anim
 - Vivid page after the change: 101 other buttons show a trailing icon and 90 show none. Smart-animate to Hover is unaffected because Default and Hover have the same layer names.
 
 **Code** (storefront): in 42 buttons across 27 files, the `<Icon>` moves after the label. Buy now in `ProductCard`, `PurchasePanel` and `AddToCartBar` keeps the icon first. The button helpers use symmetric padding, and `button-fx.css` selects `> svg` without regard to position, so no styles changed.
+
+### 17.5 Placeholder values lose the dashed outline (owner, 2026-11-26)
+
+- Every `placeholder:<what>` frame had a dashed stroke (4/3, `border/default`). That stroke and its dash pattern are now removed on all pages.
+- Edited directly: 19 frames on Components (mainly the footer and header main components) and 100 on the Vivid page. The other ~490 instances followed their main components. A final pass found none left on any page.
+- Placeholders are still marked by the `placeholder:*` layer name and the bracketed `[…]` text. They are still never real-looking values and never tel:/mailto:/wa.me links.
+- Not changed: the order-detail `Details` frames (dash 6/4) and the delivery-lane lines, which are design dashes, not placeholder marks.
+- **Code:** the footer's `placeholderFrame` (SiteFooter.tsx) drops `border border-dashed … px-1`. `data-placeholder` stays.

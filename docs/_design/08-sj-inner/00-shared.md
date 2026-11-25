@@ -452,7 +452,7 @@ The owner approved swapping the unconfirmed business values for marked placehold
 `Footer — Vivid · বাংলা` `41:9166`, and in the same values elsewhere on `34:5658`.
 
 **How a placeholder is marked.**
-- The value sits in an auto-layout frame named `placeholder:<what>`, with no fill and a 1 px dashed (4/3) inside stroke bound to `border/default`.
+- The value sits in an auto-layout frame named `placeholder:<what>`, with no fill and **no outline**. The owner removed the dashed stroke on 2026-11-26 (07 §17.5). The layer name and the bracketed `[…]` text are the only marks.
 - The frame has `space/4` left and right padding, radius `radius/xs`, and `strokesIncludedInLayout = false`. Frames that wrap an instance (a button, Trust Item or Notice) also get `space/2` top and bottom padding.
 - The text keeps its node, fill and text style. Bangla placeholder text uses Anek Bangla at the original weight and size; `COD` stays in Fredoka.
 - Where the value sits inside a sentence, the frame wraps the whole text node and only the bracketed part is the placeholder.
@@ -642,7 +642,7 @@ same as phases B and C (§6, §7):
 - Mobile frames keep the site header (spec 05 §0: no `MobileTopBar`) and the Bottom Tab Bar in flow after the footer. Search,
   brands and categories set **শপ** active. The info pages (28–31) keep **হোম** active, as phase C did.
 - Text uses the `SJ Vivid/*` styles, with a per-range Fredoka override on Latin text and digits.
-- Placeholders follow §7.0: a `placeholder:<what>` auto-layout frame with a dashed `border/default` outline. Where the value sits
+- Placeholders follow §7.0: a `placeholder:<what>` auto-layout frame, with no outline since 2026-11-26. Where the value sits
   inside an instance (FAQ Item, Button, the status pill), the frame wraps the instance.
 
 **Audits (after the last row and the tidy-ups).**
