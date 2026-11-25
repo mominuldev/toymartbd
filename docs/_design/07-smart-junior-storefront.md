@@ -1076,3 +1076,38 @@ All 126 card instances follow, with no height mismatch. Code: `CART_SQUARE` is `
 - **Figma:** Age Card (`9:176`) has a new `State` property, with Hover variants `265:3138` (desktop) and `265:3146` (mobile).
   - Hover adds a 1.5 px `border/card-hover` stroke and `SJ/Elevation/e2`, and its photo is cropped at 1.07.
   - The Default photos moved from FILL to an exact cover CROP, which looks identical, so the two can smart-animate. Default → Hover runs 0.45 s on CSS `ease`.
+
+### 17.3 Shop by age: five layout variations, B1 built (2026-11-25)
+
+**Owner requests.** A second layout for the "বয়স অনুযায়ী কিনুন" section, then "the other options also" and "another version with a different concept". Two drafts were rejected and deleted: a growth-steps staircase and wide age rows.
+
+**The age cards have no hover border in any version** (owner). Hover is the lift (e2/e3) and the photo zoom only. The product card keeps its border (§17.2).
+
+The variations sit on page `34:5658`, desktop and mobile, at the right of the screens:
+
+| Variation | Component | Pattern |
+|---|---|---|
+| **B1 Photo overlay grid** (built) | `Age Card · Overlay` `274:3195` | full-bleed photo, a gradient in the card's tone, white age and theme, tone tag, white arrow |
+| B2 Bento grid | `Age Tile · Bento` `275:3208` (Tall, Wide) | one tall feature tile, one wide and two small |
+| B3 Circle portraits | `Age Card · Circle` `274:3250` | round photo on a tone ring, text centred below |
+| B4 Polaroid scrapbook | `Age Card · Polaroid` `275:3243` | white print, tape in the tone, alternating tilt |
+| B5 Toy-road journey | `Age Stop · Journey` `277:3244` (Above, Below, Right, Left) | a winding road with a toy car (Phosphor CarProfile, fill), stops along it, a "বড় হও!" finish |
+
+Every component has Default and Hover states, and a 0.45 s CSS-`ease` smart-animate between them.
+
+**B1 is built on the site** (owner: "Implement the overlay age card"). It is `AgePhotoCard` in the storefront's `AgeTilesBlock.tsx`.
+- **The card:** 236 / 320 / 380 px tall (mobile / md / lg). The title is split into a number and a unit with `leading-none`, so the age and the line sit 2–4 px apart (owner: "reduce the age and subtitle between space"). The arrow is pinned bottom-right.
+- **Each card's gradient is its own tone** (owner: "multiple gradient color for each card"):
+  - **Colours:** the tone's deepest ink at 95% → 80% at mid-height → clear, over the lower 75%. The inks are `text/ink-butter`, `-pink`, `-sky`, `-mint` and `-coral`; purple uses `deco/grape`.
+  - **Contrast**, over a pure-white photo: the line is at least 4.5:1, and the large age at least 3.9:1.
+- **Hover and focus:** `shadow-e3` and the photo at 1.07 over 0.45 s `ease`. Reduced motion keeps the card still.
+- **Tests:** `tests/age-overlay-card.test.ts`.
+
+**Figma follows the site.**
+- **Home screens:** the 12 Age Card instances on the Vivid home screens (desktop, tablet and mobile) now use `Age Card · Overlay`. Their overrides were reset, then the content and tone were re-applied.
+- **The scrim** is a gradient: `bg/scrim-clear` → `pastel/*-ink` at 50% and 100%, with the layer at 92%.
+- **New variables:**
+  - primitives `slate/800-alpha-0` and `-alpha-88`
+  - `SJ · Color` `bg/scrim-clear` and `bg/scrim`
+- **Gotcha:** when a paint or gradient stop is bound to the same variable as the main component's default, Figma renders the fallback colour you pass. Always pass the resolved colour as the fallback.
+- **Overlap audit:** clean on both pages.
