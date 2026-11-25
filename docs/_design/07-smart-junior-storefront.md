@@ -1244,3 +1244,27 @@ The pink ramp keeps its hue. Its 500 is pinned to the gear's `#FC3C59` (was `#FD
   - `LogoMark` is the rocket, used as the footer mascot (`PlayStrip`).
   - An uploaded logo in Admin › Settings › Site & branding still wins over this fallback.
   - The `PLAY • LEARN • GROW` tagline is not part of the real logo, so it no longer shows.
+
+### 17.11 Home hero: V2 "Rainbow pop", a more vibrant alternative (owner request, 2026-11-26)
+
+The owner asked for another version of the home hero in vibrant colours. It is a design alternative for the owner to choose; the live hero (`34:5661` / `34:5884`) and the code are unchanged.
+
+**Where:** page `34:5658`, below the Shop-by-age variations: `Hero — V2 Rainbow pop · Desktop 1440` (`314:45061`, x 9780, y 5200) and `· Mobile 390` (`314:45263`, x 11380). Each one is a clone of the live hero in a wrapper that sets `SJ · Color` and `SJ · Type` to Vivid. The overlap audit is clean.
+
+**What changes from the live hero:**
+- **Main card:** a linear gradient, `purple/800` → `purple/600` → `pink/600` (left to right on desktop; pink at the top on mobile, behind the photo). The stops are bound to the primitives.
+- **Copy:** headline, body and proof in `text/inverse` (white). The accent word "খেলনা" is in `brand/sun`.
+- **Primary CTA:** `action/secondary` (sunshine) with a navy label and icon. Pink buttons would disappear on the pink end of the gradient. The outline button and the butter eyebrow stay the same.
+- **Decoration:** the two blobs are `orange/500` and `blue/500` at 55%, and the active slider dot is `brand/sun`.
+- **Flash-sale card:** solid `pink/600` with white text, and the photo tile in `pink/100`.
+- **STEM card:** solid `sunshine/400` with navy text, and the photo tile in `sunshine/100`. A saturated tile multiplies the photo, which turned the teddy red.
+
+**Contrast (estimated from the palette, not re-measured):**
+- white on `purple/800` and `purple/600`: ≥ 5.5:1
+- white on `pink/600`: 4.7:1
+- sun on `purple/600`: about 4.2:1, which passes for large text only, and the accent word is display size
+- navy on sunshine: ≥ 9:1
+
+**Not done:**
+- **No semantic tokens yet.** The gradient and the promo-card fills bind primitives, which is a rule-26 defect in code. If the owner picks V2, add tokens (for example `bg/hero-gradient-*`, `bg/promo-sale`, `bg/promo-highlight`) before building it in `HeroBlock`/`HomeHero`.
+- **No tablet frame.**
