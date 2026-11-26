@@ -1304,3 +1304,30 @@ The owner asked for "another unique concept". V2 recoloured the live layout. V3 
 - No semantic tokens yet for the sticker or the block edges (rule 26). Add them before building V3 in code.
 - No tablet frame.
 - No hover states. A natural one is a 2 px "press" that shrinks the bottom edge.
+
+### 17.13 Home hero: V4 "Rocket launch", a third alternative (owner request, 2026-11-26)
+
+The owner asked for another version of the home hero. V4 takes its idea from the logo's rocket. The hero is a night sky, the product photo is a planet, and the four promos are moons on its orbit. Like V2 and V3, it is a design alternative only; the live hero and the code are unchanged.
+
+**Where:** page `34:5658`, below V3: `Hero — V4 Rocket launch · Desktop 1440` (`320:45420`, x 9780, y 7500) and `· Mobile 390` (`320:45579`, x 11380). The wrappers are clones of the V3 wrappers, so they keep the Vivid modes. The overlap audit of the top-level frames is clean.
+
+**Layout:**
+- **Sky panel.** A diagonal gradient, `purple/800` → `purple/700` → `purple/600`, with stops bound to the primitives. Small white dots (`text/inverse` at 50–90%) and 4-point sparkles in `brand/sun`.
+- **Copy (desktop left, mobile top).** Eyebrow (Butter), the headline "ছোট্ট মনের বড় স্বপ্নের খেলনা" in white with the accent "খেলনা" in `brand/sun`, the body in white, and Buttons Secondary (sunshine) "নতুন এসেছে" plus Outline "বয়স অনুযায়ী কিনুন", both with ArrowRight. On mobile the buttons are full-width and stacked.
+- **Trust row.** Under a 20% white divider: Money, Truck and ShieldCheck icons in `brand/sun` on a 14% white badge. The labels are "ক্যাশ অন ডেলিভারি", "সারা দেশে ডেলিভারি" and "নিরাপদ, নন-টক্সিক". It wraps on desktop and stacks on mobile.
+- **Orbit (desktop right, mobile middle).**
+  - **Planet.** The hero photo, cropped to a circle with an 8 px `brand/sun` ring (5 px on mobile), over a blurred `purple/500` glow.
+  - **Orbit line.** A dashed white orbit at 50%.
+  - **Rocket.** The logo's rocket (Logo `Type=Mark` instance) rides the orbit at the top, pointing along it, with a `brand/sun` trail arc behind it.
+  - **Moons.** Four white discs with the 3D category art, each with a sunshine label pill: ফ্ল্যাশ সেল −40%, STEM কিট, 0–3 বছর, গিফট সেট.
+  - **Sticker.** The V3 rating sticker (cloned) sits at the bottom of the planet.
+
+**Contrast (estimated from the palette, not re-measured):**
+- white on `purple/800`–`purple/600`: ≥ 5.5:1
+- `brand/sun` on purple: display text and icons only
+- navy on sunshine (buttons, pills): ≥ 9:1
+
+**Not done:**
+- **No semantic tokens yet.** The sky gradient, glow and translucent whites bind primitives or opacity. That is a rule-26 defect in code, so add tokens such as `bg/hero-sky-*` before building V4.
+- **"নিরাপদ, নন-টক্সিক" is a placeholder claim.** Confirm it with the owner, or swap it for a verified one.
+- **No tablet frame and no motion spec.** A slow orbit or a rocket drift would need a `prefers-reduced-motion` fallback.
