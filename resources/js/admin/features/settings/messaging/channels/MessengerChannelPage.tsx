@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useInboxChannelSettings, useSaveInboxChannelSettings, type InboxChannelSettings } from '../api';
 import { Switch } from '../Switch';
 import { keepAll, useConnectMessengerPage, useFinishMessengerLogin, useStartMessengerLogin, type MessengerLoginPages } from './api';
-import { ConnectedCard, GoodToKnow, KEYS_LINK, LastCheckLine, ManualKeysCard, SetupCard, WebhookCard, cardClass } from './parts';
+import { ConnectedCard, GoodToKnow, keysLink, LastCheckLine, ManualKeysCard, SetupCard, WebhookCard, cardClass } from './parts';
 
 const PERMISSION = 'settings.manage_integrations';
 
@@ -39,7 +39,7 @@ export function MessengerChannelPage() {
         <div className="flex w-full min-w-0 flex-col gap-6">
             <ContentHeader
                 title={t('channels.messenger.title')}
-                breadcrumb={[{ label: t('channels.crumb.inbox'), to: '/inbox' }, { label: t('channels.crumb.channels') }]}
+                breadcrumb={[{ label: t('nav.integrations'), to: '/integrations' }, { label: t('nav.integrations.messenger') }]}
                 subtitle={t('channels.messenger.subtitle')}
             />
             {settings.isError ? (
@@ -112,7 +112,7 @@ function MessengerChannel({ settings }: { settings: InboxChannelSettings }) {
                             {login.starting ? t('channels.fb.opening') : t('channels.fb.continue')}
                         </Button>
                         {!data.login_ready && (
-                            <Link to={KEYS_LINK} className={`${buttonClass('outline', 'lg')} gap-2`}>
+                            <Link to={keysLink('messenger')} className={`${buttonClass('outline', 'lg')} gap-2`}>
                                 <PlusIcon size={20} aria-hidden />
                                 {t('channels.fb.addApp')}
                             </Link>

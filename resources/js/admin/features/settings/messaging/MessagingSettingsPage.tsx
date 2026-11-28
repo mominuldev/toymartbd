@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Navigate, useParams } from 'react-router';
 import { CheckCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { sendTestSmsRequestSchema, updateMessagingSettingsRequestSchema } from '@toymart/api-types/zod';
 import { ApiError } from '@/lib/api';
@@ -14,6 +15,7 @@ import { FormSection } from '@/components/ui/FormSection';
 import { QueryError } from '@/components/ui/QueryError';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
+import { TabLink, TabList } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
 import { InboxChannelsSection } from './InboxChannelsSection';
 import { SecretField } from './SecretField';
@@ -29,6 +31,8 @@ import {
     type MessagingSettingsInput,
     type SmsTestResult,
 } from './api';
+
+export type MessagingTab = 'sms' | 'whatsapp' | 'messenger';
 
 const PERMISSION = 'settings.manage_integrations';
 const FORM_ID = 'messaging-settings';
@@ -101,8 +105,15 @@ function toInput(v: FormValues): MessagingSettingsInput {
  * send. No Figma frame exists for this screen; it follows Store settings (B · 38, 241:50827):
  * ContentHeader with the primary "Save changes" top right, FormSection cards, 2-column fields.
  * Secrets are write-only: the server returns whether one is set and its last 4 characters.
+ *
+ * One route tab per channel (owner request 2026-11-28), each showing only its own sections:
+ * SMS (provider, credentials, test send) · WhatsApp (order updates + the Inbox's Cloud API keys)
+ * · Facebook Messenger (the Inbox's Messenger keys). The messaging form still saves as one body;
+ * a tab that hides a field keeps its loaded value in the form, so nothing is lost on save.
  */
 export function MessagingSettingsPage() {
+    const { tab: param } = useParams();
+    const tab: MessagingTab | null = param === undefined ? 'sms' : param === 'whatsapp' || param === 'messenger' ? param : null;
     const { t } = useI18n();
     const { data: me } = useMe();
     const allowed = can(me, PERMISSION);
@@ -118,10 +129,32 @@ export function MessagingSettingsPage() {
         return <p aria-busy="true" className="sr-only" />;
     }
 
-    return <MessagingForm settings={settings.data} />;
+    if (tab === null) {
+        return <Navigate to="/integrations/messaging" replace />;
+    }
+    return <MessagingForm settings={settings.data} tab={tab} />;
 }
 
-function MessagingForm({ settings }: { settings: MessagingSettings }) {
+function MessagingHeader({ actions }: { actions?: ReactNode }) {
+    const { t } = useI18n();
+    return (
+        <div className="flex flex-col gap-4">
+            <ContentHeader
+                breadcrumb={[{ label: t('messaging.crumb.settings') }, { label: t('messaging.crumb.integrations'), to: '/integrations' }, { label: t('messaging.title') }]}
+                title={t('messaging.title')}
+                subtitle={t('messaging.subtitle')}
+                actions={actions}
+            />
+            <TabList label={t('messaging.tabs')}>
+                <TabLink to="/integrations/messaging" end label={t('messaging.tab.sms')} />
+                <TabLink to="/integrations/messaging/whatsapp" label={t('messaging.tab.whatsapp')} />
+                <TabLink to="/integrations/messaging/messenger" label={t('messaging.tab.messenger')} />
+            </TabList>
+        </div>
+    );
+}
+
+function MessagingForm({ settings, tab }: { settings: MessagingSettings; tab: MessagingTab }) {
     const { t } = useI18n();
     const { notify } = useToast();
     const save = useSaveMessagingSettings();
@@ -167,74 +200,76 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
 
     return (
         <section className="flex flex-col gap-6">
-            <ContentHeader
-                breadcrumb={[{ label: t('messaging.crumb.settings') }, { label: t('messaging.crumb.integrations'), to: '/integrations' }, { label: t('messaging.title') }]}
-                title={t('messaging.title')}
-                subtitle={t('messaging.subtitle')}
+            {/* The header's save is the SMS/order-updates form's; the Messenger tab has only the keys form and its own save. */}
+            <MessagingHeader
                 actions={
-                    <Button type="submit" form={FORM_ID} disabled={save.isPending}>
-                        {save.isPending ? t('messaging.saving') : t('messaging.save')}
-                    </Button>
+                    tab !== 'messenger' && (
+                        <Button type="submit" form={FORM_ID} disabled={save.isPending}>
+                            {save.isPending ? t('messaging.saving') : t('messaging.save')}
+                        </Button>
+                    )
                 }
             />
 
-            <form id={FORM_ID} onSubmit={submit} noValidate className="flex w-full min-w-0 flex-col gap-6">
+            {/* Stays mounted on the Messenger tab too (hidden), so unsaved SMS / WhatsApp edits survive a tab switch. */}
+            <form id={FORM_ID} hidden={tab === 'messenger'} onSubmit={submit} noValidate className="flex w-full min-w-0 flex-col gap-6">
                 {/* Fills the content width (spec rule 4b): the sections pair up at xl instead of one column stretched to 1600px. */}
                 <fieldset disabled={save.isPending} className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
-                    <FormSection title={t('messaging.sms.title')} description={t('messaging.sms.description')}>
-                        <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
-                            <Field label={t('messaging.field.driver')} hint={fromEnv('sms_driver')} error={errorOf('sms_driver')}>
-                                {({ id, describedBy, invalid }) => (
-                                    <Select id={id} aria-describedby={describedBy} aria-invalid={invalid || undefined} {...register('sms_driver')}>
-                                        {driverOptions.map((value) => (
-                                            <option key={value} value={value} disabled={!(smsDrivers as readonly string[]).includes(value)}>
-                                                {t(`messaging.driver.${value}` as MessageKey)}
-                                            </option>
-                                        ))}
-                                    </Select>
-                                )}
-                            </Field>
-                            <Field label={t('messaging.field.cost')} hint={fromEnv('sms_cost_per_segment') ?? t('messaging.field.costHint')} error={errorOf('sms_cost_per_segment')}>
-                                {({ id, describedBy, invalid }) => (
-                                    <input id={id} inputMode="decimal" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('sms_cost_per_segment')} />
-                                )}
-                            </Field>
-                        </div>
-                        {driver === 'reve' && (
+                    {tab === 'sms' && (
+                        <FormSection title={t('messaging.sms.title')} description={t('messaging.sms.description')}>
                             <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
-                                <Field label={t('messaging.field.baseUrl')} hint={fromEnv('reve_base_url') ?? t('messaging.field.baseUrlHint')} error={errorOf('reve_base_url')}>
+                                <Field label={t('messaging.field.driver')} hint={fromEnv('sms_driver')} error={errorOf('sms_driver')}>
                                     {({ id, describedBy, invalid }) => (
-                                        <input
-                                            id={id}
-                                            type="url"
-                                            spellCheck={false}
-                                            autoCapitalize="none"
-                                            aria-describedby={describedBy}
-                                            aria-invalid={invalid || undefined}
-                                            className={`h-10 ${monoInputClass}`}
-                                            {...register('reve_base_url')}
-                                        />
+                                        <Select id={id} aria-describedby={describedBy} aria-invalid={invalid || undefined} {...register('sms_driver')}>
+                                            {driverOptions.map((value) => (
+                                                <option key={value} value={value} disabled={!(smsDrivers as readonly string[]).includes(value)}>
+                                                    {t(`messaging.driver.${value}` as MessageKey)}
+                                                </option>
+                                            ))}
+                                        </Select>
                                     )}
                                 </Field>
-                                <Field label={t('messaging.field.senderId')} hint={fromEnv('reve_sender_id') ?? t('messaging.field.senderIdHint')} error={errorOf('reve_sender_id')}>
+                                <Field label={t('messaging.field.cost')} hint={fromEnv('sms_cost_per_segment') ?? t('messaging.field.costHint')} error={errorOf('sms_cost_per_segment')}>
                                     {({ id, describedBy, invalid }) => (
-                                        <input
-                                            id={id}
-                                            inputMode="numeric"
-                                            autoComplete="off"
-                                            spellCheck={false}
-                                            aria-describedby={describedBy}
-                                            aria-invalid={invalid || undefined}
-                                            className={`h-10 ${monoInputClass}`}
-                                            {...register('reve_sender_id')}
-                                        />
+                                        <input id={id} inputMode="decimal" aria-describedby={describedBy} aria-invalid={invalid || undefined} className={`h-10 ${inputClass}`} {...register('sms_cost_per_segment')} />
                                     )}
                                 </Field>
                             </div>
-                        )}
-                    </FormSection>
-
-                    {driver === 'reve' && (
+                            {driver === 'reve' && (
+                                <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
+                                    <Field label={t('messaging.field.baseUrl')} hint={fromEnv('reve_base_url') ?? t('messaging.field.baseUrlHint')} error={errorOf('reve_base_url')}>
+                                        {({ id, describedBy, invalid }) => (
+                                            <input
+                                                id={id}
+                                                type="url"
+                                                spellCheck={false}
+                                                autoCapitalize="none"
+                                                aria-describedby={describedBy}
+                                                aria-invalid={invalid || undefined}
+                                                className={`h-10 ${monoInputClass}`}
+                                                {...register('reve_base_url')}
+                                            />
+                                        )}
+                                    </Field>
+                                    <Field label={t('messaging.field.senderId')} hint={fromEnv('reve_sender_id') ?? t('messaging.field.senderIdHint')} error={errorOf('reve_sender_id')}>
+                                        {({ id, describedBy, invalid }) => (
+                                            <input
+                                                id={id}
+                                                inputMode="numeric"
+                                                autoComplete="off"
+                                                spellCheck={false}
+                                                aria-describedby={describedBy}
+                                                aria-invalid={invalid || undefined}
+                                                className={`h-10 ${monoInputClass}`}
+                                                {...register('reve_sender_id')}
+                                            />
+                                        )}
+                                    </Field>
+                                </div>
+                            )}
+                        </FormSection>
+                    )}
+                    {tab === 'sms' && driver === 'reve' && (
                         <FormSection title={t('messaging.credentials.title')} description={t('messaging.credentials.description')}>
                             <div className="grid gap-x-4 gap-y-3.5 md:grid-cols-2">
                                 <SecretField
@@ -269,47 +304,49 @@ function MessagingForm({ settings }: { settings: MessagingSettings }) {
                         </FormSection>
                     )}
 
-                    <FormSection title={t('messaging.whatsapp.title')} className={driver === 'reve' ? 'xl:col-span-2' : ''}>
-                        <div className="flex items-start gap-4">
-                            <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                <p className="t-admin-body text-fg-primary">{t('messaging.whatsapp.toggle')}</p>
-                                <p className="t-admin-caption text-fg-secondary">{t('messaging.whatsapp.explain')}</p>
-                                {fromEnv('whatsapp_enabled') && <p className="t-admin-caption text-fg-tertiary">{fromEnv('whatsapp_enabled')}</p>}
+                    {tab === 'whatsapp' && (
+                        <FormSection title={t('messaging.whatsapp.title')} className="xl:col-span-2">
+                            <div className="flex items-start gap-4">
+                                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                    <p className="t-admin-body text-fg-primary">{t('messaging.whatsapp.toggle')}</p>
+                                    <p className="t-admin-caption text-fg-secondary">{t('messaging.whatsapp.explain')}</p>
+                                    {fromEnv('whatsapp_enabled') && <p className="t-admin-caption text-fg-tertiary">{fromEnv('whatsapp_enabled')}</p>}
+                                </div>
+                                <Switch
+                                    checked={whatsapp}
+                                    label={t('messaging.whatsapp.toggle')}
+                                    onChange={(value) => setValue('whatsapp_enabled', value, { shouldDirty: true })}
+                                />
                             </div>
-                            <Switch
-                                checked={whatsapp}
-                                label={t('messaging.whatsapp.toggle')}
-                                onChange={(value) => setValue('whatsapp_enabled', value, { shouldDirty: true })}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <span className="t-admin-body-strong text-fg-primary">{t('messaging.whatsapp.driver')}</span>
-                            <SegmentedControl
-                                label={t('messaging.whatsapp.driverLabel')}
-                                value={whatsappDriver}
-                                onChange={(value) => setValue('whatsapp_driver', value, { shouldDirty: true })}
-                                className="self-start"
-                                options={whatsAppDrivers.map((value) => ({ value, label: t(`messaging.whatsapp.driver.${value}` as MessageKey) }))}
-                            />
-                            <p className="t-admin-caption text-fg-secondary">
-                                {isWhatsAppDriver(whatsappDriver)
-                                    ? t(whatsappDriver === 'cloud' ? 'messaging.whatsapp.driver.cloudHint' : 'messaging.whatsapp.driver.logHint')
-                                    : t('messaging.whatsapp.driver.envOnly', { driver: whatsappDriver })}
-                            </p>
-                            {fromEnv('whatsapp_driver') && <p className="t-admin-caption text-fg-tertiary">{fromEnv('whatsapp_driver')}</p>}
-                            {errorOf('whatsapp_driver') && (
-                                <p role="alert" className="t-admin-caption text-feedback-danger">
-                                    {errorOf('whatsapp_driver')}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="t-admin-body-strong text-fg-primary">{t('messaging.whatsapp.driver')}</span>
+                                <SegmentedControl
+                                    label={t('messaging.whatsapp.driverLabel')}
+                                    value={whatsappDriver}
+                                    onChange={(value) => setValue('whatsapp_driver', value, { shouldDirty: true })}
+                                    className="self-start"
+                                    options={whatsAppDrivers.map((value) => ({ value, label: t(`messaging.whatsapp.driver.${value}` as MessageKey) }))}
+                                />
+                                <p className="t-admin-caption text-fg-secondary">
+                                    {isWhatsAppDriver(whatsappDriver)
+                                        ? t(whatsappDriver === 'cloud' ? 'messaging.whatsapp.driver.cloudHint' : 'messaging.whatsapp.driver.logHint')
+                                        : t('messaging.whatsapp.driver.envOnly', { driver: whatsappDriver })}
                                 </p>
-                            )}
-                        </div>
-                    </FormSection>
+                                {fromEnv('whatsapp_driver') && <p className="t-admin-caption text-fg-tertiary">{fromEnv('whatsapp_driver')}</p>}
+                                {errorOf('whatsapp_driver') && (
+                                    <p role="alert" className="t-admin-caption text-feedback-danger">
+                                        {errorOf('whatsapp_driver')}
+                                    </p>
+                                )}
+                            </div>
+                        </FormSection>
+                    )}
                 </fieldset>
             </form>
 
-            <TestSmsCard dirty={formState.isDirty} />
-
-            <InboxChannelsSection />
+            {tab === 'sms' && <TestSmsCard dirty={formState.isDirty} />}
+            {/* One keys form for both Meta channels, kept mounted between their tabs. */}
+            {tab !== 'sms' && <InboxChannelsSection channel={tab} />}
         </section>
     );
 }

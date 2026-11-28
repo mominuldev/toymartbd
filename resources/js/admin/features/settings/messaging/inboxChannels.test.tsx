@@ -120,9 +120,9 @@ async function card(name: string): Promise<HTMLElement> {
 }
 
 describe('integrations → messaging → inbox channels', () => {
-    it('shows both cards with ids, secrets only as hints, the webhook URLs and the readiness line', async () => {
+    it('shows each channel on its own tab, with ids, secrets only as hints, the webhook URL and the readiness line', async () => {
         inboxApi(owner);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/whatsapp');
 
         const wa = within(await card('WhatsApp inbox'));
         expect((wa.getByLabelText('Phone number ID') as HTMLInputElement).value).toBe('106540352242922');
@@ -138,8 +138,11 @@ describe('integrations → messaging → inbox channels', () => {
         expect(wa.getByText('Sending ready')).toBeTruthy();
         expect(wa.getByText('Not verified — no real account yet')).toBeTruthy();
         expect(wa.getByRole('button', { name: 'WhatsApp Cloud API' }).getAttribute('aria-pressed')).toBe('true');
+        expect(screen.queryByRole('heading', { name: 'Messenger inbox' })).toBeNull();
 
+        fireEvent.click(screen.getByRole('link', { name: 'Facebook Messenger' }));
         const fb = within(await card('Messenger inbox'));
+        expect(screen.queryByRole('heading', { name: 'WhatsApp inbox' })).toBeNull();
         expect(fb.getAllByText('Not set')).toHaveLength(3);
         expect(fb.getByText('Webhook not ready')).toBeTruthy();
         expect(fb.getByText('Sending not ready')).toBeTruthy();
@@ -151,7 +154,7 @@ describe('integrations → messaging → inbox channels', () => {
 
     it('saves a body the generated schema accepts: blank secrets kept, typed ones sent, clears explicit', async () => {
         const calls = inboxApi(owner);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/messenger');
 
         const fb = within(await card('Messenger inbox'));
         fireEvent.click(fb.getByRole('button', { name: 'Messenger' }));
@@ -159,9 +162,7 @@ describe('integrations → messaging → inbox channels', () => {
         fireEvent.change(fb.getByLabelText(/^Page access token/), { target: { value: 'EAAG-page-token' } });
         fireEvent.change(fb.getByLabelText(/^App secret/), { target: { value: 'fb-app-secret' } });
         fireEvent.click(fb.getByRole('switch', { name: 'Reply for up to 7 days (human agent)' }));
-        const wa = within(await card('WhatsApp inbox'));
-        fireEvent.click(wa.getByRole('button', { name: 'Remove saved app secret' }));
-        expect(wa.getByText('Will be removed when you save.')).toBeTruthy();
+        // The WhatsApp card is on its own tab; its saved values ride along unchanged.
         fireEvent.click(screen.getByRole('button', { name: 'Save inbox channels' }));
 
         await waitFor(() => expect(putSent(calls)).toBe(true));
@@ -174,7 +175,7 @@ describe('integrations → messaging → inbox channels', () => {
             whatsapp_app_secret: null,
             whatsapp_verify_token: null,
             clear_whatsapp_access_token: false,
-            clear_whatsapp_app_secret: true,
+            clear_whatsapp_app_secret: false,
             clear_whatsapp_verify_token: false,
             messenger_driver: 'messenger',
             messenger_page_id: '104857300112233',
@@ -196,10 +197,11 @@ describe('integrations → messaging → inbox channels', () => {
 
     it('shows the Business Account ID and explains the HUMAN_AGENT switch may need Meta app review', async () => {
         inboxApi(owner);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/whatsapp');
 
         const wa = within(await card('WhatsApp inbox'));
         expect((wa.getByLabelText('WhatsApp Business Account ID') as HTMLInputElement).value).toBe('102290129340398');
+        fireEvent.click(screen.getByRole('link', { name: 'Facebook Messenger' }));
         const fb = within(await card('Messenger inbox'));
         expect(fb.getByRole('switch', { name: 'Reply for up to 7 days (human agent)' }).getAttribute('aria-checked')).toBe('false');
         expect(fb.getByText(/Meta may require your app to pass review/)).toBeTruthy();
@@ -222,7 +224,7 @@ describe('integrations → messaging → inbox channels', () => {
             },
         };
         const calls = inboxApi(owner, undefined, { status: 200, body: { channel: 'whatsapp', ...after.whatsapp.last_check } }, after);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/whatsapp');
 
         const wa = within(await card('WhatsApp inbox'));
         expect(wa.getByText('Not tested yet.')).toBeTruthy();
@@ -256,7 +258,7 @@ describe('integrations → messaging → inbox channels', () => {
             if (url.endsWith('/settings/inbox-channels')) return { status: 200, body: failed };
             return { status: 404 };
         });
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/whatsapp');
 
         const wa = within(await card('WhatsApp inbox'));
         expect(wa.getByText(/Failed: meta_190 — Error validating access token\./)).toBeTruthy();
@@ -267,7 +269,7 @@ describe('integrations → messaging → inbox channels', () => {
 
     it('refuses a non-numeric id with the generated schema before calling the API', async () => {
         const calls = inboxApi(owner);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/messenger');
 
         const fb = within(await card('Messenger inbox'));
         fireEvent.change(fb.getByLabelText('Page ID'), { target: { value: 'toymartbd' } });
@@ -287,7 +289,7 @@ describe('integrations → messaging → inbox channels', () => {
                 errors: [{ field: 'messenger_page_access_token', message: 'Required to send through Meta.' }],
             },
         });
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/messenger');
 
         const fb = within(await card('Messenger inbox'));
         fireEvent.click(fb.getByRole('button', { name: 'Messenger' }));
@@ -300,7 +302,7 @@ describe('integrations → messaging → inbox channels', () => {
 
     it('is read-only — closed, with no credential request — for staff without settings.manage_integrations', async () => {
         const calls = inboxApi(operator);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/whatsapp');
 
         expect(await screen.findByText('You do not have access to this page.')).toBeTruthy();
         expect(screen.queryByRole('heading', { name: 'WhatsApp inbox' })).toBeNull();

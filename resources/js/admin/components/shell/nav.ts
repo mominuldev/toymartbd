@@ -42,8 +42,8 @@ export type NavChild = {
     path: string;
     /** Hidden unless the user also holds this permission (the parent's is always needed). */
     permission?: string;
-    /** For a child at the parent's own path (Inbox › Chats): not active under this prefix. */
-    activeUnless?: string;
+    /** For a child at the parent's own path (Integrations › All integrations): not active under these prefixes. */
+    activeUnless?: readonly string[];
 };
 
 export type NavGroup = { label: MessageKey | null; items: NavItem[] };
@@ -57,18 +57,7 @@ export const navigation: NavGroup[] = [
         label: null,
         items: [
             { key: 'nav.overview', path: '/', icon: SquaresFourIcon, permission: 'dashboard.view' },
-            {
-                key: 'nav.inbox',
-                path: '/inbox',
-                icon: ChatsIcon,
-                permission: 'inbox.view',
-                // Inbox › Channels (Figma 623:50926, modelled on SSFlows): connect the Facebook Page and WhatsApp.
-                children: [
-                    { key: 'nav.inbox.chats', path: '/inbox', activeUnless: '/inbox/channels' },
-                    { key: 'nav.inbox.messenger', path: '/inbox/channels/messenger', permission: 'settings.manage_integrations' },
-                    { key: 'nav.inbox.whatsapp', path: '/inbox/channels/whatsapp', permission: 'settings.manage_integrations' },
-                ],
-            },
+            { key: 'nav.inbox', path: '/inbox', icon: ChatsIcon, permission: 'inbox.view' },
         ],
     },
     {
@@ -136,7 +125,19 @@ export const navigation: NavGroup[] = [
         items: [
             { key: 'nav.staff', path: '/staff', icon: UserGearIcon, permission: 'staff.view' },
             { key: 'nav.automations', path: '/automations', icon: LightningIcon, permission: 'settings.view' },
-            { key: 'nav.integrations', path: '/integrations', icon: PlugsConnectedIcon, permission: 'settings.manage_integrations' },
+            {
+                key: 'nav.integrations',
+                path: '/integrations',
+                icon: PlugsConnectedIcon,
+                permission: 'settings.manage_integrations',
+                // Social channels (Figma 623:50926, modelled on SSFlows): connect the Facebook Page and WhatsApp.
+                // They moved here from the Inbox submenu (owner request 2026-11-28) — connecting a service is integration work.
+                children: [
+                    { key: 'nav.integrations.all', path: '/integrations', activeUnless: ['/integrations/messenger', '/integrations/whatsapp'] },
+                    { key: 'nav.integrations.messenger', path: '/integrations/messenger' },
+                    { key: 'nav.integrations.whatsapp', path: '/integrations/whatsapp' },
+                ],
+            },
             { key: 'nav.settings', path: '/settings', icon: GearIcon, permission: 'settings.view' },
         ],
     },

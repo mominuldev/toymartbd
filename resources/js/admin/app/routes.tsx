@@ -1,4 +1,4 @@
-import { Navigate, type RouteObject } from 'react-router';
+import { Navigate, useLocation, type RouteObject } from 'react-router';
 import { Shell } from './Shell';
 import { Dashboard } from './Dashboard';
 import { NotFound } from './NotFound';
@@ -102,6 +102,12 @@ import { TestimonialFormPage } from '@/features/content/testimonials/Testimonial
 import { HomeBuilderPage } from '@/features/content/home/HomeBuilderPage';
 import { HomeSettingsPage } from '@/features/content/home/HomeSettingsPage';
 import { RedirectsPage, SeoOverviewPage, SitemapRobotsPage } from '@/features/seo';
+
+/** A moved page: redirect, keeping the query string and hash (a Facebook login returns with `?code&state`). */
+function KeepQueryRedirect({ to }: { to: string }) {
+    const { search, hash } = useLocation();
+    return <Navigate to={`${to}${search}${hash}`} replace />;
+}
 
 // Sections with real screens; every other sidebar section renders ComingSoon.
 const built = new Set(['/products', '/inventory', '/purchasing', '/orders', '/returns', '/store', '/automations', '/risk', '/seo', '/marketing', '/customers', '/invoices', '/settings', '/staff', '/pos', '/inbox', '/shipments']);
@@ -269,13 +275,20 @@ export const routes: RouteObject[] = [
                     { path: 'automations/templates/:templateId', element: <TemplateEditorPage /> },
                     // Unified inbox (Figma B · 22 241:43115); `:conversationId` selects a thread.
                     { path: 'inbox', element: <InboxPage /> },
-                    // Inbox › Channels (Figma 623:50926): connect the Facebook Page (Facebook login) and WhatsApp (guided setup).
-                    { path: 'inbox/channels/messenger', element: <MessengerChannelPage /> },
-                    { path: 'inbox/channels/whatsapp', element: <WhatsAppChannelPage /> },
+                    // The channel pages moved to Integrations (2026-11-28). Old links keep their query string, so a
+                    // Facebook login that went out with the old redirect URI still finishes.
+                    { path: 'inbox/channels/messenger', element: <KeepQueryRedirect to="/integrations/messenger" /> },
+                    { path: 'inbox/channels/whatsapp', element: <KeepQueryRedirect to="/integrations/whatsapp" /> },
                     { path: 'inbox/:conversationId', element: <InboxPage /> },
                     // Integrations hub (Figma B · 37 241:50294): every outside service with its health.
                     { path: 'integrations', element: <IntegrationsHubPage /> },
+                    // One tab per channel: SMS · WhatsApp (order updates + Cloud API keys) · Facebook Messenger (keys).
+                    // Same element, no key: the form stays mounted (and unsaved edits survive) across tabs.
                     { path: 'integrations/messaging', element: <MessagingSettingsPage /> },
+                    { path: 'integrations/messaging/:tab', element: <MessagingSettingsPage /> },
+                    // Social channels (Figma 623:50926): connect the Facebook Page (Facebook login) and WhatsApp (guided setup).
+                    { path: 'integrations/messenger', element: <MessengerChannelPage /> },
+                    { path: 'integrations/whatsapp', element: <WhatsAppChannelPage /> },
                     { path: 'integrations/payments', element: <PaymentGatewaysPage /> },
                     // P8 invoicing: the list (no frame; Purchase orders B · 16 DataTable pattern) and
                     // Settings → Invoice details (Store settings B · 38 241:50827 "Business" card).

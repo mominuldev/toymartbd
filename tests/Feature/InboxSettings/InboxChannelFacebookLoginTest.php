@@ -88,12 +88,12 @@ it('builds the Facebook dialog URL with a one-time state, asking for the Page pe
 
     expect($url)->toStartWith('https://www.facebook.com/v27.0/dialog/oauth?')
         ->and($query['client_id'])->toBe(FBL_APP_ID)
-        ->and($query['redirect_uri'])->toBe('https://admin.toymart.test/admin/inbox/channels/messenger')
+        ->and($query['redirect_uri'])->toBe('https://admin.toymart.test/admin/integrations/messenger')
         ->and($query['response_type'])->toBe('code')
         ->and($query['scope'])->toBe('pages_show_list,pages_manage_metadata,pages_messaging')
         ->and($query)->not->toHaveKey('config_id')
         ->and(strlen((string) $query['state']))->toBe(48)
-        ->and($response->json('redirect_uri'))->toBe('https://admin.toymart.test/admin/inbox/channels/messenger');
+        ->and($response->json('redirect_uri'))->toBe('https://admin.toymart.test/admin/integrations/messenger');
 });
 
 it('uses the Facebook Login for Business configuration id instead of scope when one is saved', function (): void {
@@ -137,7 +137,7 @@ it('exchanges the code, lists the shared Pages without their tokens, and connect
 
     // The code exchange sent the exact redirect URI, then the long-lived exchange.
     Http::assertSent(fn (Request $r): bool => str_contains($r->url(), 'oauth/access_token') && ($r->data()['code'] ?? null) === 'AQD-code-TEST'
-        && $r->data()['redirect_uri'] === 'https://admin.toymart.test/admin/inbox/channels/messenger');
+        && $r->data()['redirect_uri'] === 'https://admin.toymart.test/admin/integrations/messenger');
     Http::assertSent(fn (Request $r): bool => str_contains($r->url(), 'oauth/access_token') && ($r->data()['grant_type'] ?? null) === 'fb_exchange_token');
     // Subscribed with the PAGE token and the fields the driver reads.
     Http::assertSent(fn (Request $r): bool => $r->method() === 'POST' && str_ends_with($r->url(), FBL_PAGE_ID.'/subscribed_apps')

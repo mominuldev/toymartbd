@@ -45,7 +45,7 @@ function channel(overrides: Partial<InboxChannelCredentials> & Pick<InboxChannel
         login_config_id: null,
         login_config_id_source: null,
         login_ready: false,
-        oauth_redirect_uri: overrides.channel === 'messenger' ? 'https://admin.toymartbd.com/admin/inbox/channels/messenger' : null,
+        oauth_redirect_uri: overrides.channel === 'messenger' ? 'https://admin.toymartbd.com/admin/integrations/messenger' : null,
         ...overrides,
     };
 }
@@ -96,12 +96,12 @@ function bodies(calls: ReturnType<typeof mockApi>, suffix: string, method = 'PUT
 describe('inbox › channels › facebook page', () => {
     it('offers Continue with Facebook only once the Meta app is added, and links to the keys form', async () => {
         api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger' }) });
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
 
         expect(await screen.findByRole('heading', { name: 'Connect your Facebook Page' })).toBeTruthy();
         expect((screen.getByRole('button', { name: 'Continue with Facebook' }) as HTMLButtonElement).disabled).toBe(true);
-        expect(screen.getByRole('link', { name: 'Add the Meta app' }).getAttribute('href')).toBe('/integrations/messaging#inbox-channel-settings');
-        expect(screen.getByText(/Valid OAuth Redirect URIs: https:\/\/admin.toymartbd.com\/admin\/inbox\/channels\/messenger/)).toBeTruthy();
+        expect(screen.getByRole('link', { name: 'Add the Meta app' }).getAttribute('href')).toBe('/integrations/messaging/messenger#inbox-channel-settings');
+        expect(screen.getByText(/Valid OAuth Redirect URIs: https:\/\/admin.toymartbd.com\/admin\/integrations\/messenger/)).toBeTruthy();
         expect(screen.getByText('Good to know before you start')).toBeTruthy();
         expect(screen.getByRole('link', { name: 'Enter keys manually' })).toBeTruthy();
     });
@@ -112,7 +112,7 @@ describe('inbox › channels › facebook page', () => {
         api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger', login_ready: true, app_id: '1', app_id_source: 'settings' }) }, (url, init) =>
             url.endsWith('/messenger/login') && init?.method === 'POST' ? { status: 200, body: { url: 'https://www.facebook.com/v27.0/dialog/oauth?client_id=1', redirect_uri: 'x' } } : undefined,
         );
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Continue with Facebook' }));
         await waitFor(() => expect(assign).toHaveBeenCalledWith('https://www.facebook.com/v27.0/dialog/oauth?client_id=1'));
@@ -129,7 +129,7 @@ describe('inbox › channels › facebook page', () => {
             if (url.endsWith('/settings/inbox-channels') && init?.method !== 'PUT' && connected) return { status: 200, body: { whatsapp: channel({ channel: 'whatsapp' }), messenger: connectedPage } };
             return undefined;
         });
-        renderApp('/inbox/channels/messenger?code=AQD-code&state=' + 'a'.repeat(48));
+        renderApp('/integrations/messenger?code=AQD-code&state=' + 'a'.repeat(48));
 
         await waitFor(() => expect(bodies(calls, '/messenger/connect', 'POST')).toEqual([{ session: 'S'.repeat(48), page_id: '151784545352643' }]));
         expect(bodies(calls, '/messenger/login/finish', 'POST')).toEqual([{ code: 'AQD-code', state: 'a'.repeat(48) }]);
@@ -151,7 +151,7 @@ describe('inbox › channels › facebook page', () => {
                   }
                 : undefined,
         );
-        renderApp('/inbox/channels/messenger?code=c&state=' + 'a'.repeat(48));
+        renderApp('/integrations/messenger?code=c&state=' + 'a'.repeat(48));
 
         expect(await screen.findByRole('heading', { name: 'Choose the Page to connect' })).toBeTruthy();
         const buttons = screen.getAllByRole('button', { name: 'Connect this Page' }) as HTMLButtonElement[];
@@ -161,13 +161,13 @@ describe('inbox › channels › facebook page', () => {
 
     it('explains a cancelled Facebook window', async () => {
         api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger', login_ready: true }) });
-        renderApp('/inbox/channels/messenger?error=access_denied&error_reason=user_denied');
+        renderApp('/integrations/messenger?error=access_denied&error_reason=user_denied');
         expect(await screen.findByText('The Facebook window was closed before the Page was shared. Nothing changed.')).toBeTruthy();
     });
 
     it('shows the connected Page: status, counts, actions, late replies and the webhook', async () => {
         api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: connectedPage });
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
 
         const card = within((await screen.findByRole('heading', { name: 'Smart Junior' })).closest('section')!);
         expect(card.getByText('Connected')).toBeTruthy();
@@ -185,7 +185,7 @@ describe('inbox › channels › facebook page', () => {
 
     it('switching replies off keeps every saved id and secret (a body the schema accepts)', async () => {
         const calls = api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: connectedPage });
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
 
         fireEvent.click(await screen.findByRole('switch', { name: 'Send replies through Messenger' }));
         await waitFor(() => expect(bodies(calls, '/settings/inbox-channels')).toHaveLength(1));
@@ -196,7 +196,7 @@ describe('inbox › channels › facebook page', () => {
 
     it('shows Reconnect needed with the fix inside the warning', async () => {
         api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: { ...connectedPage, connection: { state: 'reconnect', reason: 'meta_190', since: '2026-11-19T22:42:00+06:00' } } });
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
 
         const alert = await screen.findByRole('alert');
         expect(within(alert).getByText('Messenger chats are not arriving')).toBeTruthy();
@@ -208,7 +208,7 @@ describe('inbox › channels › facebook page', () => {
         const calls = api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: connectedPage }, (url) =>
             url.endsWith('/messenger/disconnect') ? { status: 200, body: { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger', login_ready: true }) } } : undefined,
         );
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Disconnect' }));
         expect(calls.mock.calls.some(([url]) => String(url).endsWith('/messenger/disconnect'))).toBe(false);
@@ -218,15 +218,29 @@ describe('inbox › channels › facebook page', () => {
         expect(await screen.findByRole('heading', { name: 'Connect your Facebook Page' })).toBeTruthy();
     });
 
-    it('is closed to staff without settings.manage_integrations, and the submenu hides the channel links', async () => {
+    it('is closed to staff without settings.manage_integrations, and the sidebar shows them no channel links', async () => {
         api(agent, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger' }) });
-        renderApp('/inbox/channels/messenger');
+        renderApp('/integrations/messenger');
         expect(await screen.findByText('You do not have access to this page.')).toBeTruthy();
-        const submenu = screen.queryByRole('list', { name: 'Inbox' });
-        if (submenu) {
-            expect(within(submenu).queryByRole('link', { name: 'Facebook Page' })).toBeNull();
-            expect(within(submenu).getByRole('link', { name: 'Chats' })).toBeTruthy();
-        }
+        expect(screen.queryByRole('link', { name: 'Facebook Page' })).toBeNull();
+        expect(screen.queryByRole('list', { name: 'Integrations' })).toBeNull();
+    });
+
+    it('sits in the Integrations submenu, not under Inbox', async () => {
+        api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger' }) });
+        renderApp('/integrations/messenger');
+        const submenu = (await screen.findAllByRole('list', { name: 'Integrations' }))[0]!;
+        expect(within(submenu).getByRole('link', { name: 'Facebook Page' }).getAttribute('aria-current')).toBe('page');
+        expect(within(submenu).getByRole('link', { name: 'All integrations' }).getAttribute('aria-current')).toBeNull();
+        expect(within(submenu).getByRole('link', { name: 'WhatsApp' }).getAttribute('href')).toBe('/integrations/whatsapp');
+        expect(screen.queryByRole('list', { name: 'Inbox' })).toBeNull();
+    });
+
+    it('redirects the old Inbox › Channels URL, keeping a Facebook login return', async () => {
+        api(owner, { whatsapp: channel({ channel: 'whatsapp' }), messenger: channel({ channel: 'messenger', login_ready: true }) });
+        renderApp('/inbox/channels/messenger?error=access_denied&error_reason=user_denied');
+        expect(await screen.findByText('The Facebook window was closed before the Page was shared. Nothing changed.')).toBeTruthy();
+        expect(screen.getByRole('heading', { name: 'Facebook Page', level: 1 })).toBeTruthy();
     });
 });
 
@@ -240,7 +254,7 @@ describe('inbox › channels › whatsapp', () => {
             }
             return undefined;
         });
-        renderApp('/inbox/channels/whatsapp');
+        renderApp('/integrations/whatsapp');
 
         expect(await screen.findByRole('heading', { name: 'Connect your WhatsApp Business number' })).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Start setup' }));
@@ -292,7 +306,7 @@ describe('inbox › channels › whatsapp', () => {
                     ? { status: 200, body: { channel: 'whatsapp', ok: false, checked_at: new Date().toISOString(), display_name: null, display_number: null, quality_rating: null, error_code: 'meta_190', error_message: 'Session has expired.' } }
                     : undefined,
         );
-        renderApp('/inbox/channels/whatsapp');
+        renderApp('/integrations/whatsapp');
 
         fireEvent.click(await screen.findByRole('button', { name: 'Continue setup' }));
         const dialog = within(await screen.findByRole('dialog', { name: 'Set up WhatsApp' }));
@@ -316,7 +330,7 @@ describe('inbox › channels › whatsapp', () => {
             }),
             messenger: channel({ channel: 'messenger' }),
         });
-        renderApp('/inbox/channels/whatsapp');
+        renderApp('/integrations/whatsapp');
 
         const card = within((await screen.findByRole('heading', { name: '+880 1711-000222' })).closest('section')!);
         expect(card.getByText('Quality: High')).toBeTruthy();

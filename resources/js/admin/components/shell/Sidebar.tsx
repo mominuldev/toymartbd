@@ -9,9 +9,9 @@ import { BranchSwitcher } from './BranchSwitcher';
 import type { WorkingBranchLocation } from './workingBranch';
 import { visibleNavigation, type NavChild, type NavItem } from './nav';
 
-/** A sub-page link is current at its path or below it — except under `activeUnless` (Inbox › Chats vs Channels). */
+/** A sub-page link is current at its path or below it — except under `activeUnless` (All integrations vs the channel pages). */
 export function childActive(child: NavChild, pathname: string): boolean {
-    if (child.activeUnless && pathname.startsWith(child.activeUnless)) return false;
+    if (child.activeUnless?.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return false;
     return pathname === child.path || pathname.startsWith(`${child.path}/`);
 }
 

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mockApi, renderApp, viewer } from '@/test/renderApp';
 import type { Me } from '@/features/auth/api';
@@ -60,7 +60,23 @@ describe('integrations → messaging', () => {
         expect(screen.getByText('Set in the server environment •••• — enter a value to save it here')).toBeTruthy();
         // The env-sourced cost says where it comes from.
         expect(screen.getAllByText('Currently from the server environment').length).toBeGreaterThan(0);
-        expect((screen.getByRole('switch', { name: 'Send order updates on WhatsApp first' }) as HTMLButtonElement).getAttribute('aria-checked')).toBe('false');
+    });
+
+    it('shows one channel per tab: SMS by default, WhatsApp and Facebook Messenger on their own', async () => {
+        messagingApi(owner);
+        renderApp('/integrations/messaging');
+
+        const tabs = await screen.findByRole('navigation', { name: 'Messaging channels' });
+        expect(within(tabs).getByRole('link', { name: 'SMS' }).getAttribute('aria-current')).toBe('page');
+        expect(within(tabs).getByRole('link', { name: 'WhatsApp' }).getAttribute('href')).toBe('/integrations/messaging/whatsapp');
+        expect(within(tabs).getByRole('link', { name: 'Facebook Messenger' }).getAttribute('href')).toBe('/integrations/messaging/messenger');
+        expect(await screen.findByRole('heading', { name: 'Send test SMS' })).toBeTruthy();
+        expect(screen.queryByRole('switch', { name: 'Send order updates on WhatsApp first' })).toBeNull();
+
+        fireEvent.click(within(tabs).getByRole('link', { name: 'WhatsApp' }));
+        expect((await screen.findByRole('switch', { name: 'Send order updates on WhatsApp first' })).getAttribute('aria-checked')).toBe('false');
+        expect(screen.queryByRole('heading', { name: 'Send test SMS' })).toBeNull();
+        expect(screen.queryByLabelText(/API key/)).toBeNull();
     });
 
     it('saves with blank secrets kept (null) and a typed one replaced', async () => {
@@ -69,7 +85,9 @@ describe('integrations → messaging', () => {
 
         const secret = await screen.findByLabelText(/Secret key/);
         fireEvent.change(secret, { target: { value: 'new-secret-value' } });
-        fireEvent.click(screen.getByRole('switch', { name: 'Send order updates on WhatsApp first' }));
+        // An edit on one tab survives moving to another: the form saves as one body.
+        fireEvent.click(within(screen.getByRole('navigation', { name: 'Messaging channels' })).getByRole('link', { name: 'WhatsApp' }));
+        fireEvent.click(await screen.findByRole('switch', { name: 'Send order updates on WhatsApp first' }));
         fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
 
         await waitFor(() => expect(calls.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')).toBe(true));
@@ -90,7 +108,7 @@ describe('integrations → messaging', () => {
 
     it('picks the WhatsApp Cloud API driver for order updates, explaining it uses the Inbox number', async () => {
         const calls = messagingApi(owner);
-        renderApp('/integrations/messaging');
+        renderApp('/integrations/messaging/whatsapp');
 
         const off = await screen.findByRole('button', { name: 'Off — log only', pressed: true });
         expect(off).toBeTruthy();

@@ -59,9 +59,13 @@ function PHASE10_SCREENS(): Array<[string, string]> {
         ['two-factor', '/admin/account/two-factor'],
         ['integrations-hub', '/admin/integrations'],
         ['ai-settings', '/admin/integrations/ai'],
-        // Inbox › Channels (Figma 623:50926): nothing connected on the seeded database.
-        ['channel-messenger', '/admin/inbox/channels/messenger'],
-        ['channel-whatsapp', '/admin/inbox/channels/whatsapp'],
+        // Integrations › Facebook Page / WhatsApp (Figma 623:50926): nothing connected on the seeded database.
+        ['channel-messenger', '/admin/integrations/messenger'],
+        ['channel-whatsapp', '/admin/integrations/whatsapp'],
+        // Integrations › Messaging, one tab per channel.
+        ['messaging-sms', '/admin/integrations/messaging'],
+        ['messaging-whatsapp', '/admin/integrations/messaging/whatsapp'],
+        ['messaging-messenger', '/admin/integrations/messaging/messenger'],
         ['ai-advisor', '/admin/analytics/advisor'],
         ['ai-restock', '/admin/inventory/restock'],
         ['settings-business', '/admin/settings/business'],

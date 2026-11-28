@@ -57,7 +57,7 @@ final readonly class MetaPageLogin
     /** Where Facebook sends the owner back: the Facebook Page channel screen. Paste it into "Valid OAuth Redirect URIs". */
     public static function redirectUri(): string
     {
-        return rtrim((string) config('app.url'), '/').'/admin/inbox/channels/messenger';
+        return rtrim((string) config('app.url'), '/').'/admin/integrations/messenger';
     }
 
     public function dialogUrl(string $state): string

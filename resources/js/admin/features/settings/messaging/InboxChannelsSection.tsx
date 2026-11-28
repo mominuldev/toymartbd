@@ -139,11 +139,11 @@ function toInput(v: FormValues): InboxChannelSettingsInput {
 /**
  * Integrations → Messaging, inbox channels: the WhatsApp Cloud API and Messenger credentials
  * the unified inbox uses, so a channel can be connected the day the owner has a Meta account.
- * Its own form and save (`PUT /settings/inbox-channels`), separate from the SMS settings above.
+ * Its own form and save (`PUT /settings/inbox-channels`), shown one channel per tab (WhatsApp, Facebook Messenger).
  * No Figma frame: FormSection cards and the secret-field pattern of the rest of this screen.
  * Every channel stays "Not verified" — saving keys never changes that.
  */
-export function InboxChannelsSection() {
+export function InboxChannelsSection({ channel }: { channel: Channel }) {
     const settings = useInboxChannelSettings(true);
 
     if (settings.isError) {
@@ -157,10 +157,10 @@ export function InboxChannelsSection() {
         return <p aria-busy="true" className="sr-only" />;
     }
 
-    return <InboxChannelsForm settings={settings.data} />;
+    return <InboxChannelsForm settings={settings.data} channel={channel} />;
 }
 
-function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
+function InboxChannelsForm({ settings, channel: shown }: { settings: InboxChannelSettings; channel: Channel }) {
     const { t } = useI18n();
     const { notify } = useToast();
     const save = useSaveInboxChannelSettings();
@@ -210,11 +210,9 @@ function InboxChannelsForm({ settings }: { settings: InboxChannelSettings }) {
                 </h2>
                 <p className="t-admin-caption text-fg-tertiary">{t('messaging.inbox.description')}</p>
             </div>
-            {/* The channel cards sit side by side at xl, filling the content width (spec rule 4b). */}
-            <fieldset disabled={save.isPending} className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
-                {CHANNELS.map((channel) => (
-                    <ChannelCard key={channel} channel={channel} data={settings[channel]} form={form} dirty={form.formState.isDirty} />
-                ))}
+            {/* Only this tab's channel; the other's values ride along unchanged (blank secrets mean "keep"). */}
+            <fieldset disabled={save.isPending} className="min-w-0">
+                <ChannelCard channel={shown} data={settings[shown]} form={form} dirty={form.formState.isDirty} />
             </fieldset>
             <div className="flex justify-end">
                 <Button type="submit" disabled={save.isPending} aria-busy={save.isPending || undefined}>

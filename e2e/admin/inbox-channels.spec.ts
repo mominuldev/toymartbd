@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /*
- * Inbox › Channels (Figma 623:50926) against the real app on the seeded database, where no Meta
+ * Integrations › Facebook Page / WhatsApp (Figma 623:50926; moved from Inbox › Channels 2026-11-28) against the real app on the seeded database, where no Meta
  * app, Page or WhatsApp number is connected: the Facebook Page screen asks for the Meta app first,
  * the WhatsApp guide saves each step and stops at Meta's check, and the Inbox submenu links both.
  * SHOTS_DIR=… also saves screenshots for the Figma check.
@@ -18,25 +18,25 @@ async function signIn(page: Page, path: string) {
 
 test('Facebook Page: not connected, Continue with Facebook waits for the Meta app', async ({ browser }) => {
     const page = await (await browser.newContext({ viewport: { width: 1440, height: 1000 } })).newPage();
-    await signIn(page, '/admin/inbox/channels/messenger');
+    await signIn(page, '/admin/integrations/messenger');
 
     await expect(page.getByRole('heading', { name: 'Facebook Page', level: 1 })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Connect your Facebook Page' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Continue with Facebook' })).toBeDisabled();
     await expect(page.getByRole('link', { name: 'Add the Meta app' })).toBeVisible();
-    const submenu = page.getByRole('list', { name: 'Inbox' }).first();
+    const submenu = page.getByRole('list', { name: 'Integrations' }).first();
     await expect(submenu.getByRole('link', { name: 'Facebook Page' })).toHaveAttribute('aria-current', 'page');
-    await expect(submenu.getByRole('link', { name: 'Chats' })).not.toHaveAttribute('aria-current', 'page');
+    await expect(submenu.getByRole('link', { name: 'All integrations' })).not.toHaveAttribute('aria-current', 'page');
     if (shots) await page.screenshot({ path: `${shots}/channel-messenger.png`, fullPage: true });
 
     await page.getByRole('link', { name: 'Add the Meta app' }).click();
-    await expect(page).toHaveURL(/\/admin\/integrations\/messaging#inbox-channel-settings$/);
+    await expect(page).toHaveURL(/\/admin\/integrations\/messaging\/messenger#inbox-channel-settings$/);
     await expect(page.getByLabel('Meta App ID')).toBeVisible();
 });
 
 test('WhatsApp: the guided setup saves each step and stops at Meta’s check', async ({ browser }) => {
     const page = await (await browser.newContext({ viewport: { width: 1440, height: 1000 } })).newPage();
-    await signIn(page, '/admin/inbox/channels/whatsapp');
+    await signIn(page, '/admin/integrations/whatsapp');
 
     await expect(page.getByRole('heading', { name: 'WhatsApp', level: 1 })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Connect your WhatsApp Business number' })).toBeVisible();

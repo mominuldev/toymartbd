@@ -30,7 +30,8 @@ import messengerLogo from './logos/messenger.svg';
 import whatsappLogo from './logos/whatsapp.svg';
 
 /** The keys form (Integrations › Messaging › Inbox channels) — "Enter keys manually" and "Keys & webhook". */
-export const KEYS_LINK = '/integrations/messaging#inbox-channel-settings';
+/** The channel's own keys form: its tab on Integrations › Messaging. */
+export const keysLink = (channel: Channel) => `/integrations/messaging/${channel}#inbox-channel-settings`;
 
 export const cardClass = 'rounded-md border border-line-default bg-surface shadow-e1';
 
@@ -109,7 +110,7 @@ export function ManualKeysCard({ channel }: { channel: Channel }) {
                 <h2 className="t-admin-body-strong text-fg-primary">{t('channels.manual.title')}</h2>
                 <p className="t-admin-body text-fg-secondary">{t(`channels.manual.body.${channel}`)}</p>
             </div>
-            <Link to={KEYS_LINK} className={buttonClass('outline', 'md')}>
+            <Link to={keysLink(channel)} className={buttonClass('outline', 'md')}>
                 {t('channels.manual.button')}
             </Link>
         </section>
@@ -219,7 +220,7 @@ export function ConnectedCard({ channel, data, settings, title, meta, chips, ext
                     {test.isPending ? t('channels.action.testing') : t('channels.action.test')}
                 </Button>
                 {extraAction}
-                <Link to={KEYS_LINK} className={`${buttonClass('outline', 'md')} gap-2`}>
+                <Link to={keysLink(channel)} className={`${buttonClass('outline', 'md')} gap-2`}>
                     <KeyIcon size={16} aria-hidden />
                     {t('channels.action.keys')}
                 </Link>

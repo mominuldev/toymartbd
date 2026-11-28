@@ -13,7 +13,7 @@ import { StatusChip } from '@/components/ui/StatusChip';
 import { useToast } from '@/components/ui/Toast';
 import { useInboxChannelSettings, useSaveInboxChannelSettings, useTestInboxChannel, type InboxChannelSettings, type InboxChannelSettingsInput } from '../api';
 import { keepAll } from './api';
-import { ConnectedCard, CopyBox, GoodToKnow, KEYS_LINK, LastCheckLine, ManualKeysCard, SetupCard, WebhookCard, qualityLabel, reasonText } from './parts';
+import { ConnectedCard, CopyBox, GoodToKnow, keysLink, LastCheckLine, ManualKeysCard, SetupCard, WebhookCard, qualityLabel, reasonText } from './parts';
 
 const PERMISSION = 'settings.manage_integrations';
 const DIGITS = /^\d{1,32}$/;
@@ -50,7 +50,7 @@ export function WhatsAppChannelPage() {
         <div className="flex w-full min-w-0 flex-col gap-6">
             <ContentHeader
                 title={t('channels.whatsapp.title')}
-                breadcrumb={[{ label: t('channels.crumb.inbox'), to: '/inbox' }, { label: t('channels.crumb.channels') }]}
+                breadcrumb={[{ label: t('nav.integrations'), to: '/integrations' }, { label: t('nav.integrations.whatsapp') }]}
                 subtitle={t('channels.whatsapp.subtitle')}
             />
             {settings.isError ? (
@@ -102,7 +102,7 @@ function WhatsAppChannel({ settings, onStart }: { settings: InboxChannelSettings
                         </Link>
                     }
                     reconnectAction={
-                        <Link to={KEYS_LINK} className={`${buttonClass('primary', 'md')} gap-2`}>
+                        <Link to={keysLink('whatsapp')} className={`${buttonClass('primary', 'md')} gap-2`}>
                             <KeyIcon size={16} aria-hidden />
                             {t('channels.reconnect.updateToken')}
                         </Link>

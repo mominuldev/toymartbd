@@ -266,7 +266,7 @@ final readonly class IntegrationHub
         // they go through the Inbox's number, so the row is the Inbox channel's (never verified).
         $inbox = collect($this->inbox->summary())->keyBy('channel');
         if ($this->messaging->whatsappEnabled() && $this->messaging->whatsappDriver() !== 'cloud') {
-            $items[] = $this->item('whatsapp', 'WhatsApp Business', 'messaging', 'needs_attention', ['no_driver'], 'whatsapp_on_without_driver', enabled: true, path: $path);
+            $items[] = $this->item('whatsapp', 'WhatsApp Business', 'messaging', 'needs_attention', ['no_driver'], 'whatsapp_on_without_driver', enabled: true, path: $path.'/whatsapp');
         } else {
             $items[] = $this->inboxChannel('whatsapp', 'WhatsApp Business', $inbox->get('whatsapp'));
         }
@@ -392,13 +392,15 @@ final readonly class IntegrationHub
         if ($summary === null) {
             return $this->notAvailable($key, $name, 'messaging');
         }
+        // The channel's own screen under Integrations (Facebook Page / WhatsApp), connected or not.
+        $path = '/integrations/'.$key;
         if ($summary['verified'] && $summary['send_ready'] && $summary['webhook_ready']) {
-            return $this->item($key, $name, 'messaging', 'connected_live', ['inbox_channel'], path: '/inbox');
+            return $this->item($key, $name, 'messaging', 'connected_live', ['inbox_channel'], path: $path);
         }
 
         return $summary['send_ready'] && $summary['webhook_ready']
-            ? $this->item($key, $name, 'messaging', 'test_mode', ['inbox_unverified'], path: '/inbox')
-            : $this->item($key, $name, 'messaging', 'not_connected', ['inbox_not_configured']);
+            ? $this->item($key, $name, 'messaging', 'test_mode', ['inbox_unverified'], path: $path)
+            : $this->item($key, $name, 'messaging', 'not_connected', ['inbox_not_configured'], path: $path);
     }
 
     /**

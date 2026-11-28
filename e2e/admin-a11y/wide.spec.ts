@@ -54,6 +54,8 @@ const PARAM_IDS: Record<string, string> = {
 const ROUTE_IDS: Record<string, Record<string, string>> = {
     // Promotion 7 is the demo flash sale; 1 is an ordinary discount.
     '/marketing/flash-sales/:promotionId': { promotionId: '7' },
+    // Messaging tabs: WhatsApp carries both the order-updates card and a keys card.
+    '/integrations/messaging/:tab': { tab: 'whatsapp' },
 };
 
 type Route = { pattern: string; url: string };

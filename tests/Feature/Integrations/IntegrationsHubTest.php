@@ -93,7 +93,7 @@ it('lists every service by category, with not-built services as not_available', 
     }
     // Inbox channels (P10): drivers exist, no account keys yet.
     foreach (['whatsapp', 'messenger'] as $key) {
-        expect(hubItem($response, $key))->toMatchArray(['status' => 'not_connected', 'notes' => ['inbox_not_configured'], 'settings_path' => null]);
+        expect(hubItem($response, $key))->toMatchArray(['status' => 'not_connected', 'notes' => ['inbox_not_configured'], 'settings_path' => '/integrations/'.$key]);
     }
     // COD is first-class and always on (rule 33).
     expect(hubItem($response, 'cod'))->toMatchArray(['status' => 'connected_live', 'notes' => ['cod_always_on']]);
@@ -287,7 +287,7 @@ it('flags WhatsApp switched on without a real driver', function (): void {
     Setting::put(MessagingSettings::WHATSAPP_ENABLED, true, SettingGroup::Notification);
 
     expect(hubItem($this->getJson(HUB_URL), 'whatsapp'))->toMatchArray([
-        'status' => 'needs_attention', 'attention' => 'whatsapp_on_without_driver', 'enabled' => true, 'settings_path' => '/integrations/messaging',
+        'status' => 'needs_attention', 'attention' => 'whatsapp_on_without_driver', 'enabled' => true, 'settings_path' => '/integrations/messaging/whatsapp',
     ]);
 });
 
@@ -349,7 +349,7 @@ it('shows an inbox channel with keys entered as test mode, never live while unve
     ]);
 
     expect(hubItem($this->getJson(HUB_URL), 'messenger'))->toMatchArray([
-        'status' => 'test_mode', 'notes' => ['inbox_unverified'], 'settings_path' => '/inbox',
+        'status' => 'test_mode', 'notes' => ['inbox_unverified'], 'settings_path' => '/integrations/messenger',
     ]);
 });
 

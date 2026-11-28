@@ -4,8 +4,6 @@
  * NEEDS NATIVE-SPEAKER REVIEW, like the rest of the Bangla UI copy. Digits stay Western (rule 36).
  */
 export const inboxChannelsEn = {
-    'channels.crumb.inbox': 'Inbox',
-    'channels.crumb.channels': 'Channels',
     'channels.messenger.title': 'Facebook Page',
     'channels.messenger.subtitle': 'Messenger chats from your Facebook Page land in the Inbox, and your replies go back from here.',
     'channels.whatsapp.title': 'WhatsApp',
@@ -196,8 +194,6 @@ export const inboxChannelsEn = {
 } as const;
 
 export const inboxChannelsBn: Record<keyof typeof inboxChannelsEn, string> = {
-    'channels.crumb.inbox': 'ইনবক্স',
-    'channels.crumb.channels': 'চ্যানেল',
     'channels.messenger.title': 'ফেসবুক পেজ',
     'channels.messenger.subtitle': 'আপনার ফেসবুক পেজের মেসেঞ্জার চ্যাট ইনবক্সে আসে, আর উত্তর এখান থেকেই যায়।',
     'channels.whatsapp.title': 'হোয়াটসঅ্যাপ',
