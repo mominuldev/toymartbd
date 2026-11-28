@@ -128,8 +128,6 @@ export const en = {
     ...analyticsMarketingEn,
     ...analyticsLiveEn,
     'app.name': 'Smart Junior',
-    'app.admin': 'Admin',
-    'app.wordmark': 'toymart',
 
     'nav.group.sell': 'Sell',
     'nav.group.catalog': 'Catalog',
@@ -205,7 +203,6 @@ export const en = {
     'auth.submitting': 'Signing in…',
     'auth.failed': 'Those details did not match an active staff account.',
     'auth.throttled': 'Too many attempts. Try again in a minute.',
-    'auth.brandCaption': 'Admin · Smart Junior',
     'auth.showPassword': 'Show password',
     'auth.hidePassword': 'Hide password',
     'auth.capsLock': 'Caps Lock is on',
@@ -472,8 +469,6 @@ export const bn: Messages = {
     ...analyticsMarketingBn,
     ...analyticsLiveBn,
     'app.name': 'Smart Junior',
-    'app.admin': 'অ্যাডমিন',
-    'app.wordmark': 'toymart',
 
     'nav.group.sell': 'বিক্রি',
     'nav.group.catalog': 'ক্যাটালগ',
@@ -549,7 +544,6 @@ export const bn: Messages = {
     'auth.submitting': 'সাইন ইন হচ্ছে…',
     'auth.failed': 'এই তথ্যের সাথে কোনো সক্রিয় স্টাফ অ্যাকাউন্ট মেলেনি।',
     'auth.throttled': 'অনেকবার চেষ্টা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।',
-    'auth.brandCaption': 'অ্যাডমিন · Smart Junior',
     'auth.showPassword': 'পাসওয়ার্ড দেখান',
     'auth.hidePassword': 'পাসওয়ার্ড লুকান',
     'auth.capsLock': 'ক্যাপস লক চালু আছে',

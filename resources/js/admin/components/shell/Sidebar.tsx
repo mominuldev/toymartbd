@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
-import { CaretDownIcon, ShoppingBagOpenIcon } from '@phosphor-icons/react';
+import { CaretDownIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { MessageKey } from '@/i18n/messages';
 import { CountBadge } from '@/components/ui/CountBadge';
@@ -8,6 +8,7 @@ import { Avatar } from './Avatar';
 import { BranchSwitcher } from './BranchSwitcher';
 import type { WorkingBranchLocation } from './workingBranch';
 import { visibleNavigation, type NavChild, type NavItem } from './nav';
+import { BrandLogo, BrandMark } from '@/components/brand/BrandLogo';
 
 /** A sub-page link is current at its path or below it — except under `activeUnless` (All integrations vs the channel pages). */
 export function childActive(child: NavChild, pathname: string): boolean {
@@ -39,7 +40,7 @@ type SidebarProps = {
 
 /**
  * Figma Sidebar 187:473 (expanded 248 / collapsed 64), always rendered inside
- * data-theme="admin-dark". Brand row 60 high with the gradient logo tile; nav items 38
+ * data-theme="admin-dark". Brand row 60 high with the Smart Junior mark (BrandMark) and name; nav items 38
  * high, radius/sm; overline group labels (dividers in the rail); a pinned user footer.
  * Active item: bg/brand-subtle + brand icon + semibold label (06-admin-feature-checklist §0).
  * An item with children (Online store) shows a caret and, while the route is inside it, a
@@ -76,18 +77,15 @@ export function Sidebar({ permissions, counts = {}, collapsed, onNavigate, varia
         // the logo and each row in the same place, so switching between them does not move anything.
         <div className={`flex h-full flex-col border-r border-line-default bg-surface ${pick('', 'w-16', 'w-16 xl:w-62')}`}>
             <div className={`flex h-15 shrink-0 items-center gap-2.5 overflow-hidden ${pick('ps-5 pe-3', 'ps-4.5', 'ps-4.5 xl:pe-3')}`}>
-                <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-sm bg-[image:var(--tm-gradient-button-primary)] text-fg-on-brand">
-                    <ShoppingBagOpenIcon size={16} weight="fill" />
+                {/* Rail: the rocket mark, centred in the 28 px icon column. Expanded: the On dark lockup
+                    (the sidebar is always admin-dark), which is the name. */}
+                <span className={`w-7 shrink-0 place-items-center ${pick('hidden', 'grid', 'grid xl:hidden')}`}>
+                    <BrandMark className="h-9" />
                 </span>
-                <span className={`flex-col whitespace-nowrap ${onlyExpanded}`}>
-                    <span lang="en" className="t-h3 text-fg-primary lg:text-lg/[1.3]">
-                        {t('app.wordmark')}
-                    </span>
-                    <span className="t-admin-caption text-fg-tertiary">
-                        {t('app.admin')} · {t('app.name')}
-                    </span>
+                <span className={onlyExpanded}>
+                    <BrandLogo alt={t('app.name')} className="h-10" />
                 </span>
-                {/* The name for the rail only: where the caption above shows, it already says it. */}
+                {/* The name for the rail only: where the lockup shows, its alt already says it. */}
                 <span className={`sr-only ${onlyRail}`}>{t('app.name')}</span>
             </div>
 

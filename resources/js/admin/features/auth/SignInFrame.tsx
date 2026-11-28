@@ -7,7 +7,6 @@ import {
     HeartIcon,
     RobotIcon,
     RocketLaunchIcon,
-    ShoppingBagOpenIcon,
     SoccerBallIcon,
     StarIcon,
     TrainIcon,
@@ -15,6 +14,7 @@ import {
 } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageSwitch } from '@/components/shell/LanguageSwitch';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 type Tone = 'pink' | 'butter' | 'mint' | 'sky' | 'lavender' | 'peach';
 
@@ -60,17 +60,7 @@ export function SignInFrame({ children }: { children: ReactNode }) {
             <Orbit />
 
             <header className="flex items-center justify-between gap-4 px-4 pt-5 md:px-10 md:pt-8">
-                <div className="flex items-center gap-3">
-                    <span aria-hidden className="grid size-10 place-items-center rounded-sm bg-brand text-fg-on-brand">
-                        <ShoppingBagOpenIcon size={22} weight="fill" />
-                    </span>
-                    <span className="flex flex-col">
-                        <span lang="en" className="t-admin-card-title text-fg-primary">
-                            {t('app.wordmark')}
-                        </span>
-                        <span className="t-admin-caption text-fg-tertiary">{t('auth.brandCaption')}</span>
-                    </span>
-                </div>
+                <BrandLogo alt={t('app.name')} className="h-12" />
                 <LanguageSwitch />
             </header>
 
