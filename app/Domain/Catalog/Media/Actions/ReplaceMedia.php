@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * Replace a media row's file (docs/api/media-library.md, decision 2): the new file goes
+ * Replace a media row's file (docs/api/media-library.md, decision 2): the same family only
+ * (raster ↔ raster, SVG ↔ SVG, PDF ↔ PDF), so a raster-only usage never receives a vector.
+ * The new file goes
  * to a NEW base under the SAME row — rendition paths stay immutable — so every usage,
  * which references the id, updates at once. Alt text, caption, folder, origin and
  * usages are kept. The old base is deleted after commit; the new renditions are
@@ -29,11 +31,11 @@ final readonly class ReplaceMedia
 
     public function handle(Media $media, string $uploadedPath, string $clientName): Media
     {
-        $stored = $this->files->store($uploadedPath, self::prefixOf($media->base_path), $media->kind);
-        $isImage = $media->isImage();
+        $stored = $this->files->store($uploadedPath, self::prefixOf($media->base_path), $media->kind, $media->isImage() ? $media->isVector() : null);
+        $needsRenditions = $media->isRaster();
 
         try {
-            $media = DB::transaction(function () use ($media, $stored, $clientName, $isImage): Media {
+            $media = DB::transaction(function () use ($media, $stored, $clientName, $needsRenditions): Media {
                 $this->mirror->lockLinkedImages($media->id);
                 $media = Media::query()->lockForUpdate()->findOrFail($media->id);
                 $old = $media->base_path;
@@ -41,15 +43,16 @@ final readonly class ReplaceMedia
                 $media->fill([
                     'filename' => MediaFiles::displayName($clientName, $media->kind),
                     'base_path' => $stored['base'],
+                    'mime' => $stored['mime'],
                     'original_mime' => $stored['original_mime'],
-                    'processing_status' => $isImage ? ImageProcessingStatus::Processing : ImageProcessingStatus::Ready,
+                    'processing_status' => $needsRenditions ? ImageProcessingStatus::Processing : ImageProcessingStatus::Ready,
                     'width' => $stored['width'],
                     'height' => $stored['height'],
                     'original_size_bytes' => $stored['original_size'],
                     'master_bytes' => $stored['master_bytes'],
                     'renditions_bytes' => 0,
-                    'size_bytes' => $isImage ? 0 : $stored['master_bytes'],
-                    'renditions' => null,
+                    'size_bytes' => $needsRenditions ? 0 : $stored['master_bytes'],
+                    'renditions' => $needsRenditions || ! $media->isImage() ? null : [],
                 ])->save();
 
                 $this->mirror->sync($media);
@@ -63,7 +66,7 @@ final readonly class ReplaceMedia
             throw $e;
         }
 
-        if ($isImage) {
+        if ($needsRenditions) {
             GenerateMediaRenditions::dispatch($media->id);
         }
 

@@ -16,14 +16,20 @@ Numbers are Western digits in both locales. Dates are ISO 8601 UTC (`2026-11-12T
 
 1. **Folders are flat.** A file is in **at most one** folder: `folder_id` may be `null` ("not filed": shown only under *All media*). System folders are seeded and cannot be renamed or deleted: `products`, `category_banners`, `blog`, `pages`. Custom folders can be created, renamed and deleted (deleting one un-files its files; nothing is deleted). *All media* and *Unused* are views (filters), not folders.
 2. **Replace keeps the identity, not the bytes path.** `POST /media/{id}/replace` writes a new base under the **same** media row; rendition paths stay immutable so the CDN cache is never wrong. Every usage references the media id, so every product updates at once. The old files are deleted after commit. While the new renditions are generated (a few seconds) the media is `processing` and product pages show the placeholder. This supersedes "same path" in A25 rule 3.
-3. **Stable public URL.** "Copy URL" copies `public_url` = `{APP_URL}/m/{id}/{filename-slug}.webp`, a short-cache (5 min) 302 to the current largest WebP rendition. It survives Replace. The filename segment is cosmetic and ignored.
-4. **No video in v1.** Kinds are `image` (JPEG, PNG, WebP, AVIF by content) and `document` (PDF by content). Everything else is refused.
+3. **Stable public URL.** "Copy URL" copies `public_url` = `{APP_URL}/m/{id}/{filename-slug}.webp`, a short-cache (5 min) 302 to the current largest WebP rendition. It survives Replace. The filename segment is cosmetic and ignored. For an SVG it is `…/{filename-slug}.svg` and the route serves the file itself (decision 11).
+4. **No video in v1.** Kinds are `image` (JPEG, PNG, WebP, AVIF or SVG by content) and `document` (PDF by content). Everything else is refused.
 5. **Limits.** 10 MB per file for both kinds; images ≤ 8000 px per side. **No minimum size in the library.** The 1200 × 1200 minimum and the 1:1 rule are per-context hints the picker shows from `width`/`height`; the server does not enforce them on library upload.
 6. **Storage quota** `MEDIA_STORAGE_QUOTA_GB` (config `media.storage_quota_gb`), default unset → `quota_bytes: null`; the UI shows usage without "of X GB".
 7. **Permissions.** View needs `catalog.view` **or** `content.view` (every launch role). Upload, edit, move, replace and folders need `media.manage` (super_admin, manager, content_editor — the same roles as `catalog.update`). **Delete, bulk delete and bulk download** need the new `media.delete` (super_admin and manager only).
 8. **PDFs are private.** A document is stored on the private originals disk and only served as an authenticated download (`Content-Disposition: attachment`, `nosniff`). It has no public URL and `/m/...` returns 404 for it.
 9. **What "original" means.** The raw upload bytes are never stored (`docs/api/media.md`). For an image, the "original" is the sanitised master (WebP q92, EXIF/GPS stripped, ≤ 2400 px). Downloads and the zip return that master; `original_size_bytes` still reports the size of the uploaded file.
 10. **Product-upload media follow their product image.** A file uploaded through the product form (`origin: product`) is deleted together with its last product usage, as before the library existed. A file uploaded to the library (`origin: library`) is never deleted implicitly; when its last usage goes it shows under *Unused*.
+11. **SVG is kept as a vector** (owner decision 2026-11-28). Raster uploads still become a WebP master; an SVG does not.
+    - **Sanitised on upload.** Sniffed by its root element. A `DOCTYPE` or `ENTITY` is refused (XXE, entity expansion). The rest goes through an allowlist sanitiser (`enshrined/svg-sanitize`, remote references removed): scripts, event handlers, `foreignObject`, `javascript:` and external `href`/`url()` are dropped. The result is scanned again and refused if anything active survived. Only the sanitised markup is stored (`{base}/image.svg`, private originals disk). Code: `App\Domain\Catalog\Services\VectorImage`.
+    - **Served only through `/m/{id}/{slug}.svg`**, never from the public disk or CDN. Responses carry `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox` and `nosniff`, so a sanitiser miss still cannot run script on our origin when the URL is opened directly. `urls.*` carry `?v={base id}`; with the current `v` the response is `immutable` for a year, otherwise 5 min.
+    - **No renditions.** `processing_status` is `ready` at once; `srcset.webp`/`srcset.avif` are `null`; every `urls.*` entry is the same file. `mime` and `original_mime` are `image/svg+xml`. `width`/`height` come from the root's `width`/`height` (unitless or px), else its `viewBox`, else `null`.
+    - **Refused where pixels are needed** (422 with a localised message): product gallery (`media.attach.svg`), profile photo, every branding slot (favicons, invoice and email logo, share image), the invoice logo, a blog cover (it is the share image), and any `og_image` URL ending `.svg`. Allowed for images shown on a page: CMS blocks, banners, testimonials, categories, blog author avatars, product description images. The admin picker lists SVGs only when the caller passes `allowSvg`.
+    - **Replace keeps the family:** SVG ↔ SVG, raster ↔ raster, so a raster-only usage never ends up holding a vector.
 
 ---
 
@@ -229,18 +235,19 @@ Custom folders only (system → 409 `conflict`). Its files become not filed (`fo
 
 | Field | Rules |
 |---|---|
-| `file` | required. JPEG, PNG, WebP, AVIF or PDF **by content** (name and client MIME are ignored); ≤ 10 MB |
+| `file` | required. JPEG, PNG, WebP, AVIF, SVG or PDF **by content** (name and client MIME are ignored); ≤ 10 MB |
 | `folder_id` | optional, an existing folder id, or omitted/empty = not filed |
 | `alt_text`, `alt_text_bn` | optional, ≤ 255 (ignored for a PDF) |
 | `caption` | optional, ≤ 500 |
 
-201 with `Media`. An image is `processing` (renditions are queued after commit; poll `GET /media/{id}` or the list every 2 s while any item is `processing`); a PDF is `ready` at once. Upload is **never** refused for missing alt text (A25 rule 1).
+201 with `Media`. A raster image is `processing` (renditions are queued after commit; poll `GET /media/{id}` or the list every 2 s while any item is `processing`); a PDF or an SVG is `ready` at once. Upload is **never** refused for missing alt text (A25 rule 1).
 
 Refusals are 422 `validation-error` on `file`. The messages (EN shown; Bangla with `locale=bn`) state the cause, for the queue item:
 
 | Cause | Message |
 |---|---|
-| Not an accepted type by content (incl. SVG, GIF, HEIC, video) | `Not a real image or PDF — the content is not JPG, PNG, WebP, AVIF or PDF.` |
+| Not an accepted type by content (incl. GIF, HEIC, video) | `Not a real image or PDF — the content is not JPG, PNG, WebP, AVIF, SVG or PDF.` |
+| SVG with a DOCTYPE/ENTITY, or active content that survives sanitising | `The file contains embedded script or markup and was refused.` |
 | Over 10 MB | `11.4 MB — over the 10 MB limit.` |
 | Over 8000 px | `9000 × 6000 px — over the 8000 px limit per side.` |
 | Image carrying script or markup (polyglot) | `The file contains embedded script or markup and was refused.` |

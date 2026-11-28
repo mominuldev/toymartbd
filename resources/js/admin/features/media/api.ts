@@ -121,7 +121,10 @@ export const kinds: MediaKind[] = ['image', 'document'];
 
 /** Client-side pre-check only (UX). The server sniffs the real type and is authoritative. */
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-export const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,application/pdf';
+export const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/svg+xml,application/pdf';
+
+/** The MIME a sanitised SVG keeps: no renditions, and refused where pixels are needed. */
+export const SVG_MIME = 'image/svg+xml';
 
 export const mediaKeys = {
     all: ['media'] as const,

@@ -12,6 +12,7 @@ use App\Domain\Seo\DTOs\SeoMetaData;
 use App\Domain\Seo\Enums\RobotsDirective;
 use App\Domain\Seo\Enums\TwitterCard;
 use App\Http\Requests\ApiFormRequest;
+use App\Http\Rules\NotSvgUrl;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Validation\Rule;
@@ -76,7 +77,7 @@ final class CmsPageRequest extends ApiFormRequest
             'seo.sitemap_exclude' => ['sometimes', 'boolean'],
             'seo.og_title' => ['nullable', 'string', 'max:191'],
             'seo.og_description' => ['nullable', 'string', 'max:500'],
-            'seo.og_image' => ['nullable', 'string', 'max:2048', 'url:https'],
+            'seo.og_image' => ['nullable', 'string', 'max:2048', 'url:https', new NotSvgUrl],
             'seo.twitter_card' => ['nullable', Rule::enum(TwitterCard::class)],
             'seo.focus_keyword' => ['nullable', 'string', 'max:120'],
 

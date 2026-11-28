@@ -30,10 +30,11 @@ export function folderLabel(folder: Pick<MediaFolder, 'name' | 'system_key'>, t:
     return folder.system_key ? t(systemFolderKeys[folder.system_key]) : folder.name;
 }
 
-/** "WebP", "JPG", "PNG", "AVIF", "PDF" from a MIME type. */
+/** "WebP", "JPG", "PNG", "AVIF", "SVG", "PDF" from a MIME type. */
 export function formatName(mime: string): string {
     const sub = mime.split('/')[1] ?? mime;
     if (sub === 'jpeg') return 'JPG';
+    if (sub === 'svg+xml') return 'SVG';
     if (sub === 'webp') return 'WebP';
     return sub.toUpperCase();
 }

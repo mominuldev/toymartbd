@@ -24,6 +24,7 @@ import { StatusChip } from '@/components/ui/StatusChip';
 import { tabClass } from '@/components/ui/Tabs';
 import { useI18n } from '@/i18n/I18nProvider';
 import {
+    SVG_MIME,
     defaultFilters,
     sorts,
     useMediaCounts,
@@ -67,6 +68,12 @@ export type MediaPickerContext = {
     defaultFolder?: SystemFolderKey | null;
     /** Show the বাংলা-alt warning bar (the product stays unpublished until it is added). */
     warnMissingAlt?: boolean;
+    /**
+     * SVG is offered (listed as pickable and accepted by the Upload tab). Only for images
+     * shown on a page; off for anything that needs pixels (product gallery, avatar,
+     * branding, invoice logo, share images), which the server refuses anyway.
+     */
+    allowSvg?: boolean;
 };
 
 export type InsertFailure = { media: Media; reason: string };
@@ -467,7 +474,7 @@ function LibraryTab({ context, defaultFolderId, foldersReady, picked, onToggle }
                             const n = order.get(media.id);
                             const flags = fitFlags(media, context.ratio, context.minSize);
                             const meta = tileMeta(media, flags.crop);
-                            const accepted = context.kinds.includes(media.kind);
+                            const accepted = context.kinds.includes(media.kind) && (context.allowSvg === true || media.mime !== SVG_MIME);
                             return (
                                 <li key={media.id} className="min-w-0">
                                     <MediaTile
@@ -538,7 +545,8 @@ function UploadTab({ context, queue }: { context: MediaPickerContext; queue: Ret
     const { t } = useI18n();
     const input = useRef<HTMLInputElement>(null);
     const [over, setOver] = useState(false);
-    const accept = context.kinds.includes('document') ? `${IMAGE_ACCEPT},application/pdf` : IMAGE_ACCEPT;
+    const images = context.allowSvg ? `${IMAGE_ACCEPT},${SVG_MIME}` : IMAGE_ACCEPT;
+    const accept = context.kinds.includes('document') ? `${images},application/pdf` : images;
     const isFileDrag = (event: DragEvent) => Array.from(event.dataTransfer.types).includes('Files');
 
     return (

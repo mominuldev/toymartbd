@@ -276,7 +276,7 @@ export const mediaLibraryEn = {
 
     'media.drop.title': 'Drop {count} files to upload to {folder}',
     'media.drop.titleAny': 'Drop files to upload to {folder}',
-    'media.drop.limits': 'Images: JPG, PNG, WebP or AVIF, up to 10 MB each · BSTI certificates: PDF, up to 10 MB',
+    'media.drop.limits': 'Images: JPG, PNG, WebP, AVIF or SVG, up to 10 MB each · BSTI certificates: PDF, up to 10 MB',
     'media.drop.note': 'Every file is checked by its content, location data (EXIF) is removed, and images are served as AVIF or WebP. Alt text in English and বাংলা is asked for after upload.',
 
     'media.queue.label': 'Uploads',
@@ -508,7 +508,7 @@ export const mediaLibraryBn: Record<keyof typeof mediaLibraryEn, string> = {
 
     'media.drop.title': '{folder}-এ আপলোড করতে {count}টি ফাইল ছাড়ুন',
     'media.drop.titleAny': '{folder}-এ আপলোড করতে ফাইল ছাড়ুন',
-    'media.drop.limits': 'ছবি: JPG, PNG, WebP বা AVIF, প্রতিটি সর্বোচ্চ 10 MB · BSTI সার্টিফিকেট: PDF, সর্বোচ্চ 10 MB',
+    'media.drop.limits': 'ছবি: JPG, PNG, WebP, AVIF বা SVG, প্রতিটি সর্বোচ্চ 10 MB · BSTI সার্টিফিকেট: PDF, সর্বোচ্চ 10 MB',
     'media.drop.note': 'প্রতিটি ফাইল কনটেন্ট দেখে যাচাই হয়, লোকেশন তথ্য (EXIF) মুছে ফেলা হয়, আর ছবি AVIF বা WebP হিসেবে দেওয়া হয়। আপলোডের পরে ইংরেজি ও বাংলা alt টেক্সট চাওয়া হবে।',
 
     'media.queue.label': 'আপলোড',

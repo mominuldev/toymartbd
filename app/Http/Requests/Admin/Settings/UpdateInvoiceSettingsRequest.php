@@ -6,6 +6,7 @@ namespace App\Http\Requests\Admin\Settings;
 
 use App\Domain\Catalog\Enums\ImageProcessingStatus;
 use App\Domain\Catalog\Media\Enums\MediaKind;
+use App\Domain\Catalog\Services\VectorImage;
 use App\Domain\Invoicing\DTOs\InvoiceSettingsData;
 use App\Domain\Invoicing\Services\CompanyDetails;
 use App\Http\Requests\ApiFormRequest;
@@ -40,10 +41,10 @@ final class UpdateInvoiceSettingsRequest extends ApiFormRequest
             /** Business Identification Number (NBR), 9 or 13 digits; not otherwise checked. */
             'bin' => ['nullable', 'string', 'max:32', 'regex:/^[0-9-]{5,32}$/'],
             /**
-             * A media library image whose renditions are ready. Drawn on invoices, supplementary
+             * A media library raster image (not SVG) whose renditions are ready. Drawn on invoices, supplementary
              * invoices and credit notes issued from now on; each keeps the logo file it was issued with.
              */
-            'logo_media_id' => ['nullable', 'integer', Rule::exists('media', 'id')->where('kind', MediaKind::Image->value)->where('processing_status', ImageProcessingStatus::Ready->value)],
+            'logo_media_id' => ['nullable', 'integer', Rule::exists('media', 'id')->where('kind', MediaKind::Image->value)->where('processing_status', ImageProcessingStatus::Ready->value)->whereNot('mime', VectorImage::MIME)],
             'footer_en' => ['nullable', 'string', 'max:200'],
             'footer_bn' => ['nullable', 'string', 'max:200'],
         ];

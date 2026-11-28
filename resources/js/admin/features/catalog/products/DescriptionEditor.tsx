@@ -125,6 +125,7 @@ export function DescriptionEditor({ value, onChange, error, invalid = {}, disabl
         max: 1,
         kinds: ['image'],
         defaultFolder: 'products',
+        allowSvg: true,
     };
 
     const insertImage = async (picked: Media[]): Promise<InsertFailure[]> => {

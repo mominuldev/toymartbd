@@ -46,7 +46,11 @@ final readonly class UpdateOwnAvatar
      */
     public function fromMedia(User $user, Media $media): User
     {
-        if (! $media->isImage() || $media->processing_status !== ImageProcessingStatus::Ready) {
+        if ($media->isVector()) {
+            throw ValidationException::withMessages(['media_id' => __('staff.avatar_media_svg')]);
+        }
+
+        if (! $media->isRaster() || $media->processing_status !== ImageProcessingStatus::Ready) {
             throw ValidationException::withMessages(['media_id' => __('staff.avatar_media_not_ready')]);
         }
 

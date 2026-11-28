@@ -7,7 +7,7 @@ return [
 
     'file' => [
         'empty' => 'The file is empty.',
-        'wrong_type' => 'Not a real image or PDF — the content is not JPG, PNG, WebP, AVIF or PDF.',
+        'wrong_type' => 'Not a real image or PDF — the content is not JPG, PNG, WebP, AVIF, SVG or PDF.',
         'too_large' => ':size MB — over the :limit MB limit.',
         'too_wide' => ':width × :height px — over the :limit px limit per side.',
         'payload' => 'The file contains embedded script or markup and was refused.',
@@ -16,7 +16,13 @@ return [
         'active_content' => 'The PDF contains scripts, attachments or interactive content. Export it again as a plain PDF.',
         'replace_image' => 'Replace with an image: this file is an image.',
         'replace_document' => 'Replace with a PDF: this file is a PDF.',
+        'replace_svg' => 'Replace with an SVG: this file is an SVG.',
+        'replace_raster' => 'Replace with a JPG, PNG, WebP or AVIF image: this file is not an SVG.',
     ],
+
+    'cover_svg' => 'A cover is also the social share image, which cannot be an SVG. Choose a JPG, PNG, WebP or AVIF image.',
+
+    'og_svg' => 'A share image cannot be an SVG — social networks do not show it. Use a JPG, PNG, WebP or AVIF image.',
 
     'in_use' => 'This file is used in :count places. Remove it from them, or replace the file instead.',
     'in_use_one' => 'This file is used in 1 place. Remove it from there, or replace the file instead.',
@@ -33,6 +39,7 @@ return [
 
     'attach' => [
         'not_image' => 'Only an image can be added to the gallery.',
+        'svg' => 'An SVG cannot be a product photo. Use a JPG, PNG, WebP or AVIF image.',
         'already_attached' => 'This image is already in the product gallery.',
         'file_or_media' => 'Send either a file or a media_id, not both.',
         'crop_with_media' => 'A library image cannot be cropped while it is added. Add it, then crop.',

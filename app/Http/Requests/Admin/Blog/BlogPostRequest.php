@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\Admin\Blog;
 
 use App\Domain\Catalog\Enums\AgeBand;
+use App\Domain\Catalog\Media\Models\Media;
+use App\Domain\Catalog\Services\VectorImage;
 use App\Domain\Content\Blog\DTOs\BlogPostData;
 use App\Domain\Content\Blog\DTOs\GuidePickData;
 use App\Domain\Content\Blog\DTOs\GuideSectionData;
@@ -14,9 +16,11 @@ use App\Domain\Content\Blog\Models\BlogPost;
 use App\Domain\Seo\Enums\RobotsDirective;
 use App\Http\Requests\Admin\Brand\StoreBrandRequest;
 use App\Http\Requests\ApiFormRequest;
+use App\Http\Rules\NotSvgUrl;
 use App\Support\DhakaDate;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -63,7 +67,12 @@ final class BlogPostRequest extends ApiFormRequest
             'excerpt_bn' => ['nullable', 'string', 'max:500'],
             'body' => ['nullable', 'string', 'max:200000'],
             'body_bn' => ['nullable', 'string', 'max:200000'],
-            'cover_media_id' => ['nullable', 'integer', Rule::exists('media', 'id')->where('kind', 'image')],
+            // Not SVG: the cover is also the post's social share image, which no network renders.
+            'cover_media_id' => ['nullable', 'integer', Rule::exists('media', 'id')->where('kind', 'image'), static function (string $attribute, mixed $value, Closure $fail): void {
+                if (is_numeric($value) && Media::query()->whereKey((int) $value)->where('mime', VectorImage::MIME)->exists()) {
+                    $fail((string) __('media.cover_svg'));
+                }
+            }],
             'author_id' => ['nullable', 'integer', Rule::exists('blog_authors', 'id')],
             'category_id' => ['nullable', 'integer', Rule::exists('blog_categories', 'id')],
             'tag_ids' => ['sometimes', 'array', 'max:20'],
@@ -96,7 +105,7 @@ final class BlogPostRequest extends ApiFormRequest
             'seo.description_bn' => ['nullable', 'string', 'max:500'],
             'seo.canonical_url' => ['nullable', 'string', 'max:2048', 'url:https'],
             'seo.robots' => ['nullable', Rule::enum(RobotsDirective::class)],
-            'seo.og_image' => ['nullable', 'string', 'max:2048', 'url:https'],
+            'seo.og_image' => ['nullable', 'string', 'max:2048', 'url:https', new NotSvgUrl],
             'seo.focus_keyword' => ['nullable', 'string', 'max:120'],
         ];
     }

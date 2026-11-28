@@ -51,6 +51,12 @@ final readonly class AttachMediaToProduct
                 throw ValidationException::withMessages(['media_id' => (string) __('media.attach.not_image')]);
             }
 
+            // A gallery image is cropped, sent to Google Merchant and Meta feeds, and shown
+            // through renditions — all raster. SVG stays in the library for content blocks.
+            if ($media->isVector()) {
+                throw ValidationException::withMessages(['media_id' => (string) __('media.attach.svg')]);
+            }
+
             $existing = ProductImage::query()->where('product_id', $product->id);
 
             if ((clone $existing)->where('media_id', $media->id)->exists()) {

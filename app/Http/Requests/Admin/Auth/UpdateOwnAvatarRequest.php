@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 
 /**
- * `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }`
+ * `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG, WebP or AVIF up to 5 MB), or `{ media_id }`
  * to use an image already in the media library. Your own photo only.
  */
 final class UpdateOwnAvatarRequest extends ApiFormRequest
@@ -25,7 +25,7 @@ final class UpdateOwnAvatarRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'avatar' => ['required_without:media_id', 'prohibits:media_id', 'file', 'mimes:jpg,jpeg,png,webp', 'max:'.self::MAX_KB],
+            'avatar' => ['required_without:media_id', 'prohibits:media_id', 'file', 'mimes:jpg,jpeg,png,webp,avif', 'max:'.self::MAX_KB],
             'media_id' => ['nullable', 'integer', 'exists:media,id'],
         ];
     }

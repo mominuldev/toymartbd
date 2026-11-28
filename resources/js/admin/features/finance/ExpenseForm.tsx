@@ -250,7 +250,7 @@ function ExpenseFormBody({ titleId, categories, expense, onClose }: { titleId: s
                     <input
                         ref={fileRef}
                         type="file"
-                        accept="application/pdf,image/jpeg,image/png,image/webp"
+                        accept="application/pdf,image/jpeg,image/png,image/webp,image/avif"
                         className="sr-only"
                         aria-label={t('expenses.form.receipt')}
                         aria-describedby={helpId}

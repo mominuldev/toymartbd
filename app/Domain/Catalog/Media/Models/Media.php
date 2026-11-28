@@ -9,6 +9,7 @@ use App\Domain\Catalog\Media\Enums\AltStatus;
 use App\Domain\Catalog\Media\Enums\MediaKind;
 use App\Domain\Catalog\Media\Enums\MediaOrigin;
 use App\Domain\Catalog\Services\MediaUrls;
+use App\Domain\Catalog\Services\VectorImage;
 use App\Models\User;
 use Database\Factories\MediaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,9 +22,11 @@ use Illuminate\Support\Str;
  * One file in the media library (DATABASE-DESIGN §3.9, docs/api/media-library.md).
  *
  * `base_path` is the directory of one immutable file set: the private master
- * (`{base}/master.webp` for an image, `{base}/document.pdf` for a PDF) on the originals
- * disk and, for an image, the renditions `{base}/{width}.{webp|avif}` on the public
- * media disk. Replace moves the row to a new base; paths never change in place.
+ * (`{base}/master.webp` for a raster image, `{base}/image.svg` for a sanitised SVG,
+ * `{base}/document.pdf` for a PDF) on the originals disk and, for a raster image, the
+ * renditions `{base}/{width}.{webp|avif}` on the public media disk. An SVG has no
+ * renditions: it is served as is, only through `GET /m/{id}/{name}.svg` with a sandbox
+ * CSP (VectorImage). Replace moves the row to a new base; paths never change in place.
  *
  * @property int $id
  * @property MediaKind $kind
@@ -58,6 +61,8 @@ final class Media extends Model
     public const string MASTER = 'master.webp';
 
     public const string DOCUMENT = 'document.pdf';
+
+    public const string VECTOR = 'image.svg';
 
     protected $table = 'media';
 
@@ -117,10 +122,29 @@ final class Media extends Model
         return $this->kind === MediaKind::Image;
     }
 
+    /** A sanitised SVG: kept as a vector, no pixel master and no renditions. */
+    public function isVector(): bool
+    {
+        return $this->isImage() && $this->mime === VectorImage::MIME;
+    }
+
+    /**
+     * A raster image (WebP master + renditions) — what anything that needs pixels
+     * (product gallery, crop, avatar, favicons, invoice PDF, email logo) requires.
+     */
+    public function isRaster(): bool
+    {
+        return $this->isImage() && ! $this->isVector();
+    }
+
     /** Path of the stored original on the private originals disk. */
     public function originalPath(): string
     {
-        return $this->base_path.'/'.($this->isImage() ? self::MASTER : self::DOCUMENT);
+        return $this->base_path.'/'.match (true) {
+            $this->isVector() => self::VECTOR,
+            $this->isImage() => self::MASTER,
+            default => self::DOCUMENT,
+        };
     }
 
     /** @return list<int> the widths generated, ascending */
@@ -148,14 +172,19 @@ final class Media extends Model
             return null;
         }
 
+        if ($this->isVector()) {
+            return $this->vectorUrl();
+        }
+
         $chosen = MediaUrls::pick($this->renditionWidths(), $width);
 
         return $chosen === null ? null : MediaUrls::url(MediaUrls::renditionPath($this->base_path, $chosen, $format));
     }
 
+    /** Null for an SVG too: a vector needs no width candidates. */
     public function srcset(string $format = 'webp'): ?string
     {
-        if ($this->url(null, $format) === null) {
+        if ($this->isVector() || $this->url(null, $format) === null) {
             return null;
         }
 
@@ -167,14 +196,30 @@ final class Media extends Model
         ));
     }
 
-    /** The stable `/m/{id}/{slug}.webp` URL (decision 3); null for documents and until ready. */
+    /** The stable `/m/{id}/{slug}.webp` (or `.svg`) URL (decision 3); null for documents and until ready. */
     public function publicUrl(): ?string
     {
         if ($this->url() === null) {
             return null;
         }
 
-        return url('/m/'.$this->id.'/'.$this->slugName().'.webp');
+        return url('/m/'.$this->id.'/'.$this->slugName().($this->isVector() ? '.svg' : '.webp'));
+    }
+
+    /**
+     * Where an SVG is served: the `/m/` route (never the public disk or CDN, which cannot
+     * send the sandbox CSP), versioned by the base so a Replace busts caches and the
+     * response can be cached as immutable.
+     */
+    public function vectorUrl(): string
+    {
+        return url('/m/'.$this->id.'/'.$this->slugName().'.svg').'?v='.$this->version();
+    }
+
+    /** The base's own id (`media/01h…` → `01h…`): changes on every Replace. */
+    public function version(): string
+    {
+        return basename($this->base_path);
     }
 
     /** The filename stem as an ASCII slug, for URLs and download names. */
@@ -190,7 +235,11 @@ final class Media extends Model
         $stem = pathinfo($this->filename, PATHINFO_FILENAME);
         $stem = $stem === '' ? 'file-'.$this->id : $stem;
 
-        return $stem.($this->isImage() ? '.webp' : '.pdf');
+        return $stem.match (true) {
+            $this->isVector() => '.svg',
+            $this->isImage() => '.webp',
+            default => '.pdf',
+        };
     }
 
     public function altStatus(): AltStatus

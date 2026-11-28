@@ -16,6 +16,7 @@
         "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "dedoc/scramble": "^0.13.53",
+        "enshrined/svg-sanitize": "^1.1",
         "guzzlehttp/guzzle": "^8.3",
         "intervention/image": "^4.4",
         "kalnoy/nestedset": "^7.0",

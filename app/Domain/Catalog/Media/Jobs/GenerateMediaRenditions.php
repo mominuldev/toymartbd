@@ -46,8 +46,8 @@ final class GenerateMediaRenditions implements ShouldQueue
     {
         $media = Media::query()->find($this->mediaId);
 
-        if ($media === null || ! $media->isImage()) {
-            return; // deleted before the job ran, or a document
+        if ($media === null || ! $media->isRaster()) {
+            return; // deleted before the job ran, a document, or an SVG (no renditions)
         }
 
         $base = $media->base_path;
