@@ -540,6 +540,10 @@ Route::middleware(['auth:sanctum', EnsureActiveStaffSession::class, EnsureTwoFac
     require __DIR__.'/api_v1_admin_analytics_live.php';
     require __DIR__.'/api_v1_admin_ai.php';
     require __DIR__.'/api_v1_admin_inbox.php';
+
+    // Live updates (Laravel Reverb): sign a private-channel subscription. Channels and their
+    // Policy checks are in routes/channels.php. 403 role matrix: tests/Feature/Inbox/InboxLiveUpdatesTest.php.
+    Route::post('/broadcasting/auth', App\Http\Controllers\Api\V1\Admin\Broadcasting\BroadcastAuthController::class)->name('broadcasting.auth');
     require __DIR__.'/api_v1_admin_delivery_settings.php';
     // Phase 10 batch 5.
     require __DIR__.'/api_v1_admin_shipments_board.php';

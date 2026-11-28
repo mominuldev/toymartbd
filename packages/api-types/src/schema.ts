@@ -5902,6 +5902,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/broadcasting/auth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /broadcasting/auth` — the Pusher-protocol signature `{ auth }` for one private channel.
+         *     Not a Resource: the shape is the Pusher protocol's, read only by laravel-echo
+         */
+        post: operations["v1.admin.broadcasting.auth"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings/delivery-areas": {
         parameters: {
             query?: never;
@@ -9155,6 +9175,18 @@ export interface components {
                 }[];
             };
         };
+        /**
+         * AuthorizeChannelRequest
+         * @description `POST /broadcasting/auth` — signs a Reverb private-channel subscription for the signed-in staff
+         *     member. Any active staff session may ask; whether this user may join the channel is the
+         *     channel's own Policy check (routes/channels.php), which answers 403 `forbidden`.
+         *     `channel_name` is an allowlist (rule 16): only the channels the admin subscribes to.
+         */
+        AuthorizeChannelRequest: {
+            socket_id: string;
+            /** @enum {string} */
+            channel_name: "private-inbox";
+        };
         /** AutomationSettings */
         AutomationSettings: {
             review_delay_days: number;
@@ -9321,6 +9353,7 @@ export interface components {
             excerpt_bn?: string | null;
             body?: string | null;
             body_bn?: string | null;
+            /** @description Not SVG: the cover is also the post's social share image, which no network renders. */
             cover_media_id?: number | null;
             author_id?: number | null;
             category_id?: number | null;
@@ -11528,7 +11561,7 @@ export interface components {
         ExpensePaymentMethod: "cash" | "bank_transfer" | "bkash" | "nagad" | "card" | "cheque";
         /**
          * ExpenseReceiptRequest
-         * @description `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG or WebP ≤ 10 MB (by content).
+         * @description `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG, WebP or AVIF ≤ 10 MB (by content).
          */
         ExpenseReceiptRequest: {
             /**
@@ -17803,7 +17836,7 @@ export interface components {
         };
         /**
          * StoreMediaRequest
-         * @description `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a
+         * @description `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF, SVG) or a
          *     PDF, by content, ≤ 10 MB; optional `folder_id`, `alt_text`, `alt_text_bn`, `caption`.
          *     Needs media.manage.
          */
@@ -19994,7 +20027,7 @@ export interface components {
             /** @description Business Identification Number (NBR), 9 or 13 digits; not otherwise checked. */
             bin?: string | null;
             /**
-             * @description A media library image whose renditions are ready. Drawn on invoices, supplementary
+             * @description A media library raster image (not SVG) whose renditions are ready. Drawn on invoices, supplementary
              *     invoices and credit notes issued from now on; each keeps the logo file it was issued with.
              */
             logo_media_id?: number | null;
@@ -20123,7 +20156,7 @@ export interface components {
         };
         /**
          * UpdateOwnAvatarRequest
-         * @description `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }`
+         * @description `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG, WebP or AVIF up to 5 MB), or `{ media_id }`
          *     to use an image already in the media library. Your own photo only.
          */
         UpdateOwnAvatarRequest: {
@@ -35724,6 +35757,42 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
             /** @description Not a WhatsApp conversation, or its 24-hour window is open (`conflict`) — nothing was queued */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.admin.broadcasting.auth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorizeChannelRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        auth: string;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description The channel's Policy refuses this user, e.g. no inbox.view (`forbidden`) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

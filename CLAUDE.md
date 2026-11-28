@@ -140,6 +140,7 @@ These encode decisions already argued in the docs. Changing one requires updatin
 php artisan serve
 php artisan queue:work --queue=critical,courier,notify,index,reports
 php artisan horizon
+php artisan reverb:start            # live admin updates (Inbox) — only with BROADCAST_CONNECTION=reverb
 php artisan test
 ./vendor/bin/pint && ./vendor/bin/phpstan analyse && ./vendor/bin/deptrac
 

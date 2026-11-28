@@ -22,6 +22,7 @@
         "kalnoy/nestedset": "^7.0",
         "laravel/framework": "^13.17",
         "laravel/horizon": "^5.50",
+        "laravel/reverb": "^1.14",
         "laravel/sanctum": "^4.3",
         "laravel/scout": "^11.9",
         "laravel/tinker": "^3.0",

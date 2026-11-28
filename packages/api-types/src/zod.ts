@@ -180,6 +180,13 @@ export const assignConversationRequestSchema = z.object({
 });
 export type AssignConversationRequestInput = z.input<typeof assignConversationRequestSchema>;
 
+/** `POST /broadcasting/auth` — signs a Reverb private-channel subscription for the signed-in staff */
+export const authorizeChannelRequestSchema = z.object({
+    "socket_id": z.string().min(1).regex(new RegExp("^\\d+\\.\\d+$")),
+    "channel_name": z.enum(["private-inbox"]),
+});
+export type AuthorizeChannelRequestInput = z.input<typeof authorizeChannelRequestSchema>;
+
 /** `POST /content/banners` and `PUT /content/banners/{banner}` — the whole banner. `starts_at` / */
 export const bannerRequestSchema = z.object({
     "placement": bannerPlacementSchema,
@@ -522,7 +529,7 @@ export const expenseDecisionRequestSchema = z.object({
 });
 export type ExpenseDecisionRequestInput = z.input<typeof expenseDecisionRequestSchema>;
 
-/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG or WebP ≤ 10 MB (by content). */
+/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG, WebP or AVIF ≤ 10 MB (by content). */
 export const expenseReceiptRequestSchema = z.object({
     "receipt": z.instanceof(Blob),
 });
@@ -1316,7 +1323,7 @@ export const storeInboxNoteRequestSchema = z.object({
 });
 export type StoreInboxNoteRequestInput = z.input<typeof storeInboxNoteRequestSchema>;
 
-/** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a */
+/** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF, SVG) or a */
 export const storeMediaRequestSchema = z.object({
     "file": z.instanceof(Blob),
     "folder_id": z.number().int().nullable().optional(),
@@ -2067,7 +2074,7 @@ export const updateOrderRequestSchema = z.object({
 });
 export type UpdateOrderRequestInput = z.input<typeof updateOrderRequestSchema>;
 
-/** `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }` */
+/** `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG, WebP or AVIF up to 5 MB), or `{ media_id }` */
 export const updateOwnAvatarRequestSchema = z.object({
     "avatar": z.instanceof(Blob).optional(),
     "media_id": z.number().int().nullable().optional(),

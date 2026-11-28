@@ -448,6 +448,26 @@ The owner asked for two online gateways, **SSLCommerz and PayStation**, each in 
 
 **Owner decisions open:** native-speaker review of the new Bangla strings; whether old favicon files are ever cleaned up; no static storefront favicon before the first icon upload; `logo_dark` has no storefront surface yet; the media host must be listed in `MEDIA_ORIGINS` in production.
 
+### Progress — Phase 10: Inbox live updates over Laravel Reverb (2026-11-28)
+
+**Owner request (2026-11-28):** make the Inbox real-time. New messages and changes appear at once instead of on the 15–60 s polling timer.
+
+**Done, with passing tests** (`docs/api/inbox.md` › Live updates):
+- `laravel/reverb` on the server; `laravel-echo` and `pusher-js` in the admin, loaded lazily.
+- `InboxConversationChanged` is raised by the Conversation and ConversationMessage model hooks.
+  - Its payload is `{conversation_id}` only, after commit, on the `notify` queue, on the private `inbox` channel.
+  - Nothing is queued while broadcasting is `null` or `log`.
+- `POST /api/v1/admin/broadcasting/auth` sits inside the admin session group, with a channel allowlist. The channel is authorised by inbox.view, with a role-matrix test.
+- The admin refetches the lists, badge and open thread on a push, coalesced. It resyncs after a reconnect.
+- While live, polls slow to 5 minutes; when the socket is off or down, polling is unchanged.
+- The admin CSP allows the Reverb origin only while broadcasting is Reverb. Reverb allows only `APP_URL`'s host by default.
+
+**Open:**
+- Production needs a supervised `reverb:start` process behind the TLS proxy (a `wss://` host). That is an owner infrastructure decision, together with staging.
+- With more than one app server, Reverb needs `REVERB_SCALING_ENABLED=true` over Redis.
+- No "live" indicator on the Inbox screen. No Figma frame for one.
+- Other screens (orders, shipments board) still poll. The same signal pattern extends to them.
+
 ### Progress — Phase 10: Inbox channels, modelled on SSFlows (2026-11-20)
 
 **Owner decisions of 2026-11-20 (accepted):**

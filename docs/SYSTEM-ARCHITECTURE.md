@@ -185,6 +185,12 @@ React 19 · TypeScript strict · Vite · Tailwind v4 · React Router v7 (data mo
 
 **Structure.** Feature-first: `src/features/orders/{api,components,hooks,routes,schemas}`. Shared primitives in `src/components/ui`. No feature imports from another feature's internals; cross-feature sharing is promoted to `src/shared`.
 
+**Live updates.** The admin gets pushes over **Laravel Reverb**, a self-hosted Pusher-protocol WebSocket server (`php artisan reverb:start`), using laravel-echo. Added 2026-11-28 for the Inbox; see `docs/api/inbox.md` › Live updates.
+- A push is a **signal**: an id on a private channel whose Policy is the screen's own. The client only invalidates TanStack Query keys and refetches through the API, so nothing personal or permission-dependent is ever broadcast.
+- Broadcasts are queued (`notify`) and dispatched after commit.
+- Polling stays as the fallback and as a slow safety net, so a Reverb outage degrades to the old behaviour and never to stale data.
+- Off unless `BROADCAST_CONNECTION=reverb` and the admin bundle was built with `VITE_REVERB_APP_KEY`.
+
 **Performance.** Route-level code splitting; the orders table and courier booking screen must stay usable on a 1366×768 laptop over a slow connection, because that is what the operations staff will actually use.
 
 ---

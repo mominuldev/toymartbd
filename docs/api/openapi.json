@@ -27047,6 +27047,61 @@
                 }
             }
         },
+        "/admin/broadcasting/auth": {
+            "post": {
+                "operationId": "v1.admin.broadcasting.auth",
+                "summary": "`POST /broadcasting/auth` \u2014 the Pusher-protocol signature `{ auth }` for one private channel.\nNot a Resource: the shape is the Pusher protocol's, read only by laravel-echo",
+                "tags": [
+                    "Admin"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthorizeChannelRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "auth": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "auth"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "description": "The channel's Policy refuses this user, e.g. no inbox.view (`forbidden`)",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/settings/delivery-areas": {
             "get": {
                 "operationId": "v1.admin.settings.delivery-areas.show",
@@ -41101,6 +41156,27 @@
                     "branches"
                 ],
                 "title": "AuthUserResource"
+            },
+            "AuthorizeChannelRequest": {
+                "type": "object",
+                "description": "`POST /broadcasting/auth` \u2014 signs a Reverb private-channel subscription for the signed-in staff\nmember. `channel_name` is an allowlist (rule 16): only the channels the admin subscribes to.\nThe only channel today is the Inbox's, so anyone without inbox.view is refused (403) before\nvalidation; the channel's own Policy check in routes/channels.php then runs as well.\nA new channel widens this check to \"may view any listed channel\".",
+                "properties": {
+                    "socket_id": {
+                        "type": "string",
+                        "pattern": "^\\d+\\.\\d+$"
+                    },
+                    "channel_name": {
+                        "type": "string",
+                        "enum": [
+                            "private-inbox"
+                        ]
+                    }
+                },
+                "required": [
+                    "socket_id",
+                    "channel_name"
+                ],
+                "title": "AuthorizeChannelRequest"
             },
             "AutomationSettings": {
                 "type": "object",

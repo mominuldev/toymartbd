@@ -125,5 +125,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(OrderPlaced::class, \App\Domain\Catalog\Listeners\RecordRecommendationPurchasesOnOrderPlaced::class);
         // A payment flagged for review (rule 19) holds its order for a human (P4-PAY-03).
         Event::listen(\App\Domain\Payment\Events\PaymentFlaggedForReview::class, \App\Domain\Ordering\Listeners\HoldOrderOnPaymentReview::class);
+
+        // Private broadcast channels (Reverb). Their auth route is POST /api/v1/admin/broadcasting/auth,
+        // inside the admin session group — never Laravel's default web /broadcasting/auth.
+        require base_path('routes/channels.php');
     }
 }

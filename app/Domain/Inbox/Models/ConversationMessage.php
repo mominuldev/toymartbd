@@ -9,6 +9,7 @@ use App\Domain\Inbox\Enums\InboxChannel;
 use App\Domain\Inbox\Enums\MessageDirection;
 use App\Domain\Inbox\Enums\MessageKind;
 use App\Domain\Inbox\Enums\SystemEvent;
+use App\Domain\Inbox\Events\InboxConversationChanged;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -75,6 +76,15 @@ final class ConversationMessage extends Model
             'read_at' => 'datetime',
             'failed_at' => 'datetime',
         ];
+    }
+
+    /** A new line, or a delivery-status change, is pushed live to the admin (InboxConversationChanged). */
+    protected static function booted(): void
+    {
+        // `created` and `updated` only — Eloquent skips `updated` when nothing was dirty.
+        $changed = static fn (ConversationMessage $message) => event(new InboxConversationChanged($message->conversation_id));
+        self::created($changed);
+        self::updated($changed);
     }
 
     /** @return BelongsTo<Conversation, $this> */
