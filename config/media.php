@@ -56,7 +56,11 @@ return [
     /** Images per product (Figma ImageUploader: "Images (3 of 10)"). */
     'max_per_product' => 10,
 
-    /** Real (sniffed) types accepted. SVG, GIF, HEIC and everything else are refused. */
+    /**
+     * Real (sniffed) RASTER types accepted by the pipeline. GIF, HEIC and everything else
+     * are refused. SVG is not here: the media library takes it on a separate, sanitising
+     * path (VectorImage) and keeps it as a vector — docs/api/media-library.md decision 11.
+     */
     'accepted_types' => ['image/jpeg', 'image/png', 'image/webp', 'image/avif'],
 
     /**

@@ -95,7 +95,7 @@ final class StoreBranding
         }
         $media = Media::query()->find($mediaId);
 
-        return $media instanceof Media && $media->isImage() && $media->processing_status === ImageProcessingStatus::Ready ? $media : null;
+        return $media instanceof Media && $media->isRaster() && $media->processing_status === ImageProcessingStatus::Ready ? $media : null;
     }
 
     /**
@@ -110,6 +110,10 @@ final class StoreBranding
         }
         if (! $media->isImage()) {
             return 'store_settings.branding_media_not_image';
+        }
+        // Branding feeds favicons, invoice PDFs, emails and social previews — none take SVG.
+        if ($media->isVector()) {
+            return 'store_settings.branding_media_svg';
         }
         if ($media->processing_status !== ImageProcessingStatus::Ready) {
             return 'store_settings.branding_media_not_ready';

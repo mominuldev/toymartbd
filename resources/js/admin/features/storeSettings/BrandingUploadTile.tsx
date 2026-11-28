@@ -12,7 +12,7 @@ import { useMediaUploadQueue } from '@/features/media/parts/useMediaUploadQueue'
 export type BrandingImage = { id: number; filename: string; width: number | null; height: number | null; url: string | null };
 
 /** The formats the note promises (Figma 392:69531): no SVG — every upload is re-encoded. */
-const ACCEPT = 'image/png,image/jpeg,image/webp';
+const ACCEPT = 'image/png,image/jpeg,image/webp,image/avif';
 
 export function imageOf(media: Media): BrandingImage {
     return { id: media.id, filename: media.filename, width: media.width, height: media.height, url: media.urls.medium ?? media.urls.thumb };

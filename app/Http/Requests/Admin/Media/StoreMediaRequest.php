@@ -9,7 +9,7 @@ use App\Http\Requests\ApiFormRequest;
 use Illuminate\Http\UploadedFile;
 
 /**
- * `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a
+ * `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF, SVG) or a
  * PDF, by content, ≤ 10 MB; optional `folder_id`, `alt_text`, `alt_text_bn`, `caption`.
  * Needs media.manage.
  */

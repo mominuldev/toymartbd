@@ -14,14 +14,14 @@ use InvalidArgumentException;
 
 /**
  * Expense receipts: a PDF (the certificate rules — sniffed, no active content) or a
- * JPEG/PNG/WebP photo of a paper receipt, ≤ 10 MB. Kept on the private originals disk under
+ * JPEG/PNG/WebP/AVIF photo of a paper receipt, ≤ 10 MB. Kept on the private originals disk under
  * `finance/receipts/` and only ever served as a download (`nosniff`, `no-store`).
  */
 final readonly class ExpenseAttachments
 {
     public const int MAX_BYTES = 10 * 1024 * 1024;
 
-    private const array IMAGE_TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    private const array IMAGE_TYPES = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/avif' => 'avif'];
 
     public function __construct(private CertificateFiles $pdfs) {}
 
@@ -51,7 +51,7 @@ final readonly class ExpenseAttachments
             return $mime;
         }
         if (! array_key_exists($mime, self::IMAGE_TYPES) || @getimagesize($path) === false) {
-            throw new InvalidArgumentException('A receipt must be a PDF, JPEG, PNG or WebP file.');
+            throw new InvalidArgumentException('A receipt must be a PDF, JPEG, PNG, WebP or AVIF file.');
         }
 
         return $mime;

@@ -13,5 +13,6 @@ return [
     'two_factor_expired' => 'The sign-in has expired. Enter your email and password again.',
     'two_factor_required' => 'Your role can see money: set up two-factor sign-in before continuing.',
     'owner_only_permission' => 'Only the owner role can hold this permission.',
+    'avatar_media_svg' => 'An SVG cannot be a profile photo. Pick a JPG, PNG, WebP or AVIF image.',
     'avatar_media_not_ready' => 'That image is not ready yet. Try again in a moment, or pick another.',
 ];

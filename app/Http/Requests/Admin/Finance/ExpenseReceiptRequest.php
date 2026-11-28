@@ -12,7 +12,7 @@ use Closure;
 use Illuminate\Http\UploadedFile;
 use InvalidArgumentException;
 
-/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG or WebP ≤ 10 MB (by content). */
+/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG, WebP or AVIF ≤ 10 MB (by content). */
 final class ExpenseReceiptRequest extends ApiFormRequest
 {
     public function authorize(): bool

@@ -11,6 +11,7 @@ use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Services\CertificateFiles;
 use App\Domain\Catalog\Services\ImagePipeline;
 use App\Domain\Catalog\Services\MediaUrls;
+use App\Domain\Catalog\Services\VectorImage;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -18,8 +19,12 @@ use Illuminate\Validation\ValidationException;
 /**
  * Validates and stores a media-library file, reusing the product pipeline unchanged:
  *
- * - an image goes through ImagePipeline (content sniff, payload scan, ≤ 10 MB and
- *   ≤ 8000 px, EXIF strip, re-encoded WebP master — the raw bytes are never kept);
+ * - a raster image (JPEG, PNG, WebP, AVIF) goes through ImagePipeline (content sniff,
+ *   payload scan, ≤ 10 MB and ≤ 8000 px, EXIF strip, re-encoded WebP master — the raw
+ *   bytes are never kept);
+ * - an SVG goes through VectorImage (sniffed by its root element, DOCTYPE/entities
+ *   refused, allowlist-sanitised, re-scanned) and the sanitised markup is stored
+ *   privately as `image.svg` — no renditions, served only through the `/m/` route;
  * - a PDF goes through CertificateFiles (sniffed by `%PDF-` + finfo, ≤ 10 MB, refused
  *   with JavaScript, launch actions, embedded files, RichMedia or XFA) and is stored
  *   privately as is.
@@ -32,6 +37,7 @@ final readonly class MediaFiles
     public function __construct(
         private ImagePipeline $pipeline,
         private CertificateFiles $certificates,
+        private VectorImage $vectors,
     ) {}
 
     /**
@@ -46,18 +52,26 @@ final readonly class MediaFiles
     }
 
     /**
-     * Validate, then write the original under a new base.
+     * Validate, then write the original under a new base. With `$expectVector` (Replace),
+     * the new file must be the same family as the old one — SVG for SVG, raster for
+     * raster — so a raster-only usage (a product gallery) never ends up holding a vector.
      *
      * @return array{kind: MediaKind, base: string, mime: string, original_mime: string, width: int|null, height: int|null, original_size: int, master_bytes: int}
      *
      * @throws ValidationException 422 on `file`
      */
-    public function store(string $path, string $prefix, ?MediaKind $expected = null): array
+    public function store(string $path, string $prefix, ?MediaKind $expected = null, ?bool $expectVector = null): array
     {
         $kind = $this->kindOf($path);
 
         if ($expected !== null && $kind !== $expected) {
             throw ValidationException::withMessages(['file' => (string) __($expected === MediaKind::Image ? 'media.file.replace_image' : 'media.file.replace_document')]);
+        }
+
+        $isVector = $kind === MediaKind::Image && VectorImage::looksLikeSvg($path);
+
+        if ($expectVector !== null && $kind === MediaKind::Image && $isVector !== $expectVector) {
+            throw ValidationException::withMessages(['file' => (string) __($expectVector ? 'media.file.replace_svg' : 'media.file.replace_raster')]);
         }
 
         $size = (int) @filesize($path);
@@ -76,6 +90,22 @@ final readonly class MediaFiles
             return [
                 'kind' => $kind, 'base' => $base, 'mime' => 'application/pdf', 'original_mime' => 'application/pdf',
                 'width' => null, 'height' => null, 'original_size' => $size, 'master_bytes' => $size,
+            ];
+        }
+
+        if ($isVector) {
+            try {
+                $svg = $this->vectors->sanitize($path);
+            } catch (InvalidImage $e) {
+                throw self::refusal($e->reason, $e->params);
+            }
+
+            $originals->put("{$base}/".Media::VECTOR, $svg['bytes']);
+
+            return [
+                'kind' => $kind, 'base' => $base, 'mime' => VectorImage::MIME, 'original_mime' => VectorImage::MIME,
+                'width' => $svg['width'], 'height' => $svg['height'], 'original_size' => $size,
+                'master_bytes' => strlen($svg['bytes']),
             ];
         }
 
@@ -117,7 +147,7 @@ final readonly class MediaFiles
             return $safe.'.pdf';
         }
 
-        return $safe.'.'.(in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'avif'], true) ? $ext : 'webp');
+        return $safe.'.'.(in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'avif', 'svg'], true) ? $ext : 'webp');
     }
 
     /**

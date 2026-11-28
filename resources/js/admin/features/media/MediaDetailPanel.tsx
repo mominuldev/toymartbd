@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/Select';
 import { useToast } from '@/components/ui/Toast';
 import { useI18n } from '@/i18n/I18nProvider';
 import { ApiError } from '@/lib/api';
-import { inUseUsages, problemMessage, useDeleteMedia, useMedia, useReplaceMedia, useUpdateMedia, type MediaDetail, type MediaFolder, type MediaPatch, type MediaUsage } from './api';
+import { SVG_MIME, inUseUsages, problemMessage, useDeleteMedia, useMedia, useReplaceMedia, useUpdateMedia, type MediaDetail, type MediaFolder, type MediaPatch, type MediaUsage } from './api';
 import { MediaDeleteDialog, adminRoute } from './MediaDeleteDialog';
 import { aspectLabel, folderLabel, formatName, usageContext, usageTitle } from './parts/display';
 import { formatBytes, formatDhakaDateTime } from './parts/format';
@@ -170,7 +170,7 @@ function DetailBody({ media, folders, canManage, canDelete, onDeleted }: { media
                                 hidden
                                 aria-hidden
                                 tabIndex={-1}
-                                accept={isImage ? 'image/jpeg,image/png,image/webp,image/avif' : 'application/pdf'}
+                                accept={isImage ? (media.mime === SVG_MIME ? SVG_MIME : 'image/jpeg,image/png,image/webp,image/avif') : 'application/pdf'}
                                 data-testid="media-replace-input"
                                 onChange={(e) => {
                                     onReplaceFile(e.target.files?.[0]);

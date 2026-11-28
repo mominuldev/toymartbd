@@ -61,7 +61,7 @@ export function MediaField({ label, hint, pickerTitle, value, onChange, disabled
             {error && <p className="t-admin-caption text-fg-primary">{error}</p>}
             {picking && (
                 <MediaPickerModal
-                    context={{ title: t(pickerTitle), multiple: false, max: 1, kinds: ['image'], defaultFolder: 'pages', ratio }}
+                    context={{ title: t(pickerTitle), multiple: false, max: 1, kinds: ['image'], defaultFolder: 'pages', ratio, allowSvg: true }}
                     onInsert={insert}
                     onClose={() => setPicking(false)}
                 />

@@ -10,6 +10,7 @@ use App\Domain\Catalog\Media\Enums\MediaOrigin;
 use App\Domain\Catalog\Media\Jobs\GenerateMediaRenditions;
 use App\Domain\Catalog\Media\Models\Media;
 use App\Domain\Catalog\Media\Services\MediaFiles;
+use App\Domain\Catalog\Services\VectorImage;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -34,6 +35,8 @@ final readonly class UploadMedia
     {
         $stored = $this->files->store($uploadedPath, 'media');
         $isImage = $stored['kind'] === MediaKind::Image;
+        // An SVG has no renditions to generate: it is ready as soon as it is stored.
+        $needsRenditions = $isImage && $stored['mime'] !== VectorImage::MIME;
 
         try {
             $media = DB::transaction(static fn (): Media => Media::query()->create([
@@ -46,14 +49,14 @@ final readonly class UploadMedia
                 'base_path' => $stored['base'],
                 'mime' => $stored['mime'],
                 'original_mime' => $stored['original_mime'],
-                'processing_status' => $isImage ? ImageProcessingStatus::Processing : ImageProcessingStatus::Ready,
+                'processing_status' => $needsRenditions ? ImageProcessingStatus::Processing : ImageProcessingStatus::Ready,
                 'width' => $stored['width'],
                 'height' => $stored['height'],
                 'original_size_bytes' => $stored['original_size'],
                 'master_bytes' => $stored['master_bytes'],
                 'renditions_bytes' => 0,
-                'size_bytes' => $isImage ? 0 : $stored['master_bytes'],
-                'renditions' => null,
+                'size_bytes' => $needsRenditions ? 0 : $stored['master_bytes'],
+                'renditions' => $needsRenditions || ! $isImage ? null : [],
                 'origin' => MediaOrigin::Library,
                 'uploaded_by' => $userId,
             ]));
@@ -63,7 +66,7 @@ final readonly class UploadMedia
             throw $e;
         }
 
-        if ($isImage) {
+        if ($needsRenditions) {
             GenerateMediaRenditions::dispatch($media->id);
         }
 

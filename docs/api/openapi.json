@@ -41615,7 +41615,8 @@
                         "type": [
                             "integer",
                             "null"
-                        ]
+                        ],
+                        "description": "Not SVG: the cover is also the post's social share image, which no network renders."
                     },
                     "author_id": {
                         "type": [
@@ -50375,7 +50376,7 @@
             },
             "ExpenseReceiptRequest": {
                 "type": "object",
-                "description": "`POST /finance/expenses/{expense}/receipt` \u2014 multipart `receipt`: a PDF, JPEG, PNG or WebP \u2264 10 MB (by content).",
+                "description": "`POST /finance/expenses/{expense}/receipt` \u2014 multipart `receipt`: a PDF, JPEG, PNG, WebP or AVIF \u2264 10 MB (by content).",
                 "properties": {
                     "receipt": {
                         "type": "string",
@@ -74558,7 +74559,7 @@
             },
             "StoreMediaRequest": {
                 "type": "object",
-                "description": "`POST /media` \u2014 `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a\nPDF, by content, \u2264 10 MB; optional `folder_id`, `alt_text`, `alt_text_bn`, `caption`.\nNeeds media.manage.",
+                "description": "`POST /media` \u2014 `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF, SVG) or a\nPDF, by content, \u2264 10 MB; optional `folder_id`, `alt_text`, `alt_text_bn`, `caption`.\nNeeds media.manage.",
                 "properties": {
                     "file": {
                         "type": "string",
@@ -82961,7 +82962,7 @@
                             "integer",
                             "null"
                         ],
-                        "description": "A media library image whose renditions are ready. Drawn on invoices, supplementary\ninvoices and credit notes issued from now on; each keeps the logo file it was issued with."
+                        "description": "A media library raster image (not SVG) whose renditions are ready. Drawn on invoices, supplementary\ninvoices and credit notes issued from now on; each keeps the logo file it was issued with."
                     },
                     "footer_en": {
                         "type": [
@@ -83331,7 +83332,7 @@
             },
             "UpdateOwnAvatarRequest": {
                 "type": "object",
-                "description": "`POST /auth/avatar` \u2014 multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }`\nto use an image already in the media library. Your own photo only.",
+                "description": "`POST /auth/avatar` \u2014 multipart `{ avatar }` (JPG, PNG, WebP or AVIF up to 5 MB), or `{ media_id }`\nto use an image already in the media library. Your own photo only.",
                 "properties": {
                     "avatar": {
                         "type": "string",

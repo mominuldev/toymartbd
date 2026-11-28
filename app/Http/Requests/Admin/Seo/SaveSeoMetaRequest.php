@@ -9,6 +9,7 @@ use App\Domain\Seo\Enums\RobotsDirective;
 use App\Domain\Seo\Enums\TwitterCard;
 use App\Domain\Seo\Models\SeoMeta;
 use App\Http\Requests\ApiFormRequest;
+use App\Http\Rules\NotSvgUrl;
 use Illuminate\Validation\Rule;
 
 /**
@@ -35,7 +36,7 @@ final class SaveSeoMetaRequest extends ApiFormRequest
             'og_description' => ['nullable', 'string', 'max:500'],
             'og_description_bn' => ['nullable', 'string', 'max:500'],
             // Media Library picks are served over http on a local machine; production stays https-only.
-            'og_image' => ['nullable', 'string', 'max:2048', app()->isProduction() ? 'url:https' : 'url:http,https'],
+            'og_image' => ['nullable', 'string', 'max:2048', app()->isProduction() ? 'url:https' : 'url:http,https', new NotSvgUrl],
             'canonical_url' => ['nullable', 'string', 'max:2048', 'url:https'],
             'robots' => ['sometimes', 'nullable', Rule::enum(RobotsDirective::class)],
             'sitemap_exclude' => ['sometimes', 'boolean'],
