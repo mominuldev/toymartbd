@@ -44,7 +44,7 @@ it('reports the checkout rules from the settings and rate card checkout uses', f
             'online_methods' => [],
             'order_notes' => true,
             'order_note_max' => 500,
-            'risk_advance' => ['available' => false, 'blocker' => 'no_bkash_gateway', 'bkash_status' => 'not_registered', 'hold_score' => 70],
+            'risk_advance' => ['available' => false, 'blocker' => 'no_bkash_gateway', 'bkash_status' => 'inactive', 'hold_score' => 70],
             'cod_advance' => ['zones' => ['outside_dhaka'], 'threshold' => '5000.00', 'amount' => '200.00'],
             'free_shipping_threshold' => '3000.00',
             'delivery_courier' => 'Steadfast',

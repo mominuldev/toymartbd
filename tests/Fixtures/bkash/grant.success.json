@@ -1,0 +1,8 @@
+{
+    "statusCode": "0000",
+    "statusMessage": "Successful",
+    "id_token": "{{id_token}}",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "refresh_token": "{{refresh_token}}"
+}

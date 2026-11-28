@@ -1,0 +1,16 @@
+{
+    "paymentId": "{{payment_id}}",
+    "verificationStatus": "Complete",
+    "payerReference": "{{reference}}",
+    "payerAccount": "01770618575",
+    "payerType": "Customer",
+    "paymentCreateTime": "2026-11-28T12:31:28:970 GMT+0600",
+    "paymentExecuteTime": "2026-11-28T12:34:11:929 GMT+0600",
+    "trxId": "{{trx_id}}",
+    "transactionStatus": "Completed",
+    "amount": "{{amount}}",
+    "currency": "BDT",
+    "intent": "sale",
+    "merchantInvoice": "{{invoice}}",
+    "maxRefundableAmount": "{{amount}}"
+}

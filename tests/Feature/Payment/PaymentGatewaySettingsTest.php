@@ -88,7 +88,7 @@ describe('GET /settings/payment-gateways', function (): void {
         $response = $this->getJson('/api/v1/admin/settings/payment-gateways')->assertOk();
 
         expect($response->getContent())->not->toContain(PGS_SANDBOX_SECRET)->not->toContain(PGS_LIVE_SECRET);
-        $response->assertJsonCount(2, 'data')
+        $response->assertJsonCount(3, 'data')
             ->assertJsonPath('data.0.code', 'sslcommerz')
             ->assertJsonPath('data.0.mode', 'live')
             ->assertJsonPath('data.0.is_active', true)
@@ -96,13 +96,15 @@ describe('GET /settings/payment-gateways', function (): void {
             ->assertJsonPath('data.0.configured', true)
             ->assertJsonPath('data.0.status.enabled', true)
             ->assertJsonPath('data.0.credentials.live.complete', true)
-            ->assertJsonPath('data.0.credentials.live.fields.0', ['key' => 'store_id', 'secret' => false, 'set' => true, 'value' => 'live-store'])
-            ->assertJsonPath('data.0.credentials.live.fields.1', ['key' => 'store_password', 'secret' => true, 'set' => true, 'value' => null])
+            ->assertJsonPath('data.0.credentials.live.fields.0', ['key' => 'store_id', 'secret' => false, 'set' => true, 'value' => 'live-store', 'hint' => null])
+            ->assertJsonPath('data.0.credentials.live.fields.1', ['key' => 'store_password', 'secret' => true, 'set' => true, 'value' => null, 'hint' => null])
             ->assertJsonPath('data.0.credentials.sandbox.fields.0.value', 'sbx-store')
             ->assertJsonPath('data.1.code', 'paystation')
             ->assertJsonPath('data.1.mode', 'sandbox')
             ->assertJsonPath('data.1.configured', false)
-            ->assertJsonPath('data.1.credentials.live.complete', false);
+            ->assertJsonPath('data.1.credentials.live.complete', false)
+            ->assertJsonPath('data.2.code', 'bkash')
+            ->assertJsonPath('data.2.mode', 'sandbox');
     });
 
     it('gives each gateway its IPN URL and the host per mode, for display', function (): void {
@@ -230,7 +232,7 @@ describe('PUT /settings/payment-gateways/{code}', function (): void {
         $this->putJson('/api/v1/admin/settings/payment-gateways/sslcommerz', ['credentials' => ['sandbox' => ['store_id' => ['nested']]]])
             ->assertStatus(422)->assertJsonPath('errors.0.field', 'credentials.sandbox.store_id');
         expect(sslRow()->refresh()->credentials)->toBeNull();
-        $this->putJson('/api/v1/admin/settings/payment-gateways/bkash', ['is_active' => true])
+        $this->putJson('/api/v1/admin/settings/payment-gateways/nagad', ['is_active' => true])
             ->assertNotFound()->assertJsonPath('type', 'https://toymartbd.com/problems/not-found');
         $this->postJson('/api/v1/admin/settings/payment-gateways/cod/check')->assertNotFound();
     });

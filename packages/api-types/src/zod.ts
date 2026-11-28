@@ -200,6 +200,16 @@ export const bannerRequestSchema = z.object({
 });
 export type BannerRequestInput = z.input<typeof bannerRequestSchema>;
 
+/** The customer's browser came back from bKash to our callbackURL, which bKash suffixed with */
+export const bkashReturnRequestSchema = z.object({
+    "order_number": z.string().min(1).regex(new RegExp("^[A-Za-z0-9\\-]{3,32}$")),
+    "payment_id": z.string().min(1).max(128).regex(new RegExp("^[A-Za-z0-9\\-_]+$")),
+    "status": z.enum(["success","failure","cancel"]),
+    "signature": z.string().max(255).nullable().optional(),
+    "query": z.array(z.string().max(500).nullable()).max(20).nullable().optional(),
+});
+export type BkashReturnRequestInput = z.input<typeof bkashReturnRequestSchema>;
+
 /** `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it). */
 export const blogPostRequestSchema = z.object({
     "type": postTypeSchema,
@@ -522,7 +532,7 @@ export const expenseDecisionRequestSchema = z.object({
 });
 export type ExpenseDecisionRequestInput = z.input<typeof expenseDecisionRequestSchema>;
 
-/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG or WebP ≤ 10 MB (by content). */
+/** `POST /finance/expenses/{expense}/receipt` — multipart `receipt`: a PDF, JPEG, PNG, WebP or AVIF ≤ 10 MB (by content). */
 export const expenseReceiptRequestSchema = z.object({
     "receipt": z.instanceof(Blob),
 });
@@ -1316,7 +1326,7 @@ export const storeInboxNoteRequestSchema = z.object({
 });
 export type StoreInboxNoteRequestInput = z.input<typeof storeInboxNoteRequestSchema>;
 
-/** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF) or a */
+/** `POST /media` — `multipart/form-data`, one file: an image (JPEG, PNG, WebP, AVIF, SVG) or a */
 export const storeMediaRequestSchema = z.object({
     "file": z.instanceof(Blob),
     "folder_id": z.number().int().nullable().optional(),
@@ -2067,7 +2077,7 @@ export const updateOrderRequestSchema = z.object({
 });
 export type UpdateOrderRequestInput = z.input<typeof updateOrderRequestSchema>;
 
-/** `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG or WebP up to 5 MB), or `{ media_id }` */
+/** `POST /auth/avatar` — multipart `{ avatar }` (JPG, PNG, WebP or AVIF up to 5 MB), or `{ media_id }` */
 export const updateOwnAvatarRequestSchema = z.object({
     "avatar": z.instanceof(Blob).optional(),
     "media_id": z.number().int().nullable().optional(),

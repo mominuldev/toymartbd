@@ -36698,6 +36698,132 @@
                 }
             }
         },
+        "/storefront/payments/bkash/return": {
+            "post": {
+                "operationId": "v1.storefront.payments.bkash.return",
+                "summary": "`POST /payments/bkash/return` \u2014 the storefront forwards bKash's callback (`paymentID` as\n`payment_id`, `status`, `signature`) and the order number. Requires an `Idempotency-Key`:\nit may capture the payment (rule 17). The signature cannot be verified, so bKash is\nre-queried; on `success` the payment is executed and queried again, and only the query's\nanswer is applied. `deferred: true` means bKash could not be reached yet and nothing was\ndecided \u2014 show \"checking your payment\" and let the order page re-read the status",
+                "tags": [
+                    "Storefront"
+                ],
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/IdempotencyKey"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BkashReturnRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "order_number": {
+                                                    "type": "string"
+                                                },
+                                                "payment_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "pending",
+                                                        "initiated",
+                                                        "authorised",
+                                                        "paid",
+                                                        "failed",
+                                                        "cancelled",
+                                                        "expired"
+                                                    ]
+                                                },
+                                                "order_payment_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "unpaid",
+                                                        "pending",
+                                                        "partially_paid",
+                                                        "paid",
+                                                        "partially_refunded",
+                                                        "refunded",
+                                                        "failed"
+                                                    ]
+                                                },
+                                                "deferred": {
+                                                    "type": "boolean",
+                                                    "description": "True when bKash could not be reached yet; nothing was decided."
+                                                }
+                                            },
+                                            "required": [
+                                                "order_number",
+                                                "payment_status",
+                                                "order_payment_status",
+                                                "deferred"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No online bKash payment with that paymentID for that order \u2014 nothing was written",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Key reused with a different body, or validation failed",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Idempotency-Key missing or invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "A request with this key is still in progress",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProblemDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/storefront/auth/otp": {
             "post": {
                 "operationId": "v1.storefront.auth.otp.request",
@@ -41524,6 +41650,61 @@
                     "name"
                 ],
                 "title": "BannerRequest"
+            },
+            "BkashReturnRequest": {
+                "type": "object",
+                "description": "The customer's browser came back from bKash to our callbackURL, which bKash suffixed with\n`paymentID`, `status` and `signature`; the storefront's route handler forwards those plus the\norder number from the URL path. bKash publishes no way to verify `signature`, so these only\nselect which of OUR payments to re-query and whether the customer said success (which allows\nthe Execute call) \u2014 never the payment's status or amount (rule 19,\ndocs/_research/bkash-api.md \u00a75).",
+                "properties": {
+                    "order_number": {
+                        "type": "string",
+                        "description": "The order number from our callback URL's path.",
+                        "pattern": "^[A-Za-z0-9\\-]{3,32}$"
+                    },
+                    "payment_id": {
+                        "type": "string",
+                        "description": "bKash's `paymentID` query parameter, forwarded untouched.",
+                        "pattern": "^[A-Za-z0-9\\-_]+$",
+                        "maxLength": 128
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "bKash's `status` query parameter.",
+                        "enum": [
+                            "success",
+                            "failure",
+                            "cancel"
+                        ]
+                    },
+                    "signature": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "bKash's `signature` query parameter \u2014 kept for disputes; there is no documented way to verify it.",
+                        "maxLength": 255
+                    },
+                    "query": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "description": "Anything else bKash appended, kept for disputes only.",
+                        "items": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 500
+                        },
+                        "maxItems": 20
+                    }
+                },
+                "required": [
+                    "order_number",
+                    "payment_id",
+                    "status"
+                ],
+                "title": "BkashReturnRequest"
             },
             "BlockType": {
                 "type": "string",
@@ -60079,7 +60260,8 @@
                         "type": "string",
                         "enum": [
                             "sslcommerz",
-                            "paystation"
+                            "paystation",
+                            "bkash"
                         ]
                     },
                     "name": {
@@ -60139,7 +60321,7 @@
                     },
                     "credentials": {
                         "type": "object",
-                        "description": "Saved keys per mode. `value` is null for every secret. `complete` counts saved keys only.",
+                        "description": "Saved keys per mode. `value` is null for every secret; `hint` is \"\u2022\u2022\u2022\u20221234\" at most, only for a saved secret of a gateway that shows one (bKash). `complete` counts saved keys only.",
                         "properties": {
                             "sandbox": {
                                 "type": "object",
@@ -60166,13 +60348,20 @@
                                                         "string",
                                                         "null"
                                                     ]
+                                                },
+                                                "hint": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
                                                 "key",
                                                 "secret",
                                                 "set",
-                                                "value"
+                                                "value",
+                                                "hint"
                                             ]
                                         }
                                     }
@@ -60207,13 +60396,20 @@
                                                         "string",
                                                         "null"
                                                     ]
+                                                },
+                                                "hint": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 }
                                             },
                                             "required": [
                                                 "key",
                                                 "secret",
                                                 "set",
-                                                "value"
+                                                "value",
+                                                "hint"
                                             ]
                                         }
                                     }

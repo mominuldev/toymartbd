@@ -25,8 +25,9 @@ use App\Domain\Risk\Services\RiskSettings;
  *  - order notes: `customer_note` (≤ 500 chars) is always accepted and stored. Fixed — the
  *    storefront has no switch to hide the field, so turning notes off would reject or drop
  *    what a customer typed.
- *  - risk-based advance: NOT AVAILABLE. No bKash driver is registered and checkout has no
- *    partial-advance payment flow. A high score holds the order for verification instead
+ *  - risk-based advance: NOT AVAILABLE. A bKash driver exists (P10, sandbox-only and unverified
+ *    until a merchant account does), but checkout has no partial-advance payment flow — bKash
+ *    takes the whole order total like any online method. A high score holds the order for verification instead
  *    (rules 23, 24b); the zone/value COD advance (`delivery.cod_advance`) is arranged by phone.
  *  - delivery charges: the default courier's rate card ({@see CourierProvider::defaultForQuotes()}),
  *    which is what DeliveryChargeResolver quotes; the free-delivery threshold is

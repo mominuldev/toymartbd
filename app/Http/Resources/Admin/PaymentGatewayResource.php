@@ -43,7 +43,7 @@ final class PaymentGatewayResource extends ApiResource
         $ipnRoute = 'api.v1.webhooks.payments.'.$row->code.'.ipn';
 
         return [
-            /** @var 'sslcommerz'|'paystation' */
+            /** @var 'sslcommerz'|'paystation'|'bkash' */
             'code' => $row->code,
             'name' => $row->name,
             /** @var bool */
@@ -61,7 +61,7 @@ final class PaymentGatewayResource extends ApiResource
                 'enabled' => $status['enabled'],
                 'reason' => $status['reason'],
             ],
-            /** @var array{sandbox: array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null}>}, live: array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null}>}} Saved keys per mode. `value` is null for every secret. `complete` counts saved keys only. */
+            /** @var array{sandbox: array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null, hint: string|null}>}, live: array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null, hint: string|null}>}} Saved keys per mode. `value` is null for every secret; `hint` is "••••1234" at most, only for a saved secret of a gateway that shows one (bKash). `complete` counts saved keys only. */
             'credentials' => [
                 GatewayCredentials::SANDBOX => self::set($method, $row, true),
                 GatewayCredentials::LIVE => self::set($method, $row, false),
@@ -83,12 +83,12 @@ final class PaymentGatewayResource extends ApiResource
     private static function host(string $code, string $mode): ?string
     {
         $url = config("payments.{$code}.hosts.{$mode}");
-        $host = is_string($url) ? parse_url($url, PHP_URL_HOST) : null;
+        $host = is_string($url) && $url !== '' ? parse_url($url, PHP_URL_HOST) : null;
 
         return is_string($host) && $host !== '' ? $host : null;
     }
 
-    /** @return array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null}>} */
+    /** @return array{complete: bool, fields: list<array{key: string, secret: bool, set: bool, value: string|null, hint: string|null}>} */
     private static function set(PaymentMethod $method, PaymentProvider $row, bool $sandbox): array
     {
         $saved = GatewayCredentials::forMode($row, $sandbox);
@@ -100,6 +100,7 @@ final class PaymentGatewayResource extends ApiResource
                 'secret' => $field['secret'],
                 'set' => isset($saved[$field['key']]),
                 'value' => $field['secret'] ? null : ($saved[$field['key']] ?? null),
+                'hint' => $field['secret'] && $field['hint'] ? GatewayCredentials::hint($saved[$field['key']] ?? null) : null,
             ], GatewayCredentials::fields($method)),
         ];
     }

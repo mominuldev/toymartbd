@@ -88,9 +88,11 @@ it('lists every service by category, with not-built services as not_available', 
     expect($keys)->toBe(['steadfast', 'redx', 'cod', 'sslcommerz', 'paystation', 'bkash', 'nagad', 'sms', 'whatsapp', 'messenger', 'live_chat', 'meta_capi', 'ga4', 'gtm', 'search_console', 'anthropic', 'openai', 'gemini']);
     expect(collect($response->json('data'))->pluck('category')->unique()->values()->all())->toBe(['couriers', 'payments', 'messaging', 'marketing', 'ai']);
 
-    foreach (['redx', 'bkash', 'nagad', 'live_chat', 'search_console'] as $key) {
+    foreach (['redx', 'nagad', 'live_chat', 'search_console'] as $key) {
         expect(hubItem($response, $key))->toMatchArray(['status' => 'not_available', 'notes' => ['no_driver'], 'settings_path' => null, 'enabled' => null]);
     }
+    // bKash Tokenized Checkout (P10): a driver exists; no keys, switched off, managed on Integrations › Payments.
+    expect(hubItem($response, 'bkash'))->toMatchArray(['status' => 'not_connected', 'notes' => ['no_credentials', 'switched_off'], 'settings_path' => '/integrations/payments', 'enabled' => false]);
     // Inbox channels (P10): drivers exist, no account keys yet.
     foreach (['whatsapp', 'messenger'] as $key) {
         expect(hubItem($response, $key))->toMatchArray(['status' => 'not_connected', 'notes' => ['inbox_not_configured'], 'settings_path' => '/integrations/'.$key]);

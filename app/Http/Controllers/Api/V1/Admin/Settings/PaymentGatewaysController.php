@@ -24,8 +24,8 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Integrations › Payments (owner request 2026-11-19): the online gateways SSLCommerz and
- * PayStation — a sandbox and a live key set each, the mode in use, on/off and "Check
+ * Integrations › Payments (owner request 2026-11-19): the online gateways SSLCommerz,
+ * PayStation and bKash — a sandbox and a live key set each, the mode in use, on/off and "Check
  * connection". Everything needs settings.manage_integrations. Secret keys are write-only
  * (rule 20). Verifying a gateway for production stays an owner CLI step
  * (`toymart:payments:gateway --verify`); there is no endpoint for it.

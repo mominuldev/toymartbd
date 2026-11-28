@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Storefront\Account\NotificationPreferenceControl
 use App\Http\Controllers\Api\V1\Storefront\Account\OrderController as AccountOrderController;
 use App\Http\Controllers\Api\V1\Storefront\Account\ReviewController as AccountReviewController;
 use App\Http\Controllers\Api\V1\Storefront\Account\WishlistController as AccountWishlistController;
+use App\Http\Controllers\Api\V1\Storefront\BkashPaymentController;
 use App\Http\Controllers\Api\V1\Storefront\BrandController;
 use App\Http\Controllers\Api\V1\Storefront\CartController;
 use App\Http\Controllers\Api\V1\Storefront\CategoryController;
@@ -133,6 +134,9 @@ Route::middleware(['auth:sanctum', CheckAbilities::class.':storefront:read'])->g
     Route::post('/orders/{number}/payment', [PaymentController::class, 'start'])->middleware(['throttle:checkout', 'idempotent'])->where('number', '[A-Za-z0-9\-]{3,32}')->name('orders.payment.store');
     Route::post('/payments/sslcommerz/return', [PaymentController::class, 'sslcommerzReturn'])->middleware('throttle:checkout')->name('payments.sslcommerz.return');
     Route::post('/payments/paystation/return', [PaymentController::class, 'paystationReturn'])->middleware('throttle:checkout')->name('payments.paystation.return');
+    // bKash: the callback triggers the capture (Execute), so it needs an Idempotency-Key (rule 17);
+    // its signature is unverifiable, so only bKash's Query Payment answer is ever applied.
+    Route::post('/payments/bkash/return', [BkashPaymentController::class, 'return'])->middleware(['throttle:checkout', 'idempotent'])->name('payments.bkash.return');
 });
 
 // Customer sign-in (P4-STO-11) — docs/api/account.md. Phone + SMS code (never WhatsApp,

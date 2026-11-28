@@ -82,6 +82,8 @@ class AppServiceProvider extends ServiceProvider
             // production) verified — OnlineGateways (P4-PAY-02).
             $registry->register(PaymentMethod::Sslcommerz, \App\Domain\Payment\Gateways\Sslcommerz\SslcommerzGateway::class);
             $registry->register(PaymentMethod::Paystation, \App\Domain\Payment\Gateways\Paystation\PaystationGateway::class);
+            // bKash Tokenized Checkout (P10): no merchant account yet — the row stays unverified.
+            $registry->register(PaymentMethod::Bkash, \App\Domain\Payment\Gateways\Bkash\BkashGateway::class);
 
             return $registry;
         });

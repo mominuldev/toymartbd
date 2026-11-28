@@ -65,4 +65,30 @@ return [
         // so empty = not enforced; the IPN is only a trigger to re-query either way.
         'ipn_allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('PAYSTATION_IPN_ALLOWED_IPS', ''))))),
     ],
+
+    // bKash Tokenized Checkout, without agreement (docs/_research/bkash-api.md — built from
+    // developer.bka.sh, read 2026-11-28). No merchant account exists: sandbox-shaped, the row
+    // stays unverified. Keys live in payment_gateways.credentials per mode (GatewayCredentials);
+    // these env values fill the SANDBOX set only — a live key always comes from the admin.
+    'bkash' => [
+        'username' => env('BKASH_USERNAME'),
+        'password' => env('BKASH_PASSWORD'),
+        'app_key' => env('BKASH_APP_KEY'),
+        'app_secret' => env('BKASH_APP_SECRET'),
+        'hosts' => [
+            // Published on every Tokenized Checkout page (v2).
+            'sandbox' => 'https://tokenized.sandbox.bka.sh/v2/tokenized-checkout',
+            // NOT published: bKash supplies the live base URL at onboarding. Until it is set,
+            // live mode counts as not configured and can take no payment.
+            'live' => env('BKASH_LIVE_BASE_URL'),
+        ],
+        // bKash documents a 30 s timeout on every call; a slower Execute is settled by Query.
+        'timeout_seconds' => (int) env('BKASH_TIMEOUT', 30),
+        // The docs' header table says "Bearer token", but every curl sample sends the bare
+        // id_token (`authorization: id_token`). `plain` follows the samples; switch to
+        // `bearer` if the sandbox refuses it. UNVERIFIED until a sandbox key exists.
+        'authorization' => env('BKASH_AUTHORIZATION_SCHEME', 'plain'),
+        // The storefront's route handler the customer returns to (callbackURL).
+        'return_base_url' => env('BKASH_RETURN_URL', env('STOREFRONT_URL')),
+    ],
 ];
