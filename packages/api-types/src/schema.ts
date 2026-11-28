@@ -9202,9 +9202,10 @@ export interface components {
         /**
          * AuthorizeChannelRequest
          * @description `POST /broadcasting/auth` — signs a Reverb private-channel subscription for the signed-in staff
-         *     member. Any active staff session may ask; whether this user may join the channel is the
-         *     channel's own Policy check (routes/channels.php), which answers 403 `forbidden`.
-         *     `channel_name` is an allowlist (rule 16): only the channels the admin subscribes to.
+         *     member. `channel_name` is an allowlist (rule 16): only the channels the admin subscribes to.
+         *     The only channel today is the Inbox's, so anyone without inbox.view is refused (403) before
+         *     validation; the channel's own Policy check in routes/channels.php then runs as well.
+         *     A new channel widens this check to "may view any listed channel".
          */
         AuthorizeChannelRequest: {
             socket_id: string;
