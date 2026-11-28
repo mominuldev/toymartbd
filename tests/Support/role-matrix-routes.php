@@ -59,6 +59,7 @@ return [
     'api.v1.admin.brands.show',
     'api.v1.admin.brands.store',
     'api.v1.admin.brands.update',
+    'api.v1.admin.broadcasting.auth',
     'api.v1.admin.cart-recoveries.index',
     'api.v1.admin.cart-recoveries.summary',
     'api.v1.admin.categories.destroy',

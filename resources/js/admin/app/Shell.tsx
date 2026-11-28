@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router';
 import { XIcon } from '@phosphor-icons/react';
 import { Sidebar } from '@/components/shell/Sidebar';
 import { useInboxBadge } from '@/components/shell/useInboxBadge';
+import { useInboxLiveUpdates } from '@/features/inbox/live';
 import { useWorkingBranch } from '@/components/shell/workingBranch';
 import { Topbar } from '@/components/shell/Topbar';
 import { AskAiPanel } from '@/features/ai/advisor/AskAiPanel';
@@ -54,6 +55,8 @@ export function Shell() {
     // Nav count badges (Figma CountBadge 185:43 on SidebarItem): each a cheap server count.
     const lowStock = useLowStockCount(can(me, 'inventory.view'));
     const inbox = useInboxBadge(can(me, 'inbox.view'));
+    // Live inbox (Reverb): a push refetches the lists, the badge and the open thread at once.
+    useInboxLiveUpdates(can(me, 'inbox.view'));
     // The working branch (sidebar switcher): a per-device default for POS, purchases and stock screens.
     const working = useWorkingBranch();
     const [askOpen, setAskOpen] = useState(false);

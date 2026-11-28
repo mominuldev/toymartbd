@@ -77,7 +77,8 @@ final class SecurityHeaders
             'font-src' => ["'self'", 'data:', 'https://fonts.bunny.net', ...$hot['http']],
             'img-src' => ["'self'", 'data:', 'blob:', 'https:', ...($local ? ['http:'] : [])],
             // + the admin's Sentry ingest origin, only when SENTRY_ADMIN_DSN is set (P10).
-            'connect-src' => ["'self'", ...$hot['http'], ...$hot['ws'], ...(($sentry = self::origin(config('monitoring.sentry_admin.dsn'))) !== null ? [$sentry] : [])],
+            // + the Reverb socket for live updates (Inbox), only while BROADCAST_CONNECTION=reverb.
+            'connect-src' => ["'self'", ...$hot['http'], ...$hot['ws'], ...self::reverbOrigins(), ...(($sentry = self::origin(config('monitoring.sentry_admin.dsn'))) !== null ? [$sentry] : [])],
             // blob: — Print buttons load the PDF into a hidden frame from a blob URL the admin
             // itself made, then print it (lib/pdf.ts printPdfBlob). Nothing else can mint one.
             'frame-src' => ["'self'", 'blob:', ...($storefront !== null ? [$storefront] : [])],
@@ -92,6 +93,30 @@ final class SecurityHeaders
             array_keys($directives),
             $directives,
         ));
+    }
+
+    /**
+     * The WebSocket origin the admin's Echo client opens (lib/realtime.ts): REVERB_HOST/PORT/SCHEME,
+     * the same values the bundle gets as VITE_REVERB_*. Empty while broadcasting is not Reverb.
+     *
+     * @return list<string>
+     */
+    private static function reverbOrigins(): array
+    {
+        if (config('broadcasting.default') !== 'reverb') {
+            return [];
+        }
+
+        $host = config('broadcasting.connections.reverb.options.host');
+        if (! is_string($host) || $host === '' || preg_match('/^[A-Za-z0-9.\-]+$/', $host) !== 1) {
+            return [];
+        }
+        $tls = config('broadcasting.connections.reverb.options.scheme') !== 'http';
+        $port = config('broadcasting.connections.reverb.options.port');
+        $port = is_numeric($port) ? (int) $port : ($tls ? 443 : 80);
+        $suffix = ($tls && $port === 443) || (! $tls && $port === 80) ? '' : ':'.$port;
+
+        return [($tls ? 'wss://' : 'ws://').$host.$suffix];
     }
 
     /** @return array{http: list<string>, ws: list<string>} */

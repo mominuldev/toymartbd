@@ -24,6 +24,37 @@ Suggested reply (Figma 539:83211, P10 AI for growth): `POST /inbox/conversations
 
 Phones are masked (`017****5678`) unless the viewer holds `customers.view_pii` (rule 20).
 
+## Live updates (Laravel Reverb, 2026-11-28)
+
+With live updates on, the Inbox refreshes the moment something changes instead of on its polling timer.
+
+- **What is pushed.** `App\Domain\Inbox\Events\InboxConversationChanged` is broadcast on the private channel `inbox` as `conversation.changed`, with the payload `{conversation_id}` and **nothing else**.
+  - It is a signal, not data. The admin refetches through the endpoints above, which apply the viewer's own permissions, including phone masking.
+  - So no personal data ever crosses the socket (rule 20), and server data stays in TanStack Query (rule 25a).
+- **When.** The `Conversation` and `ConversationMessage` model hooks raise it on every create and every real update:
+  - a message in or out
+  - a delivery status
+  - read, assign, resolve or reopen
+  - a note or a template.
+  
+  A save that changes nothing raises nothing. It is dispatched **after commit** (`ShouldDispatchAfterCommit`), so a rolled-back write raises nothing. The push to Reverb runs on the `notify` queue (rule 4).
+- **Who may listen.** `POST /broadcasting/auth` (body `{socket_id, channel_name}`; `channel_name` allowlist: `private-inbox`; 422 otherwise) is inside the admin session group: `auth:sanctum`, an active staff session and two-factor enrolment.
+  - The channel itself is authorised by `ConversationPolicy::viewAny` (inbox.view) in `routes/channels.php`. Without inbox.view the answer is 403 `forbidden` (role matrix: `tests/Feature/Inbox/InboxLiveUpdatesTest.php`).
+  - The response is the Pusher protocol's `{auth}`, so it is not a Resource.
+  - Laravel's default web `/broadcasting/auth` route is **not** registered.
+- **Admin.** `lib/realtime.ts` holds the Echo client, loaded lazily. It signs subscriptions through `api()` (cookie plus X-XSRF-TOKEN) and leaves `window.fetch` alone. `features/inbox/live.ts`, mounted in the Shell for inbox.view holders, works like this:
+  - Pushes within 250 ms are coalesced.
+  - It then invalidates the conversation lists (and with them the nav badge) and the named thread's detail and messages.
+  - After a dropped connection it refetches everything in the inbox once.
+  - While the socket is live, the 30 s list, 15 s thread and 60 s badge polls drop to a 5-minute safety net.
+  - When live updates are off, or the socket is down, the admin polls exactly as before.
+- **Turning it on.**
+  - Server: `BROADCAST_CONNECTION=reverb` and the `REVERB_*` keys, then run `php artisan reverb:start` (supervised in production, behind the TLS proxy).
+  - Admin build: the `VITE_REVERB_*` values. Without `VITE_REVERB_APP_KEY` the admin never opens a socket.
+  - The admin CSP adds the Reverb `ws(s)://` origin to `connect-src` only while broadcasting is Reverb.
+  - `REVERB_ALLOWED_ORIGINS` defaults to `APP_URL`'s host.
+  - With `null` or `log`, nothing is queued (`broadcastWhen`).
+
 ## Reply state (restarting a closed conversation)
 
 `App\Domain\Inbox\Services\ReplyWindow` decides, for the resource, the Actions (before queueing and again under the row lock) and the send job (once more before calling Meta):

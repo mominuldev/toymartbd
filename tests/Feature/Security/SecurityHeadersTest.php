@@ -96,3 +96,21 @@ it('does not expose the private disk over /storage (no signed serve or upload ro
     expect(Illuminate\Support\Facades\Route::has('storage.local'))->toBeFalse()
         ->and(Illuminate\Support\Facades\Route::has('storage.local.upload'))->toBeFalse();
 });
+
+it('lets the admin open the Reverb socket only while broadcasting is Reverb', function (): void {
+    config(['broadcasting.connections.reverb.options' => ['host' => 'ws.smartjunior.com.bd', 'port' => 443, 'scheme' => 'https']]);
+    expect(SecurityHeaders::adminPolicy('abc'))->not->toContain('ws.smartjunior.com.bd'); // broadcasting is `null` here
+
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.options' => ['host' => 'ws.smartjunior.com.bd', 'port' => 443, 'scheme' => 'https'],
+    ]);
+    expect(SecurityHeaders::adminPolicy('abc'))->toMatch('/connect-src [^;]*wss:\/\/ws\.smartjunior\.com\.bd[ ;]/');
+
+    config(['broadcasting.connections.reverb.options' => ['host' => 'localhost', 'port' => 8080, 'scheme' => 'http']]);
+    expect(SecurityHeaders::adminPolicy('abc'))->toContain('ws://localhost:8080');
+
+    // A host that is not a plain hostname never reaches the policy.
+    config(['broadcasting.connections.reverb.options' => ['host' => 'evil.test; script-src *', 'port' => 443, 'scheme' => 'https']]);
+    expect(SecurityHeaders::adminPolicy('abc'))->not->toContain('evil.test');
+});

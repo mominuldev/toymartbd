@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import type { Schema } from '@toymart/api-types';
 import type { AssignConversationRequestInput, SendInboxReplyRequestInput, SendInboxTemplateRequestInput, SendQuickReplyRequestInput, StoreInboxNoteRequestInput } from '@toymart/api-types/zod';
 import { api } from '@/lib/api';
+import { useLivePollInterval } from '@/lib/realtime';
 
 export type Conversation = Schema<'InboxConversation'>;
 export type ConversationDetail = Schema<'InboxConversationDetail'>;
@@ -58,13 +59,15 @@ export function conversationsPath(f: InboxFilters, cursor?: string | null): stri
     return `/inbox/conversations${text ? `?${text}` : ''}`;
 }
 
+/** Polled every 30 s — or pushed live over Reverb, with a 5-minute safety poll (features/inbox/live.ts). */
 export function useConversations(filters: InboxFilters) {
+    const refetchInterval = useLivePollInterval(30_000);
     return useInfiniteQuery({
         queryKey: inboxKeys.list(filters),
         queryFn: ({ pageParam }) => api<ConversationPage>(conversationsPath(filters, pageParam)),
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.meta.next_cursor,
-        refetchInterval: 30_000,
+        refetchInterval,
     });
 }
 
@@ -78,13 +81,14 @@ export function useConversation(id: number) {
 
 /** Newest first from the API; the thread reverses each page for display. */
 export function useMessages(id: number) {
+    const refetchInterval = useLivePollInterval(15_000);
     return useInfiniteQuery({
         queryKey: inboxKeys.messages(id),
         queryFn: ({ pageParam }) => api<MessagePage>(`/inbox/conversations/${id}/messages${pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : ''}`),
         initialPageParam: null as string | null,
         getNextPageParam: (last) => last.meta.next_cursor,
         enabled: Number.isInteger(id) && id > 0,
-        refetchInterval: 15_000,
+        refetchInterval,
     });
 }
 

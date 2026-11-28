@@ -7,6 +7,7 @@ namespace App\Domain\Inbox\Models;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Inbox\Enums\ConversationStatus;
 use App\Domain\Inbox\Enums\InboxChannel;
+use App\Domain\Inbox\Events\InboxConversationChanged;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -66,6 +67,15 @@ final class Conversation extends Model
             'last_inbound_at' => 'datetime',
             'resolved_at' => 'datetime',
         ];
+    }
+
+    /** Every real change is pushed live to the admin (a signal only — see InboxConversationChanged). */
+    protected static function booted(): void
+    {
+        // `created` and `updated` only — Eloquent skips `updated` when nothing was dirty.
+        $changed = static fn (Conversation $conversation) => event(new InboxConversationChanged($conversation->id));
+        self::created($changed);
+        self::updated($changed);
     }
 
     /** @return BelongsTo<Customer, $this> */
