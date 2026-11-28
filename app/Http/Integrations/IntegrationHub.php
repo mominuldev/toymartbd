@@ -175,7 +175,7 @@ final readonly class IntegrationHub
 
     /**
      * Payments: COD, then each online gateway. A gateway the admin manages keys for
-     * (SSLCommerz, PayStation — `GatewayCredentials::methods()`) is judged on its CURRENT mode
+     * (SSLCommerz, PayStation, bKash — `GatewayCredentials::methods()`) is judged on its CURRENT mode
      * only, as `OnlineGateways::status()` reports it: no complete key set for that mode →
      * not connected; sandbox → test mode; live but not yet verified by the owner (a CLI
      * action after a real live payment) → still test mode, because production refuses it;

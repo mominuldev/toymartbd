@@ -1,0 +1,13 @@
+{
+    "paymentId": "{{payment_id}}",
+    "verificationStatus": "Incomplete",
+    "payerReference": "{{reference}}",
+    "payerType": "Customer",
+    "paymentCreateTime": "2026-11-28T12:31:28:970 GMT+0600",
+    "amount": "{{amount}}",
+    "currency": "BDT",
+    "intent": "sale",
+    "merchantInvoice": "{{invoice}}",
+    "transactionStatus": "Initiated",
+    "maxRefundableAmount": "{{amount}}"
+}

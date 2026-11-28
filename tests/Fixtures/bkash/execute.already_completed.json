@@ -1,0 +1,6 @@
+{
+    "internalCode": "payment_already_completed",
+    "externalCode": "2062",
+    "errorMessageEn": "The payment has already been completed",
+    "errorMessageBn": null
+}

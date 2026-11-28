@@ -26,20 +26,31 @@ final class GatewayCredentials
 
     /**
      * The fields each gateway needs, in display order. `secret` fields are never returned
-     * by the API — only whether they are set.
+     * by the API — only whether they are set, and, where `hint` is true, at most their last
+     * four characters ("••••1234", like the courier and messaging keys) so the owner can tell
+     * which account is connected.
      *
-     * @return list<array{key: string, secret: bool}>
+     * bKash: all four credentials bKash issues are secret (the username and password go in
+     * the grant-token headers, the app key and secret in its body — docs/_research/bkash-api.md).
+     *
+     * @return list<array{key: string, secret: bool, hint: bool}>
      */
     public static function fields(PaymentMethod $method): array
     {
         return match ($method) {
             PaymentMethod::Sslcommerz => [
-                ['key' => 'store_id', 'secret' => false],
-                ['key' => 'store_password', 'secret' => true],
+                ['key' => 'store_id', 'secret' => false, 'hint' => false],
+                ['key' => 'store_password', 'secret' => true, 'hint' => false],
             ],
             PaymentMethod::Paystation => [
-                ['key' => 'merchant_id', 'secret' => false],
-                ['key' => 'password', 'secret' => true],
+                ['key' => 'merchant_id', 'secret' => false, 'hint' => false],
+                ['key' => 'password', 'secret' => true, 'hint' => false],
+            ],
+            PaymentMethod::Bkash => [
+                ['key' => 'username', 'secret' => true, 'hint' => true],
+                ['key' => 'password', 'secret' => true, 'hint' => true],
+                ['key' => 'app_key', 'secret' => true, 'hint' => true],
+                ['key' => 'app_secret', 'secret' => true, 'hint' => true],
             ],
             default => [],
         };
@@ -48,7 +59,17 @@ final class GatewayCredentials
     /** @return list<PaymentMethod> gateways whose keys the admin manages */
     public static function methods(): array
     {
-        return [PaymentMethod::Sslcommerz, PaymentMethod::Paystation];
+        return [PaymentMethod::Sslcommerz, PaymentMethod::Paystation, PaymentMethod::Bkash];
+    }
+
+    /** "••••1234": at most the last four characters, and none of a value shorter than eight. */
+    public static function hint(?string $value): ?string
+    {
+        if ($value === null || mb_strlen($value) < 8) {
+            return $value === null ? null : '••••';
+        }
+
+        return '••••'.mb_substr($value, -4);
     }
 
     public static function mode(bool $sandbox): string

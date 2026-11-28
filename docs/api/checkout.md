@@ -295,3 +295,65 @@ SSLCommerz refund stays `processing` in `PayRefund` until one is built.
 - `shipping_method=NO` is sent (no shipping address to the gateway); whether SSLCommerz requires
   shipping fields for this store profile is an onboarding question.
 - `cus_email` falls back to a placeholder (`SSLCOMMERZ_FALLBACK_EMAIL`) when checkout has none.
+
+## Online payment — bKash Tokenized Checkout (P10)
+
+**Status: built against bKash's published Tokenized Checkout pages only** (developer.bka.sh, read
+2026-11-28 — `docs/_research/bkash-api.md`, with every undocumented point listed). No merchant
+account and so **no sandbox keys** exist: tests run on hand-authored fixtures (`tests/Fixtures/bkash`,
+a stateful simulator in `tests/Feature/Payment/Bkash/BkashSandbox.php`) and never call the network.
+The `bkash` row is seeded inactive, unverified and in sandbox; live mode also needs
+`BKASH_LIVE_BASE_URL`, which bKash gives at onboarding.
+
+Availability, the start/retry call, expiry and the admin re-check are exactly the SSLCommerz ones
+above (`payment_method: "bkash"`). Different:
+
+| Method | Path | Guard |
+|---|---|---|
+| POST | `/api/v1/storefront/payments/bkash/return` | storefront token + **`Idempotency-Key`** (it may capture — rule 17) |
+
+There is **no bKash IPN listener** (its SNS signature scheme is undocumented); the callback and the
+sweeper's query settle every payment.
+
+### Flow
+
+1. `POST /orders/{number}/payment` → Create Payment. `next_action.url` is bKash's `bkashURL`.
+   `payments.transaction_id` = bKash's `paymentId`; the invoice `{order}-P{payment id}` is in the payload.
+2. bKash returns the browser to `{storefront}/api/payments/bkash/{number}/success` **with no
+   `?locale=`** (bKash appends `?paymentID=…&status=success|failure|cancel&signature=…`, and does not
+   document what happens to an existing query string). The `success` path segment means nothing —
+   the storefront must read bKash's `status`.
+3. The storefront forwards `{order_number, payment_id: paymentID, status, signature, query?}` to
+   `POST /payments/bkash/return` with a fresh `Idempotency-Key` per callback, then sends the customer
+   to the order's payment page, which re-reads the order. Answer:
+   `{"data":{"order_number","payment_status","order_payment_status","deferred"}}`. 404 for a
+   paymentID that is not an online bKash payment of that order (nothing written); 422 for an
+   unknown `status`.
+
+### What happens to a callback — in this order
+
+1. Ours? (404 before any write.) 2. `webhook_receipts` row `(bkash, "return:{paymentId}:{status}")`,
+   `signature_valid = false` — a processed replay is a no-op. 3. Under a per-payment lock, **Query
+   Payment**. `Completed` → applied (never executed twice). Still `Initiated`: on `success` →
+   **Execute** (the capture), then **query again** and apply only that; on `failure` / `cancel` →
+   the attempt is closed `failed` / `cancelled` (no money; a retry opens a new paymentId).
+   An execute refusal (e.g. 2023 insufficient balance) with the query still `Initiated` closes it
+   `failed` (`execute_refused:2023`); an execute timeout leaves it open, `deferred: true`.
+4. Apply through `ReconcileOnlinePayment`: paid only when the query says `Completed` for our
+   paymentId and invoice, in BDT, with a `trxId`, at exactly the payment's amount — a mismatch is
+   flagged for review and the order held. Nothing in the callback body is read as money.
+
+### Refunds
+
+`BkashGateway::refund()` uses the v2 refund call (`paymentId`, `trxId`, `refundAmount`, `sku` = our
+invoice, `reason`); `Completed` → completed with `refundTrxId`. On a timeout it asks Refund Status
+and accepts only a `Completed` refund of exactly that amount not already recorded; otherwise failed
+(bKash: never repeat a refund within 10 minutes). A POS counter bKash payment (same `method`, no
+driver marker) is never queried, executed or refunded through the API.
+
+### Not done / unverified
+
+- The `Authorization` header form (bare token per the curl samples, or `Bearer …` per the tables) —
+  `BKASH_AUTHORIZATION_SCHEME`, default `plain`. Confirm against the real sandbox.
+- No ledger rows on capture (as for every online gateway, above); bKash's `serviceFee` is kept in the
+  payload, not booked — no published rate.

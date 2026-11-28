@@ -207,6 +207,16 @@ export const bannerRequestSchema = z.object({
 });
 export type BannerRequestInput = z.input<typeof bannerRequestSchema>;
 
+/** The customer's browser came back from bKash to our callbackURL, which bKash suffixed with */
+export const bkashReturnRequestSchema = z.object({
+    "order_number": z.string().min(1).regex(new RegExp("^[A-Za-z0-9\\-]{3,32}$")),
+    "payment_id": z.string().min(1).max(128).regex(new RegExp("^[A-Za-z0-9\\-_]+$")),
+    "status": z.enum(["success","failure","cancel"]),
+    "signature": z.string().max(255).nullable().optional(),
+    "query": z.array(z.string().max(500).nullable()).max(20).nullable().optional(),
+});
+export type BkashReturnRequestInput = z.input<typeof bkashReturnRequestSchema>;
+
 /** `POST /blog/posts` and `PUT /blog/posts/{post}` — the whole post document (a save replaces it). */
 export const blogPostRequestSchema = z.object({
     "type": postTypeSchema,

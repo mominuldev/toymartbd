@@ -8137,6 +8137,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/storefront/payments/bkash/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * `POST /payments/bkash/return` — the storefront forwards bKash's callback (`paymentID` as
+         *     `payment_id`, `status`, `signature`) and the order number. Requires an `Idempotency-Key`:
+         *     it may capture the payment (rule 17). The signature cannot be verified, so bKash is
+         *     re-queried; on `success` the payment is executed and queried again, and only the query's
+         *     answer is applied. `deferred: true` means bKash could not be reached yet and nothing was
+         *     decided — show "checking your payment" and let the order page re-read the status
+         */
+        post: operations["v1.storefront.payments.bkash.return"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/storefront/auth/otp": {
         parameters: {
             query?: never;
@@ -9297,6 +9321,30 @@ export interface components {
             starts_at?: string | null;
             /** Format: date-time */
             ends_at?: string | null;
+        };
+        /**
+         * BkashReturnRequest
+         * @description The customer's browser came back from bKash to our callbackURL, which bKash suffixed with
+         *     `paymentID`, `status` and `signature`; the storefront's route handler forwards those plus the
+         *     order number from the URL path. bKash publishes no way to verify `signature`, so these only
+         *     select which of OUR payments to re-query and whether the customer said success (which allows
+         *     the Execute call) — never the payment's status or amount (rule 19,
+         *     docs/_research/bkash-api.md §5).
+         */
+        BkashReturnRequest: {
+            /** @description The order number from our callback URL's path. */
+            order_number: string;
+            /** @description bKash's `paymentID` query parameter, forwarded untouched. */
+            payment_id: string;
+            /**
+             * @description bKash's `status` query parameter.
+             * @enum {string}
+             */
+            status: "success" | "failure" | "cancel";
+            /** @description bKash's `signature` query parameter — kept for disputes; there is no documented way to verify it. */
+            signature?: string | null;
+            /** @description Anything else bKash appended, kept for disputes only. */
+            query?: (string | null)[] | null;
         };
         /**
          * BlockType
@@ -14016,7 +14064,7 @@ export interface components {
         /** PaymentGatewaySettings */
         PaymentGatewaySettings: {
             /** @enum {string} */
-            code: "sslcommerz" | "paystation";
+            code: "sslcommerz" | "paystation" | "bkash";
             name: string;
             is_active: boolean;
             /**
@@ -14035,7 +14083,7 @@ export interface components {
                 /** @enum {string|null} */
                 reason: "not_registered" | "inactive" | "not_configured" | "unverified" | "sandbox_in_production" | null;
             };
-            /** @description Saved keys per mode. `value` is null for every secret. `complete` counts saved keys only. */
+            /** @description Saved keys per mode. `value` is null for every secret; `hint` is "••••1234" at most, only for a saved secret of a gateway that shows one (bKash). `complete` counts saved keys only. */
             credentials: {
                 sandbox: {
                     complete: boolean;
@@ -14044,6 +14092,7 @@ export interface components {
                         secret: boolean;
                         set: boolean;
                         value: string | null;
+                        hint: string | null;
                     }[];
                 };
                 live: {
@@ -14053,6 +14102,7 @@ export interface components {
                         secret: boolean;
                         set: boolean;
                         value: string | null;
+                        hint: string | null;
                     }[];
                 };
             };
@@ -41274,6 +41324,79 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.storefront.payments.bkash.return": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Client-generated unique key (a UUID v4 is ideal), 8–255 printable ASCII characters. Retrying with the same key and body replays the stored 2xx response for 24h with `Idempotent-Replayed: true`; the same key with a different body is 422 `idempotency-key-reused`; while the first request runs, 409 `request-in-progress`. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BkashReturnRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            order_number: string;
+                            /** @enum {string} */
+                            payment_status: "pending" | "initiated" | "authorised" | "paid" | "failed" | "cancelled" | "expired";
+                            /** @enum {string} */
+                            order_payment_status: "unpaid" | "pending" | "partially_paid" | "paid" | "partially_refunded" | "refunded" | "failed";
+                            /** @description True when bKash could not be reached yet; nothing was decided. */
+                            deferred: boolean;
+                        };
+                    };
+                };
+            };
+            /** @description Idempotency-Key missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description No online bKash payment with that paymentID for that order — nothing was written */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A request with this key is still in progress */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Key reused with a different body, or validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
         };
     };
     "v1.storefront.auth.otp.request": {

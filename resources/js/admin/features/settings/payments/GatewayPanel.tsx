@@ -32,6 +32,7 @@ import { Dot, Section, dhakaStamp } from './parts';
 const docsUrl: Record<PaymentGateway['code'], string> = {
     sslcommerz: 'https://sandbox-gw.sslcommerz.com/docs',
     paystation: 'https://paystation.com.bd/documentation',
+    bkash: 'https://developer.bka.sh/docs',
 };
 const SSL_SANDBOX_SIGNUP = 'https://sandbox-gw.sslcommerz.com/register';
 const SSL_LIVE_SIGNUP = 'https://signup.sslcommerz.com/register';
@@ -42,8 +43,19 @@ const fieldLabels: Record<string, MessageKey> = {
     store_password: 'paymentGateways.field.store_password',
     merchant_id: 'paymentGateways.field.merchant_id',
     password: 'paymentGateways.field.password',
+    username: 'paymentGateways.field.username',
+    app_key: 'paymentGateways.field.app_key',
+    app_secret: 'paymentGateways.field.app_secret',
 };
-const docNames: Record<string, string> = { store_id: 'store_id', store_password: 'store_passwd', merchant_id: 'merchantId', password: 'password' };
+const docNames: Record<string, string> = {
+    store_id: 'store_id',
+    store_password: 'store_passwd',
+    merchant_id: 'merchantId',
+    password: 'password',
+    username: 'username',
+    app_key: 'app_key',
+    app_secret: 'app_secret',
+};
 
 type Props = {
     gateway: PaymentGateway;
@@ -330,6 +342,13 @@ function EnvironmentSection({ gateway: g, mode, error, onPick }: { gateway: Paym
                     {t('paymentGateways.env.sslcommerzLimits')}
                 </p>
             )}
+            {g.code === 'bkash' && !g.hosts.live && (
+                // bKash does not publish its live address; it is given at onboarding and set on the server.
+                <p className="flex items-start gap-2 t-admin-caption text-fg-secondary">
+                    <InfoIcon size={14} aria-hidden className="mt-px shrink-0" />
+                    {t('paymentGateways.bkash.liveHostMissing')}
+                </p>
+            )}
         </Section>
     );
 }
@@ -390,8 +409,9 @@ function KeyField({ gateway: g, form, mode, field, label, action, error }: KeyFi
                 <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
                     <div className="flex h-10 min-w-0 sm:flex-1 items-center gap-2 rounded-sm border border-line-default bg-subtle pr-2 pl-3">
                         <KeyIcon size={14} aria-hidden className="shrink-0 text-fg-secondary" />
-                        <span aria-hidden className={`t-admin-mono text-fg-secondary ${removing ? 'line-through' : ''}`}>
-                            ••••••••••••
+                        {/* bKash keys carry a last-four hint ("••••1234") so the owner can tell which account is saved. */}
+                        <span aria-hidden={!field.hint} data-key-hint={field.hint ?? undefined} className={`t-admin-mono text-fg-secondary ${removing ? 'line-through' : ''}`}>
+                            {field.hint ?? '••••••••••••'}
                         </span>
                         <span className="flex-1" />
                         {removing ? (
@@ -487,7 +507,7 @@ function WhereKeysComeFrom({ gateway: g }: { gateway: PaymentGateway }) {
                     </p>
                 </>
             ) : (
-                <p className="t-admin-caption text-fg-secondary">{t('paymentGateways.paystation.keysSource')}</p>
+                <p className="t-admin-caption text-fg-secondary">{t(`paymentGateways.${g.code}.keysSource`)}</p>
             )}
         </div>
     );

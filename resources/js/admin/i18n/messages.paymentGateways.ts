@@ -1,7 +1,8 @@
 /**
- * Integrations › Payments (Figma B · 37a, redesign 2026-11-20) — SSLCommerz and PayStation keys
+ * Integrations › Payments (Figma B · 37a, redesign 2026-11-20) — SSLCommerz, PayStation and bKash keys
  * per mode, plus the Cash on delivery tile. Spread into `en` / `bn` in messages.ts. Brand names
- * and each gateway's own parameter names (store_id, store_passwd, merchantId, callback_url) stay
+ * and each gateway's own parameter names (store_id, store_passwd, merchantId, callback_url, username,
+ * app_key, app_secret) stay
  * untranslated.
  *
  * NEEDS NATIVE-SPEAKER REVIEW, like the rest of the Bangla UI copy. Digits stay Western (rule 36).
@@ -33,6 +34,15 @@ export const paymentGatewaysEn = {
     'paymentGateways.paystation.ipnHint': 'Shared with PayStation when they set up your account. There is nothing to paste on your side.',
     'paymentGateways.paystation.returnTitle': 'Return address',
     'paymentGateways.paystation.returnText': 'We send it with every payment, so customers come back to the shop after paying. Nothing to set up.',
+
+    'paymentGateways.bkash.short': 'bKash wallet only',
+    'paymentGateways.bkash.description': 'Customers pay from their bKash wallet on bKash’s own payment page.',
+    'paymentGateways.bkash.keysAbout': 'bKash issues four keys for each environment: a username, a password, an app key and an app secret. All four are write-only — only their last four characters are shown.',
+    'paymentGateways.bkash.keysSource': 'bKash issues sandbox and live keys after it approves your merchant account. There are no public sandbox test keys — ask bKash for them.',
+    'paymentGateways.bkash.ipnLabel': 'Payment notifications',
+    'paymentGateways.bkash.ipnAbout': 'bKash payment notifications are not connected. We confirm every payment by asking bKash directly.',
+    'paymentGateways.bkash.ipnHint': 'Nothing to set up.',
+    'paymentGateways.bkash.liveHostMissing': 'bKash gives the live address when it approves your merchant account. Live mode works once it is set on the server.',
 
     'paymentGateways.cod.name': 'Cash on delivery',
     'paymentGateways.cod.short': 'Customers pay the courier on delivery',
@@ -102,6 +112,9 @@ export const paymentGatewaysEn = {
     'paymentGateways.field.store_password': 'Store Password',
     'paymentGateways.field.merchant_id': 'Merchant ID',
     'paymentGateways.field.password': 'Password',
+    'paymentGateways.field.username': 'Username',
+    'paymentGateways.field.app_key': 'App key',
+    'paymentGateways.field.app_secret': 'App secret',
     'paymentGateways.field.help': '{doc} in the {name} docs.',
     'paymentGateways.field.secretHelp': '{doc} in the {name} docs. Write-only — replace it to change it.',
     'paymentGateways.field.notSetHelp': '{doc} in the {name} docs. Write-only — once saved it is never shown again.',
@@ -185,6 +198,15 @@ export const paymentGatewaysBn: Record<keyof typeof paymentGatewaysEn, string> =
     'paymentGateways.paystation.returnTitle': 'ফেরার ঠিকানা',
     'paymentGateways.paystation.returnText': 'প্রতিটি পেমেন্টের সাথে আমরা এটি পাঠাই, তাই পেমেন্টের পর গ্রাহক শপে ফিরে আসেন। কিছু সেট করতে হবে না।',
 
+    'paymentGateways.bkash.short': 'শুধু বিকাশ ওয়ালেট',
+    'paymentGateways.bkash.description': 'গ্রাহক বিকাশের নিজস্ব পেমেন্ট পেজে তাঁর বিকাশ ওয়ালেট থেকে পেমেন্ট করেন।',
+    'paymentGateways.bkash.keysAbout': 'বিকাশ প্রতিটি পরিবেশের জন্য চারটি কী দেয়: একটি username, একটি password, একটি app key ও একটি app secret। চারটিই শুধু লেখা যায় — কেবল শেষ চারটি অক্ষর দেখানো হয়।',
+    'paymentGateways.bkash.keysSource': 'আপনার মার্চেন্ট অ্যাকাউন্ট অনুমোদনের পর বিকাশ স্যান্ডবক্স ও লাইভ কী দেয়। প্রকাশ্য স্যান্ডবক্স টেস্ট কী নেই — বিকাশের কাছে চেয়ে নিন।',
+    'paymentGateways.bkash.ipnLabel': 'পেমেন্ট নোটিফিকেশন',
+    'paymentGateways.bkash.ipnAbout': 'বিকাশের পেমেন্ট নোটিফিকেশন যুক্ত নেই। প্রতিটি পেমেন্ট আমরা সরাসরি বিকাশের কাছে জিজ্ঞেস করে নিশ্চিত করি।',
+    'paymentGateways.bkash.ipnHint': 'কিছু সেট করতে হবে না।',
+    'paymentGateways.bkash.liveHostMissing': 'মার্চেন্ট অ্যাকাউন্ট অনুমোদনের সময় বিকাশ লাইভ ঠিকানা দেয়। সার্ভারে সেটি বসানোর পর লাইভ মোড চলবে।',
+
     'paymentGateways.cod.name': 'ক্যাশ অন ডেলিভারি',
     'paymentGateways.cod.short': 'ডেলিভারির সময় গ্রাহক কুরিয়ারকে টাকা দেন',
     'paymentGateways.cod.alwaysOn': 'সবসময় চালু',
@@ -253,6 +275,9 @@ export const paymentGatewaysBn: Record<keyof typeof paymentGatewaysEn, string> =
     'paymentGateways.field.store_password': 'Store Password',
     'paymentGateways.field.merchant_id': 'Merchant ID',
     'paymentGateways.field.password': 'Password',
+    'paymentGateways.field.username': 'Username',
+    'paymentGateways.field.app_key': 'App key',
+    'paymentGateways.field.app_secret': 'App secret',
     'paymentGateways.field.help': '{name} ডকসে {doc}।',
     'paymentGateways.field.secretHelp': '{name} ডকসে {doc}। শুধু লেখা যায় — বদলাতে নতুন দিন।',
     'paymentGateways.field.notSetHelp': '{name} ডকসে {doc}। শুধু লেখা যায় — সংরক্ষণের পর আর কখনো দেখানো হয় না।',

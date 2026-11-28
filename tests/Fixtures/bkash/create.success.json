@@ -1,0 +1,15 @@
+{
+    "paymentId": "{{payment_id}}",
+    "bkashURL": "https://sandbox.payment.bkash.com/?paymentId={{payment_id}}&hash=fixture&mode=0011&apiVersion=v2/",
+    "callbackURL": "{{callback}}",
+    "successCallbackURL": "{{callback}}?paymentID={{payment_id}}&status=success&signature=vwJk5FkL4i",
+    "failureCallbackURL": "{{callback}}?paymentID={{payment_id}}&status=failure&signature=vwJk5FkL4i",
+    "cancelledCallbackURL": "{{callback}}?paymentID={{payment_id}}&status=cancel&signature=vwJk5FkL4i",
+    "amount": "{{amount}}",
+    "intent": "sale",
+    "currency": "BDT",
+    "paymentCreateTime": "2026-11-28T12:31:28:970 GMT+0600",
+    "transactionStatus": "Initiated",
+    "merchantInvoiceNumber": "{{invoice}}",
+    "signature": "vwJk5FkL4i"
+}

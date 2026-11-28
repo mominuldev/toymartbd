@@ -1,0 +1,11 @@
+{
+    "originalTrxId": "{{trx_id}}",
+    "refundTrxId": "{{refund_trx_id}}",
+    "refundTransactionStatus": "Completed",
+    "originalTrxAmount": "{{original_amount}}",
+    "refundAmount": "{{amount}}",
+    "currency": "BDT",
+    "completedTime": "2026-11-28T15:10:02:571 GMT+0600",
+    "sku": "{{invoice}}",
+    "reason": "refund"
+}

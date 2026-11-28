@@ -1,0 +1,6 @@
+{
+    "internalCode": "invalid_payment_id",
+    "externalCode": "2002",
+    "errorMessageEn": "Invalid Payment ID",
+    "errorMessageBn": null
+}
