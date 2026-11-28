@@ -1,9 +1,10 @@
 import { useSyncExternalStore } from 'react';
 import { Link } from 'react-router';
-import { CashRegisterIcon, CheckCircleIcon, ClockIcon, CloudSlashIcon, ShoppingBagOpenIcon, SquaresFourIcon, StackIcon, StorefrontIcon } from '@phosphor-icons/react';
+import { CashRegisterIcon, CheckCircleIcon, ClockIcon, CloudSlashIcon, SquaresFourIcon, StackIcon, StorefrontIcon } from '@phosphor-icons/react';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { PosSession } from './api';
 import { dhakaTime, takaText } from './format';
+import { BrandLogo } from '@/components/brand/BrandLogo';
 
 function subscribeOnline(callback: () => void): () => void {
     window.addEventListener('online', callback);
@@ -41,12 +42,8 @@ export function PosBar({ session, heldCount, onHeld, onCloseDrawer }: { session:
 
     return (
         <header data-theme="admin-dark" className="flex h-14 shrink-0 items-center gap-2 bg-canvas px-3 text-fg-primary sm:gap-3 sm:px-5 print:hidden">
-            <span className="flex shrink-0 items-center gap-2">
-                <span aria-hidden className="grid size-8 place-items-center rounded-sm bg-brand text-fg-on-brand">
-                    <ShoppingBagOpenIcon size={18} weight="fill" />
-                </span>
-                <span className="hidden t-admin-body-strong xl:inline">{t('pos.brand')}</span>
-            </span>
+            {/* The On dark lockup (the bar is admin-dark): the logo is the store name. */}
+            <BrandLogo alt={t('app.name')} className="h-9" />
             <span aria-hidden className="h-6 w-px shrink-0 bg-line-default" />
             <h1 className="flex min-w-0 items-center gap-1.5 t-admin-body text-fg-primary">
                 <StorefrontIcon size={16} aria-hidden className="shrink-0 text-fg-secondary" />

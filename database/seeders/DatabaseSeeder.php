@@ -79,8 +79,10 @@ class DatabaseSeeder extends Seeder
             $this->call(DemoInventorySeeder::class);
             // After the demo catalogue: the home's category chips and gift picks name its rows.
             $this->call(CmsHomeBlocksSeeder::class);
-            // Demo inbox conversations (local/testing only; the admin E2E thread tests use them).
-            $this->call(DemoInboxSeeder::class);
+            // Demo inbox conversations: off unless DEMO_SEED_INBOX=true (the admin E2E thread tests use them).
+            if ((bool) config('demo.inbox')) {
+                $this->call(DemoInboxSeeder::class);
+            }
 
             if ((bool) config('demo.transactions')) {
                 $this->call(DemoDataSeeder::class);

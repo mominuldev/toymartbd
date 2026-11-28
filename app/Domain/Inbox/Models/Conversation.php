@@ -72,10 +72,12 @@ final class Conversation extends Model
     /** Every real change is pushed live to the admin (a signal only — see InboxConversationChanged). */
     protected static function booted(): void
     {
-        // `created` and `updated` only — Eloquent skips `updated` when nothing was dirty.
+        // Created, updated (Eloquent skips `updated` when nothing was dirty) and deleted — a removed
+        // thread must leave the open lists and the nav badge too.
         $changed = static fn (Conversation $conversation) => event(new InboxConversationChanged($conversation->id));
         self::created($changed);
         self::updated($changed);
+        self::deleted($changed);
     }
 
     /** @return BelongsTo<Customer, $this> */
