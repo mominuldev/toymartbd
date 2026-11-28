@@ -28,15 +28,15 @@ const ssl: PaymentGateway = {
         sandbox: {
             complete: true,
             fields: [
-                { key: 'store_id', secret: false, set: true, value: 'testbox' },
-                { key: 'store_password', secret: true, set: true, value: null },
+                { key: 'store_id', secret: false, set: true, value: 'testbox', hint: null },
+                { key: 'store_password', secret: true, set: true, value: null, hint: null },
             ],
         },
         live: {
             complete: false,
             fields: [
-                { key: 'store_id', secret: false, set: false, value: null },
-                { key: 'store_password', secret: true, set: false, value: null },
+                { key: 'store_id', secret: false, set: false, value: null, hint: null },
+                { key: 'store_password', secret: true, set: false, value: null, hint: null },
             ],
         },
     },
@@ -56,11 +56,47 @@ const paystation: PaymentGateway = {
     configured: true,
     status: { enabled: false, reason: 'unverified' },
     credentials: {
-        sandbox: { complete: false, fields: [{ key: 'merchant_id', secret: false, set: false, value: null }, { key: 'password', secret: true, set: false, value: null }] },
-        live: { complete: true, fields: [{ key: 'merchant_id', secret: false, set: true, value: '104-1690000000' }, { key: 'password', secret: true, set: true, value: null }] },
+        sandbox: { complete: false, fields: [{ key: 'merchant_id', secret: false, set: false, value: null, hint: null }, { key: 'password', secret: true, set: false, value: null, hint: null }] },
+        live: { complete: true, fields: [{ key: 'merchant_id', secret: false, set: true, value: '104-1690000000', hint: null }, { key: 'password', secret: true, set: true, value: null, hint: null }] },
     },
     ipn_url: 'https://api.toymartbd.test/api/v1/webhooks/payments/paystation/ipn',
     hosts: { sandbox: 'sandbox.paystation.com.bd', live: 'api.paystation.com.bd' },
+    updated_at: null,
+    updated_by: null,
+};
+
+/** bKash: four write-only keys with last-four hints; no IPN; the live host is not published. */
+const bkash: PaymentGateway = {
+    code: 'bkash',
+    name: 'bKash',
+    is_active: false,
+    mode: 'sandbox',
+    verified: false,
+    verified_at: null,
+    configured: true,
+    status: { enabled: false, reason: 'inactive' },
+    credentials: {
+        sandbox: {
+            complete: true,
+            fields: [
+                { key: 'username', secret: true, set: true, value: null, hint: '••••er02' },
+                { key: 'password', secret: true, set: true, value: null, hint: '••••2345' },
+                { key: 'app_key', secret: true, set: true, value: null, hint: '••••1eqq' },
+                { key: 'app_secret', secret: true, set: true, value: null, hint: '••••ug4b' },
+            ],
+        },
+        live: {
+            complete: false,
+            fields: [
+                { key: 'username', secret: true, set: false, value: null, hint: null },
+                { key: 'password', secret: true, set: false, value: null, hint: null },
+                { key: 'app_key', secret: true, set: false, value: null, hint: null },
+                { key: 'app_secret', secret: true, set: false, value: null, hint: null },
+            ],
+        },
+    },
+    ipn_url: null,
+    hosts: { sandbox: 'tokenized.sandbox.bka.sh', live: null },
     updated_at: null,
     updated_by: null,
 };
@@ -69,17 +105,17 @@ type Reply = { status: number; body?: unknown };
 
 const okCheck: Reply = { status: 200, body: { ok: true, code: 'ok', mode: 'sandbox', checked_at: '2026-11-20T10:52:00+00:00' } satisfies GatewayCheck };
 
-function gatewaysApi(me: Me, put?: (code: string, body: Record<string, unknown>) => Reply, check: Reply = okCheck) {
+function gatewaysApi(me: Me, put?: (code: string, body: Record<string, unknown>) => Reply, check: Reply = okCheck, rows: PaymentGateway[] = [ssl, paystation]) {
     return mockApi((url, init) => {
         if (url.endsWith('/auth/me')) return { status: 200, body: me };
         const m = /\/settings\/payment-gateways\/(\w+)(\/check)?$/.exec(url);
         if (m && m[2]) return check;
         if (m && init?.method === 'PUT') {
             const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-            const row = m[1] === 'sslcommerz' ? ssl : paystation;
+            const row = rows.find((r) => r.code === m[1]) ?? paystation;
             return put ? put(m[1]!, body) : { status: 200, body: { ...row, ...(body.mode ? { mode: body.mode } : {}) } };
         }
-        if (url.endsWith('/settings/payment-gateways')) return { status: 200, body: { data: [ssl, paystation] } };
+        if (url.endsWith('/settings/payment-gateways')) return { status: 200, body: { data: rows } };
         return { status: 404 };
     });
 }
@@ -279,6 +315,55 @@ describe('integrations → payments', () => {
 
         await waitFor(() => expect(writeText).toHaveBeenCalledWith(SSL_IPN));
         expect(await screen.findByText('IPN URL copied')).toBeTruthy();
+    });
+
+    it('shows bKash with its four write-only keys as last-four hints, never the values', async () => {
+        gatewaysApi(owner, undefined, okCheck, [ssl, paystation, bkash]);
+        renderApp('/integrations/payments');
+
+        const tiles = await screen.findByRole('list', { name: 'Payment methods' });
+        expect(within(tiles).getAllByRole('listitem')).toHaveLength(4);
+        fireEvent.click(within(tiles).getByRole('button', { name: 'bKash settings' }));
+
+        const bkPanel = await panel('bKash');
+        expect(within(bkPanel).getByText('Customers pay from their bKash wallet on bKash’s own payment page.')).toBeTruthy();
+        for (const hint of ['••••er02', '••••2345', '••••1eqq', '••••ug4b']) expect(within(bkPanel).getByText(hint)).toBeTruthy();
+        for (const label of ['Username', 'Password', 'App key', 'App secret']) {
+            expect(within(bkPanel).getByRole('button', { name: `Replace the saved ${label}` })).toBeTruthy();
+        }
+        // No notification URL to copy, and the unpublished live address is explained.
+        expect(within(bkPanel).queryByRole('heading', { name: 'Payment notifications' })).toBeNull();
+        expect(within(bkPanel).getByText(/bKash gives the live address when it approves your merchant account/)).toBeTruthy();
+        expect(within(bkPanel).getByText(/There are no public sandbox test keys — ask bKash for them/)).toBeTruthy();
+    });
+
+    it('sends only the bKash keys typed, per mode, and never a hint back', async () => {
+        const calls = gatewaysApi(owner, undefined, okCheck, [ssl, paystation, bkash]);
+        renderApp('/integrations/payments');
+
+        fireEvent.click(await screen.findByRole('button', { name: 'bKash settings' }));
+        const bkPanel = await panel('bKash');
+        fireEvent.click(within(bkPanel).getByRole('button', { name: 'Replace the saved App secret' }));
+        fireEvent.change(within(bkPanel).getByLabelText('App secret'), { target: { value: 'new-sandbox-secret' } });
+        fireEvent.click(within(bkPanel).getByRole('button', { name: 'Live keys' }));
+        fireEvent.change(within(bkPanel).getByLabelText('Username'), { target: { value: 'live-user' } });
+        fireEvent.click(saveButton(bkPanel));
+
+        await waitFor(() => expect(puts(calls)).toHaveLength(1));
+        expect(putBody(calls, 'bkash')).toEqual({
+            credentials: { sandbox: { app_secret: 'new-sandbox-secret' }, live: { username: 'live-user' } },
+        });
+    });
+
+    it('shows bKash in Bangla with the same hints', async () => {
+        gatewaysApi(owner, undefined, okCheck, [ssl, paystation, bkash]);
+        renderApp('/integrations/payments', { locale: 'bn' });
+
+        fireEvent.click(await screen.findByRole('button', { name: 'bKash সেটিংস' }));
+        const bkPanel = await panel('bKash');
+        expect(within(bkPanel).getByText('গ্রাহক বিকাশের নিজস্ব পেমেন্ট পেজে তাঁর বিকাশ ওয়ালেট থেকে পেমেন্ট করেন।')).toBeTruthy();
+        expect(within(bkPanel).getByText('••••ug4b')).toBeTruthy();
+        expect(within(bkPanel).getByText(/বিকাশ লাইভ ঠিকানা দেয়/)).toBeTruthy();
     });
 
     it('is forbidden without settings.manage_integrations', async () => {
