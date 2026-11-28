@@ -11,3 +11,5 @@ export DEMO_SEED_IMAGES=false
 # POS, transfer, branch-setup and branch-dialog specs need the demo branches (a normal seed
 # is a single shop with multi-branch off).
 export DEMO_SEED_BRANCHES=true
+# The inbox spec drives the demo conversations (a normal seed has none: the Inbox shows real messages only).
+export DEMO_SEED_INBOX=true

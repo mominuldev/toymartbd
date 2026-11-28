@@ -24,6 +24,13 @@ return [
      */
     'branches' => (bool) env('DEMO_SEED_BRANCHES', false),
 
+    /*
+     * Demo inbox conversations (DemoInboxSeeder): four invented WhatsApp/Messenger/web-form
+     * threads. Off by default (owner request 2026-11-28): the Inbox shows only real messages.
+     * The admin E2E harness turns it on (e2e/demo-seed.env.sh) — its inbox spec drives those threads.
+     */
+    'inbox' => (bool) env('DEMO_SEED_INBOX', false),
+
     /* How many days back the demo order history starts, ending today (Dhaka time). */
     'history_days' => (int) env('DEMO_SEED_HISTORY_DAYS', 60),
 

@@ -581,7 +581,7 @@ Owner decisions of 2026-11-15:
   - **Rules:** the 24-hour window is enforced in the API and the job. Notes are never sent. Phones are masked without `customers.view_pii`.
   - **Screen:** assignment, resolve, and quick actions (product card, tracking link, create order from chat, which now prefills the composer).
   - **Integrations hub:** shows the channels as not connected or test mode, and live chat as not available.
-  - **Demo data and cleanup:** demo conversations are seeded locally; webhook receipts are pruned daily after 90 days.
+  - **Demo data and cleanup:** demo conversations are seeded only with `DEMO_SEED_INBOX=true` (off by default since 2026-11-28, owner request: the Inbox shows real messages only; the admin E2E harness turns it on); webhook receipts are pruned daily after 90 days.
   - **Not built:** the AI parts.
 - **Delivery areas & timing** (`/settings/delivery`):
   - `GET/PUT /settings/delivery-areas` covers cut-off, ETA per zone, metro and suburb districts, not-serviced upazilas and the COD advance. Writing needs `settings.update` + `shipments.manage_rates`.
