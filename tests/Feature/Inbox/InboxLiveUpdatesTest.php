@@ -127,6 +127,15 @@ it('raises the change on a staff reply, a note, read, assign and resolve', funct
     'resolve' => ['resolve', []],
 ]);
 
+it('raises the change when a conversation is removed, so the lists and the badge drop it', function (): void {
+    $conversation = InboxFixtures::conversation(['unread_count' => 2, 'needs_human' => true]);
+    Event::fake([InboxConversationChanged::class]);
+
+    $conversation->delete();
+
+    Event::assertDispatched(InboxConversationChanged::class, fn (InboxConversationChanged $e): bool => $e->conversationId === $conversation->id);
+});
+
 it('stays quiet on a save that changes nothing', function (): void {
     $conversation = InboxFixtures::conversation();
     Event::fake([InboxConversationChanged::class]);

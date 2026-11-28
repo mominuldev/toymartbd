@@ -31,7 +31,7 @@ With live updates on, the Inbox refreshes the moment something changes instead o
 - **What is pushed.** `App\Domain\Inbox\Events\InboxConversationChanged` is broadcast on the private channel `inbox` as `conversation.changed`, with the payload `{conversation_id}` and **nothing else**.
   - It is a signal, not data. The admin refetches through the endpoints above, which apply the viewer's own permissions, including phone masking.
   - So no personal data ever crosses the socket (rule 20), and server data stays in TanStack Query (rule 25a).
-- **When.** The `Conversation` and `ConversationMessage` model hooks raise it on every create and every real update:
+- **When.** The `Conversation` and `ConversationMessage` model hooks raise it on every create, every real update and every delete:
   - a message in or out
   - a delivery status
   - read, assign, resolve or reopen
